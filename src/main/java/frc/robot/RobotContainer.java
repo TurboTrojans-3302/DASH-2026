@@ -25,8 +25,13 @@ import frc.robot.Constants.DigitalIO;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Constants.OIConstants.ButtonBox;
+import frc.robot.commands.NavigateToTag;
+import frc.robot.commands.OrbitAroundReef;
 import frc.robot.commands.TeleopDrive;
+import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.Navigation;
 
 /*
@@ -37,10 +42,9 @@ import frc.robot.subsystems.Navigation;
  */
 public class RobotContainer {
 
-  private static boolean ELEVATOR_ENABLE = true;
+  
   private static boolean INTAKE_ENABLE = true;
   private static boolean INTAKE_ARM_ENABLE = true;
-  private static boolean GRIPPER_ENABLE = true;
   private static boolean CLIMBERS_ENABLE = true;
 
   private static RobotContainer instance;
@@ -140,12 +144,7 @@ public class RobotContainer {
       }));    
 
     if (INTAKE_ENABLE) {
-      new JoystickButton(m_driverController, XboxController.Button.kRightBumper.value)
-          .onTrue(new RunCommand(() -> m_intake.down(), m_intake))
-          .onFalse(new RunCommand(() -> m_intake.stop(), m_intake));
-      new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value)
-      .onTrue(new RunCommand(() -> m_intake.up(), m_intake))
-      .onFalse(new RunCommand(() -> m_intake.stop(), m_intake));
+      
 }
 
     /**
@@ -156,41 +155,13 @@ public class RobotContainer {
 
 
     if (CLIMBERS_ENABLE) {
-      new Trigger(() -> m_buttonBoard
-          .getPOV() == Constants.OIConstants.ButtonBox.StickUp)
-          .whileTrue(m_climbers.climbersUpCommand());
-      new Trigger(() -> m_buttonBoard
-          .getPOV() == Constants.OIConstants.ButtonBox.StickDown)
-          .whileTrue(m_climbers.climbersDownCommand());
-
-      Trigger safetySwitch = new Trigger(() -> m_buttonBoard.getRawButton(OIConstants.ButtonBox.SafetySwitch));
-      Trigger lockClimbers = new Trigger(() -> m_buttonBoard.getRawButton(OIConstants.ButtonBox.EngineStart));
       
-      safetySwitch.onTrue(new InstantCommand(() ->{ m_climbers.climberLockActive = true; }));
-
-      lockClimbers.onTrue(new InstantCommand(() -> {
-          m_climbers.climbersFullDown();
-      }));
+    
       
     }
 
     if (INTAKE_ARM_ENABLE) {
-      new Trigger(() -> m_copilotController.getRightY() < -0.9 )
-          .onTrue(m_intakeArm.setPositionCommand(IntakeConstants.kFloorPosition));
       
-      new Trigger(() -> m_copilotController.getRightY() > 0.9)
-          .onTrue(m_intakeArm.setPositionCommand(IntakeConstants.kElevatorPosition));
-
-      new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
-          .onTrue(m_intakeArm.setPositionCommand(IntakeConstants.kTroughPosition));
-
-      new Trigger(() -> m_intake.objectDetected())
-          .onTrue(new Coral(m_intakeArm, m_intake));    
-
-      new Trigger(()->m_buttonBoard.getRawButton(ButtonBox.RightKnobCW))
-        .onTrue(m_intakeArm.changePositionCommand(IntakeConstants.kPositionIncrement));
-      new Trigger(()->m_buttonBoard.getRawButton(ButtonBox.RightKnobCCW))
-        .onTrue(m_intakeArm.changePositionCommand(-IntakeConstants.kPositionIncrement));
     }
 
     // m_reefController.getChangeTrigger()
@@ -204,13 +175,7 @@ public class RobotContainer {
 
       
 
-      if (INTAKE_ENABLE && INTAKE_ARM_ENABLE){
-        // new JoystickButton(m_copilotController, XboxController.Button.kY.value)
-        //   .onTrue(new LoadGripper(instance));
-
-        new JoystickButton(m_copilotController, XboxController.Button.kA.value)
-          .onTrue(new TroughScore(m_intakeArm, m_intake));
-      }
+   
   };
 
   public void configureTestControls() {
@@ -219,42 +184,20 @@ public class RobotContainer {
 
 
     if (INTAKE_ARM_ENABLE) {
-      JoystickButton testIntakeArm = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch2Up);
-      testIntakeArm.and(testPlus).whileTrue(m_intakeArm.testCommand(0.4));
-      testIntakeArm.and(testMinus).whileTrue(m_intakeArm.testCommand(-0.4));    
+      
     }
 
     if (INTAKE_ENABLE) {
-      JoystickButton testConveyor = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
-      testConveyor.and(testPlus)    
-          .onTrue(new InstantCommand(() -> m_intake.up()))
-          .onFalse(new InstantCommand(() -> m_intake.setIntakeSpeed(0.0)));
-      testConveyor.and(testMinus) 
-          .onTrue(new InstantCommand(() -> m_intake.down()))
-          .onFalse(new InstantCommand(() -> m_intake.setIntakeSpeed(0.0)));
+     
     }
 
   
 
     if (CLIMBERS_ENABLE) {
-      new Trigger(() -> m_buttonBoard
-          .getPOV() == Constants.OIConstants.ButtonBox.StickLeft)
-          .whileTrue(new InstantCommand(() -> m_climbers.test(0.10)));
-      new Trigger(() -> m_buttonBoard
-          .getPOV() == Constants.OIConstants.ButtonBox.StickRight)
-          .whileTrue(new InstantCommand(() -> m_climbers.test(-0.10)));
-      new Trigger(() -> m_buttonBoard
-          .getPOV() == -1)
-          .whileTrue(new InstantCommand(() -> m_climbers.test(0.0)));
+      
     }
 
-    if (GRIPPER_ENABLE) {
-      JoystickButton testExtension = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Down);
-      testExtension.and(testPlus)
-          .whileTrue(m_gripper.testExtensionCommand(1.0));
-      testExtension.and(testMinus)
-          .whileTrue(m_gripper.testExtensionCommand(-1.0));
-    }
+   
   }
 
   /**
@@ -285,13 +228,13 @@ public class RobotContainer {
    */
   public void initRed() {
     m_robotDrive.setGyroAngleDeg(0.0);
-    m_autonomousChooser = AutonMenus.getRed();
+   /* m_autonomousChooser = AutonMenus.getRed();
     SmartDashboard.putData("Auton Command", m_autonomousChooser);
     m_autonomousChooser.onChange(this::setAutonCommand);
 
     m_startPosChooser = StartPositions.getRed();
     SmartDashboard.putData("Start Position", m_startPosChooser);
-    m_startPosChooser.onChange(this::setStartPosition);
+    m_startPosChooser.onChange(this::setStartPosition); */
   }
 
   /*
@@ -299,13 +242,13 @@ public class RobotContainer {
    */
   public void initBlue() {
     m_robotDrive.setGyroAngleDeg(180.0);
-    m_autonomousChooser = AutonMenus.getBlue();
+    /*m_autonomousChooser = AutonMenus.getBlue();
     SmartDashboard.putData("Auton Command", m_autonomousChooser);
     m_autonomousChooser.onChange((this::setAutonCommand));
 
     m_startPosChooser = StartPositions.getBlue();
     SmartDashboard.putData("Start Position", m_startPosChooser);
-    m_startPosChooser.onChange(this::setStartPosition);
+    m_startPosChooser.onChange(this::setStartPosition); */
   }
 
   private void setStartPosition(Pose2d pose) {
