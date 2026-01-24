@@ -212,11 +212,13 @@ if (SHOOTER_ENABLE){
    //we are able to spin up the shooter in preparation for a scoring period but the feeder is disabled
   if (Robot.scoring || ignorePeriods){
     feederEnabled = true;
+    m_shooter.toggleFeeder(true);
   } else {
     feederEnabled = false;
+    m_shooter.toggleFeeder(false);
   }
    
-
+  
 
   };
 

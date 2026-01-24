@@ -83,7 +83,10 @@ public class Shooter extends SubsystemBase{
     }
 
     public void setFeederSpeed(double speed){
-        feederMotor.set(speed);
+        if (feederEnabled){
+        feederMotor.set(speed);}
+        else {feederMotor.set(0.0);
+}
     }
 
   
