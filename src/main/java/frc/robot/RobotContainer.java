@@ -48,9 +48,9 @@ public class RobotContainer {
   private static boolean INTAKE_ENABLE = true;
   private static boolean INTAKE_ARM_ENABLE = true;
   private static boolean CLIMBERS_ENABLE = true;
-  private boolean SHOOTER_ENABLE = true;
-  public boolean feederEnabled = true;
-  public boolean ignorePeriods = false;
+  private static boolean SHOOTER_ENABLE = true;
+  public static boolean feederEnabled = true;
+  public static boolean ignorePeriods = false;
 
   private static RobotContainer instance;
 
@@ -91,7 +91,9 @@ public class RobotContainer {
     SmartDashboard.putData("Yaw PID", m_robotDrive.headingPidController);
     m_nav = new Navigation(m_robotDrive);
     SmartDashboard.putData("Navigation", m_nav);
-  
+    SmartDashboard.putString("TeleOp Period", Robot.currentTeleOpPeriod);
+    SmartDashboard.putNumber("Time Left In Period:", Robot.timeLeftInPeriod);
+    SmartDashboard.putBoolean("Score", Robot.scoring); //tower activated, robot can score
     if (INTAKE_ENABLE) {
      
     }

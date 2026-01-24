@@ -35,8 +35,11 @@ public class Robot extends TimedRobot {
   public static Boolean scoring;
   public static int shift = 0;
   public static double periodStart;
-  public static double periodEnd;
+  public static String currentTeleOpPeriod = "Transition"; //default to first period
+
+  public static double timeLeftInPeriod;
  
+  public static String[] teleOpPeriods = {"Transition", "Shift 1", "Shift 2", "Shift 3", "Shift 4", "Endgame"};
   public static double[] PeriodStartTime = {140.0, 130.0, 105.0, 80.0, 55.0, 30.0}; //Transition, Shift 1 ... 4, Endgame
  
 
@@ -203,6 +206,10 @@ public class Robot extends TimedRobot {
         scoring = true; //anyone can score in endgame 
       }
     }
+
+      currentTeleOpPeriod = teleOpPeriods[shift];
+
+      timeLeftInPeriod = (DriverStation.getMatchTime() - PeriodStartTime[shift + 1]);
     }
   } 
   
