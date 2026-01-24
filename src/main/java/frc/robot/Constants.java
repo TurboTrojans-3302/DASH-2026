@@ -148,6 +148,7 @@ public final class Constants {
   }
 
   public static final class ShooterConstants {
+    public static final double feederSpeed = 0;
     public static double PIDTolerance = 0.0;
     public static double manualSpeedIncrement = 20; //rpm
   }

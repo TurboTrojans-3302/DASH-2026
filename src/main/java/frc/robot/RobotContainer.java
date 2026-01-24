@@ -201,6 +201,7 @@ if (SHOOTER_ENABLE){
     m_shooter.setRPM(0.0);
   }
 
+
  
   // toggle between using timer to limit feeder and ignoring timer (feeder is always active)
   JoystickButton toggleTimerUsage = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
@@ -218,6 +219,14 @@ if (SHOOTER_ENABLE){
     m_shooter.toggleFeeder(false);
   }
    
+  JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up); //into shooter
+  JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down); //out of shooter, only needed to remove a blockage in the feeder mechanism i think
+ 
+ 
+
+  feedShooter.whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(Constants.ShooterConstants.feederSpeed)));
+  feederReverse.whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeed)));
+  ((feedShooter.negate()).and(feederReverse.negate())).onTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(0.0)));
   
 
   };
