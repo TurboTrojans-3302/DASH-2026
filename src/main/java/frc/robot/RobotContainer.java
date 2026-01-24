@@ -24,6 +24,7 @@ import frc.robot.Constants.CanIds;
 import frc.robot.Constants.DigitalIO;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.OIConstants.ButtonBox;
 import frc.robot.commands.NavigateToTag;
 import frc.robot.commands.OrbitAroundReef;
@@ -33,6 +34,7 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.Navigation;
+import frc.robot.subsystems.Shooter;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -46,6 +48,9 @@ public class RobotContainer {
   private static boolean INTAKE_ENABLE = true;
   private static boolean INTAKE_ARM_ENABLE = true;
   private static boolean CLIMBERS_ENABLE = true;
+  private boolean SHOOTER_ENABLE = true;
+  public boolean feederEnabled = true;
+  public boolean ignorePeriods = false;
 
   private static RobotContainer instance;
 
@@ -55,6 +60,7 @@ public class RobotContainer {
   public Intake m_intake;
   public IntakeArm m_intakeArm;
   public Climbers m_climbers;
+  public Shooter m_shooter;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -96,6 +102,7 @@ public class RobotContainer {
     if (CLIMBERS_ENABLE) {
      
     }
+
 
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
@@ -172,15 +179,51 @@ public class RobotContainer {
     //         SmartDashboard.putString("ReefController", m_reefController.label());
     //       }
     //  ));
+if (SHOOTER_ENABLE){
+  JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);
+  JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);        
+  //Set PID or Manual
+  if (m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
+    m_shooter.setPID(true);
+  } else if (m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
+    m_shooter.setPID(false);
+    increaseShooterSpeed.whileTrue(new InstantCommand(() -> {
+    m_shooter.setRPM(m_shooter.getRPM() + ShooterConstants.manualSpeedIncrement);
 
-      
+    }));
+    decreaseShooterSpeed.whileTrue(new InstantCommand(() -> {
+    m_shooter.setRPM(m_shooter.getRPM() - ShooterConstants.manualSpeedIncrement);
 
+    }));
+  } else {
+    m_shooter.setRPM(0.0);
+  }
+
+ 
+  // toggle between using timer to limit feeder and ignoring timer (feeder is always active)
+  JoystickButton toggleTimerUsage = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
+
+  toggleTimerUsage.onTrue(new InstantCommand(() -> ignorePeriods = !ignorePeriods));
+  
+  
+  
+   //we are able to spin up the shooter in preparation for a scoring period but the feeder is disabled
+  if (Robot.scoring || ignorePeriods){
+    feederEnabled = true;
+  } else {
+    feederEnabled = false;
+  }
    
+
+
   };
 
+
+  }
   public void configureTestControls() {
     JoystickButton testPlus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up);
     JoystickButton testMinus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down);
+
 
 
     if (INTAKE_ARM_ENABLE) {
@@ -196,6 +239,8 @@ public class RobotContainer {
     if (CLIMBERS_ENABLE) {
       
     }
+
+    
 
    
   }

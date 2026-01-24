@@ -4,18 +4,16 @@
 
 package frc.robot;
 
-import java.util.List;
+
 import java.util.Map;
 import java.util.Optional;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -32,10 +30,24 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
   private static Robot instance;
   public static DriverStation.Alliance alliance;
+  public static String firstAllianceDisabled;
+  public static Boolean timerActivated = true;
+  public static Boolean scoring;
+  public static int shift = 0;
+  public static double periodStart;
+  public static double periodEnd;
+ 
+  public static double[] PeriodStartTime = {140.0, 130.0, 105.0, 80.0, 55.0, 30.0}; //Transition, Shift 1 ... 4, Endgame
+ 
+
+  
+
+  
 
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+
 
   Robot(){}
 
@@ -72,6 +84,8 @@ public class Robot extends TimedRobot {
                                               Constants.LimelightConstants.Offset.pitch,
                                               Constants.LimelightConstants.Offset.yaw
                                             );
+
+    
   }
 
   /**
@@ -144,7 +158,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-
+    
     m_robotContainer.configureButtonBindings();
     m_robotContainer.setDefaultCommands();
     //m_robotContainer.m_intakeArm.stop();
@@ -157,21 +171,51 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+    
+    firstAllianceDisabled = DriverStation.getGameSpecificMessage();
+   
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    
 
-    if (30.0 > DriverStation.getMatchTime() && DriverStation.getMatchTime() > 29.0) {
+    //teleop is 140 seconds
+  if (timerActivated){
+    if (firstAllianceDisabled == "R" && alliance == Alliance.Red){
+      scoring = false;
+      }
+    else if (firstAllianceDisabled == "B" && alliance == Alliance.Blue){
+      scoring = false;
+    }
+    else{
+      scoring = true;
+    }
+
+
+
+    if (DriverStation.getMatchTime() < PeriodStartTime[shift]){
+      shift++;
+      if (shift >= 2){
+        scoring = !scoring;
+      } else if (DriverStation.getMatchTime() < 30){
+        scoring = true; //anyone can score in endgame 
+      }
+    }
+    }
+  } 
+  
+
+  /*   if (30.0 > DriverStation.getMatchTime() && DriverStation.getMatchTime() > 29.0) {
       m_robotContainer.m_driverController.setRumble(RumbleType.kBothRumble, 1.0);
       m_robotContainer.m_copilotController.setRumble(RumbleType.kBothRumble, 1.0);
     } else {
       m_robotContainer.m_driverController.setRumble(RumbleType.kBothRumble, 0.0);
       m_robotContainer.m_copilotController.setRumble(RumbleType.kBothRumble, 0.0);
     }
-
-  }
+*/
+  
 
   @Override
   public void testInit() {
