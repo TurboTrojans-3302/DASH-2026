@@ -4,7 +4,7 @@
 
 package frc.robot.subsystems;
 
-import com.kauailabs.navx.frc.AHRS; // TODO find the library for the gyro, it is the only cause of errors in this file
+import com.studica.frc.Navx; // TODO find the library for the gyro, it is the only cause of errors in this file
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -47,7 +48,7 @@ public class Drivetrain extends DriveSubsystemBase {
       DriveConstants.kBackRightChassisAngularOffset);
 
   // The gyro sensor
-  private final AHRS m_gyro = new AHRS();
+  private final Navx m_gyro = new Navx(99);
   private double m_gyroOffsetDeg = 0.0;
 
   public PIDController headingPidController;
@@ -62,7 +63,7 @@ public class Drivetrain extends DriveSubsystemBase {
     headingPidController.setTolerance(2.0);
 
     SmartDashboard.putData("headingPIDcontroller", headingPidController);
-    SmartDashboard.putData("IMU", m_gyro);
+    //SmartDashboard.putData("IMU", m_gyro.toString()); // TODO fix this line if the gyro library is found
 
     // todo add the swerve drive to the dashboard
     SmartDashboard.putData("Swerve Drive", new Sendable() {
@@ -174,7 +175,7 @@ public class Drivetrain extends DriveSubsystemBase {
   }
 
   public void setGyroAngleDeg(double angle) {
-    m_gyroOffsetDeg = angle + m_gyro.getAngle();
+    m_gyroOffsetDeg = angle + m_gyro.getYaw().magnitude(); // confirm magnitude gives degrees
   }
 
   public double getGyroAngleRadians() {
@@ -182,7 +183,7 @@ public class Drivetrain extends DriveSubsystemBase {
   }
 
   public double getGyroAngleDegrees () {
-    return -m_gyro.getAngle() + m_gyroOffsetDeg; // fix offset name
+    return -m_gyro.getYaw().magnitude() + m_gyroOffsetDeg; // fix offset name
   }
 
   /**
@@ -191,7 +192,7 @@ public class Drivetrain extends DriveSubsystemBase {
    * @return The turn rate of the robot, in degrees per second
    */
   public double getTurnRate() {
-    return m_gyro.getRate();
+    return m_gyro.getAngularVel()[0].magnitude(); // confirm z is the correct axis
   }
 
   public ChassisSpeeds getChassisSpeeds() {
