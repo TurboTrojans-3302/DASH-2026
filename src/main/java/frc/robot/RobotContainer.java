@@ -83,7 +83,7 @@ public class RobotContainer {
     CameraServer.startAutomaticCapture();
     
     // The robot's subsystems
-    m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
+    m_robotDrive = new DriveTrain(Configs.practiceDriveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
     // SmartDashboard.putData("Yaw PID", m_robotDrive.headingPidController);
     SmartDashboard.putString("TeleOp Period", Robot.currentTeleOpPeriod);
