@@ -144,7 +144,7 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     setLED(LEDmode.Auton);
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    System.out.println("autonomousInit() m_pos == " + m_robotContainer.m_nav.getPose());
+    // System.out.println("autonomousInit() m_pos == " + m_robotContainer.m_nav.getPose());
     System.out.println("Starting command: " + m_autonomousCommand.getName());
 
 
@@ -229,7 +229,7 @@ public class Robot extends TimedRobot {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
 
-    m_robotContainer.m_robotDrive.stop();
+    m_robotContainer.m_robotDrive.lock();
   
     //m_robotContainer.m_intake.stop();
    // m_robotContainer.m_intakeArm.stop();

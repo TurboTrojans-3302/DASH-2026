@@ -12,22 +12,20 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Robot;
-import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.Navigation;
-import frc.robot.subsystems.DriveConstants;
+import frc.robot.subsystems.DriveTrain;
+
 
 
 public class TeleopDrive extends Command {
-  private DriveSubsystem m_robotDrive;
+  private DriveTrain m_robotDrive;
   private XboxController m_driverController;
   private boolean m_fieldOrientedEnable = true;
   private boolean m_slowDriveFlag = false;
-  private double orbitSpeed = DriveConstants.ORBIT_SPEED;
-  DriveSubsystem drive;
-  Navigation nav;
+  DriveTrain drive;
+
 
   /** Creates a new TeleopDrive. */
-  public TeleopDrive(DriveSubsystem robotDrive, XboxController driverController) {
+  public TeleopDrive(DriveTrain robotDrive, XboxController driverController) {
     m_driverController = driverController;
     m_robotDrive = robotDrive;
     addRequirements(m_robotDrive);
@@ -36,7 +34,7 @@ public class TeleopDrive extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_robotDrive.stop();
+    m_robotDrive.lock();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -58,37 +56,38 @@ public class TeleopDrive extends Command {
 
     if(forward == 0.0 && leftward == 0.0 && rotate == 0.0){
 
-      if(m_driverController.getXButton()){
-        //new OrbitAroundReef(drive, nav, -orbitSpeed * speedScale);
-      }
-      else if(m_driverController.getBButton()){
-      //  new OrbitAroundReef(drive, nav, orbitSpeed * speedScale);
-      }
-      else{
-        m_robotDrive.stop();
-      }
-
-      final Translation2d orbitCenter = new Translation2d(1.0, 0.0);
-      if(m_driverController.getPOV() == 90 && m_driverController.getXButton() == false && m_driverController.getBButton() == false){
-        m_robotDrive.orbitRobotFrame(orbitSpeed * -speedScale, orbitCenter);
-      }
-      else if(m_driverController.getPOV() == 270){
-        m_robotDrive.orbitRobotFrame(orbitSpeed * speedScale, orbitCenter);
-      }else{
-        m_robotDrive.stop();
+      // if(m_driverController.getXButton()){
+      //   //new OrbitAroundReef(drive, nav, -orbitSpeed * speedScale);
+      // }
+      // else if(m_driverController.getBButton()){
+      // //  new OrbitAroundReef(drive, nav, orbitSpeed * speedScale);
+      // }
+        m_robotDrive.lock();
       }
 
-    } else {
-
-      if(m_fieldOrientedEnable) {
-        double reverse = (Robot.alliance == Alliance.Red) ? -1.0 : 1.0;
-        m_robotDrive.driveFieldOriented(reverse * forward, reverse * leftward, rotate);
-      }else{
-        m_robotDrive.driveRobotOriented(forward, leftward, rotate);
       }
 
-    }
-  }
+      // final Translation2d orbitCenter = new Translation2d(1.0, 0.0);
+      // if(m_driverController.getPOV() == 90 && m_driverController.getXButton() == false && m_driverController.getBButton() == false){
+      //   m_robotDrive.orbitRobotFrame(orbitSpeed * -speedScale, orbitCenter);
+      // }
+      // else if(m_driverController.getPOV() == 270){
+      //   m_robotDrive.orbitRobotFrame(orbitSpeed * speedScale, orbitCenter);
+      // }else{
+      //   m_robotDrive.stop();
+      // }
+
+  //   } else {
+
+  //     if(m_fieldOrientedEnable) {
+  //       double reverse = (Robot.alliance == Alliance.Red) ? -1.0 : 1.0;
+  //       m_robotDrive.driveFieldOriented(reverse * forward, reverse * leftward, rotate);
+  //     }else{
+  //       m_robotDrive.driveRobotOriented(forward, leftward, rotate);
+  //     }
+
+  //   }
+  // }
 
   // applies deadband and scaling to raw stick value
   private double stick2speed(double stickValue) {
@@ -110,6 +109,5 @@ public class TeleopDrive extends Command {
     super.initSendable(builder);
     builder.addBooleanProperty("FieldOrientedEnable", () -> m_fieldOrientedEnable, (x)->{m_fieldOrientedEnable = x;});
     builder.addBooleanProperty("SlowDriveFlag", () -> m_slowDriveFlag, (x)->{m_slowDriveFlag = x;});
-    builder.addDoubleProperty("Orbit Speed", ()-> orbitSpeed, (x)-> orbitSpeed = x);
   }
 }

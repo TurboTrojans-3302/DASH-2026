@@ -26,14 +26,12 @@ import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.OIConstants.ButtonBox;
-import frc.robot.commands.NavigateToTag;
-import frc.robot.commands.OrbitAroundReef;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
-import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.Configs;
+import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.IntakeArm;
-import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 
 /*
@@ -55,8 +53,7 @@ public class RobotContainer {
   private static RobotContainer instance;
 
   // The robot's subsystems
-  public DriveSubsystem m_robotDrive;
-  public Navigation m_nav;
+  public DriveTrain m_robotDrive;
   public Intake m_intake;
   public IntakeArm m_intakeArm;
   public Climbers m_climbers;
@@ -86,11 +83,9 @@ public class RobotContainer {
     CameraServer.startAutomaticCapture();
     
     // The robot's subsystems
-    m_robotDrive = new DriveSubsystem();
+    m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
-    SmartDashboard.putData("Yaw PID", m_robotDrive.headingPidController);
-    m_nav = new Navigation(m_robotDrive);
-    SmartDashboard.putData("Navigation", m_nav);
+    // SmartDashboard.putData("Yaw PID", m_robotDrive.headingPidController);
     SmartDashboard.putString("TeleOp Period", Robot.currentTeleOpPeriod);
     SmartDashboard.putNumber("Time Left In Period:", Robot.timeLeftInPeriod);
     SmartDashboard.putBoolean("Score", Robot.scoring); //tower activated, robot can score
@@ -130,27 +125,13 @@ public class RobotContainer {
         .onTrue(new RunCommand(() -> {
           targetTagId = (int) LimelightHelpers.getFiducialID("limelight");
         }));
-    new Trigger(() -> m_driverController.getPOV() == 180)
-        .whileTrue(Commands.defer(() -> new NavigateToTag(m_robotDrive, m_nav, () -> targetTagId),
-            Set.of(m_robotDrive, m_nav))); 
 
-    new JoystickButton(m_driverController, XboxController.Button.kB.value)
-        .whileTrue(new OrbitAroundReef(m_robotDrive, m_nav, 1.0));
-    new JoystickButton(m_driverController, XboxController.Button.kX.value)
-        .whileTrue(new OrbitAroundReef(m_robotDrive, m_nav, -1.0));
     new JoystickButton(m_driverController, XboxController.Button.kY.value)
         .onTrue(new InstantCommand(() -> {
           double stream = LimelightHelpers.getLimelightNTDouble("limelight", "stream");
           LimelightHelpers.setLimelightNTDouble("limelight", "stream",
               (stream == 0.0 ? 2.0 : 0.0));
         }));
-
-    new JoystickButton(m_driverController, XboxController.Button.kA.value)
-      .onTrue(new InstantCommand(()->{
-        double newheading = m_robotDrive.getGyroAngleDegrees() + 180.0;
-        if(newheading > 180.0){ newheading -= 180.0;}
-        m_robotDrive.setGyroAngleDeg((newheading) );
-      }));    
 
     if (INTAKE_ENABLE) {
       
@@ -285,7 +266,7 @@ if (SHOOTER_ENABLE){
    * called once when is set to Red by the DriverStation
    */
   public void initRed() {
-    m_robotDrive.setGyroAngleDeg(0.0);
+    m_robotDrive.zeroGyroWithAlliance();
    /* m_autonomousChooser = AutonMenus.getRed();
     SmartDashboard.putData("Auton Command", m_autonomousChooser);
     m_autonomousChooser.onChange(this::setAutonCommand);
@@ -299,7 +280,7 @@ if (SHOOTER_ENABLE){
    * called once when is set to Blue by the DriverStation
    */
   public void initBlue() {
-    m_robotDrive.setGyroAngleDeg(180.0);
+    m_robotDrive.zeroGyroWithAlliance();
     /*m_autonomousChooser = AutonMenus.getBlue();
     SmartDashboard.putData("Auton Command", m_autonomousChooser);
     m_autonomousChooser.onChange((this::setAutonCommand));
@@ -309,12 +290,12 @@ if (SHOOTER_ENABLE){
     m_startPosChooser.onChange(this::setStartPosition); */
   }
 
-  private void setStartPosition(Pose2d pose) {
-    if (DriverStation.isDisabled()) {
-      System.out.println("setStartPosition()" + pose.toString());
-      m_robotDrive.setGyroAngleDeg(pose.getRotation().getDegrees());
-      m_nav.resetOdometry(pose);
-    }
-  }
+  // private void setStartPosition(Pose2d pose) {
+  //   if (DriverStation.isDisabled()) {
+  //     System.out.println("setStartPosition()" + pose.toString());
+  //     m_robotDrive.setGyroAngleDeg(pose.getRotation().getDegrees());
+  //     m_nav.resetOdometry(pose);
+  //   }
+  // }
 
 }

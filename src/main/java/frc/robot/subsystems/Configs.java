@@ -1,10 +1,15 @@
 package frc.robot.subsystems;
 
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
+import java.io.File;
+
+import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 public final class Configs {
+        public static final String driveConfigFolder = "2026/Swerve";
+        public static final String practiceDriveConfigFolder = "2026/practiceBot";
     public static final class MAXSwerveModule {
         public static final SparkMaxConfig drivingConfig = new SparkMaxConfig();
         public static final SparkMaxConfig turningConfig = new SparkMaxConfig();
@@ -23,7 +28,7 @@ public final class Configs {
                     .positionConversionFactor(drivingFactor) // meters
                     .velocityConversionFactor(drivingFactor / 60.0); // meters per second
             drivingConfig.closedLoop
-                    .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                    .feedbackSensor(com.revrobotics.spark.FeedbackSensor.kPrimaryEncoder)
                     // These are example gains you may need to them for your own robot!
                     .pid(0.04, 0, 0)
                     .velocityFF(drivingVelocityFeedForward)
