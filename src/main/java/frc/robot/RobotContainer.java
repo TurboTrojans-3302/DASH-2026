@@ -89,16 +89,7 @@ public class RobotContainer {
     SmartDashboard.putString("TeleOp Period", Robot.currentTeleOpPeriod);
     SmartDashboard.putNumber("Time Left In Period:", Robot.timeLeftInPeriod);
     SmartDashboard.putBoolean("Score", Robot.scoring); //tower activated, robot can score
-    if (INTAKE_ENABLE) {
-     
-    }
-    if (INTAKE_ARM_ENABLE) {
-     
-    }
-  
-    if (CLIMBERS_ENABLE) {
-     
-    }
+    
 
 
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);

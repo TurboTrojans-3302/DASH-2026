@@ -19,7 +19,7 @@ import frc.robot.subsystems.DriveTrain;
 public class TeleopDrive extends Command {
   private DriveTrain m_robotDrive;
   private XboxController m_driverController;
-  private boolean m_fieldOrientedEnable = true;
+  private boolean m_fieldOrientedEnable = false; //TODO default this to true when it's working
   private boolean m_slowDriveFlag = false;
   DriveTrain drive;
 
@@ -54,40 +54,15 @@ public class TeleopDrive extends Command {
     double leftward = stick2speed(speedScale * m_driverController.getLeftX());
     double rotate = stick2speed(speedScale * m_driverController.getRightX());
 
-    if(forward == 0.0 && leftward == 0.0 && rotate == 0.0){
+  
+    if(m_fieldOrientedEnable) {
+      double reverse = (Robot.alliance == Alliance.Red) ? -1.0 : 1.0;
+      m_robotDrive.drive(new Translation2d(reverse * forward, reverse * leftward), rotate, true);
+    }else{
+      m_robotDrive.driveRobotOriented(forward, leftward, rotate);
+    }
 
-      // if(m_driverController.getXButton()){
-      //   //new OrbitAroundReef(drive, nav, -orbitSpeed * speedScale);
-      // }
-      // else if(m_driverController.getBButton()){
-      // //  new OrbitAroundReef(drive, nav, orbitSpeed * speedScale);
-      // }
-        m_robotDrive.lock();
-      }
-
-      }
-
-      // final Translation2d orbitCenter = new Translation2d(1.0, 0.0);
-      // if(m_driverController.getPOV() == 90 && m_driverController.getXButton() == false && m_driverController.getBButton() == false){
-      //   m_robotDrive.orbitRobotFrame(orbitSpeed * -speedScale, orbitCenter);
-      // }
-      // else if(m_driverController.getPOV() == 270){
-      //   m_robotDrive.orbitRobotFrame(orbitSpeed * speedScale, orbitCenter);
-      // }else{
-      //   m_robotDrive.stop();
-      // }
-
-  //   } else {
-
-  //     if(m_fieldOrientedEnable) {
-  //       double reverse = (Robot.alliance == Alliance.Red) ? -1.0 : 1.0;
-  //       m_robotDrive.driveFieldOriented(reverse * forward, reverse * leftward, rotate);
-  //     }else{
-  //       m_robotDrive.driveRobotOriented(forward, leftward, rotate);
-  //     }
-
-  //   }
-  // }
+  }
 
   // applies deadband and scaling to raw stick value
   private double stick2speed(double stickValue) {

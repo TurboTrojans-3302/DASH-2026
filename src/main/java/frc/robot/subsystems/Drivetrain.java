@@ -267,6 +267,11 @@ public class DriveTrain extends SubsystemBase
     swerveDrive.drive(velocity);
   }
 
+
+  public void driveRobotOriented(double forward, double leftward, double rotate){
+      swerveDrive.drive(new Translation2d(forward, leftward), rotate, false, false);
+  }
+
   /**
    * Get the swerve drive kinematics object.
    *
