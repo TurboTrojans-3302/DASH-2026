@@ -32,7 +32,7 @@ public class Robot extends TimedRobot {
   public static DriverStation.Alliance alliance;
   public static String firstAllianceDisabled;
   public static Boolean timerActivated = true;
-  public static Boolean scoring;
+  public static Boolean scoring = true; //just a default so nothing breaks, will check if this works later
   public static int shift = 0;
   public static double periodStart;
   public static String currentTeleOpPeriod = "Transition"; //default to first period
