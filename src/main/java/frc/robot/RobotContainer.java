@@ -78,6 +78,11 @@ public class RobotContainer {
     SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
     SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
 
+    if(SHOOTER_ENABLE){
+      m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId);
+      SmartDashboard.putData("ShooterSubsystem", m_shooter);
+    }
+
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
 

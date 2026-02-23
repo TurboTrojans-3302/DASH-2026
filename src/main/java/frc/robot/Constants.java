@@ -24,25 +24,14 @@ public final class Constants {
 
   public final class CanIds {
     public static final int DX_SENSOR_CAN_ID = 0;
-    // ids 1-8 is drivetrain, 9 is shooter, 10 is feeder
-    // Ludwig DriveTrain
-    // public static final int kFrontRightTurningCanId = 1;
-    // public static final int kFrontRightDrivingCanId = 2;
-    // public static final int kFrontLeftTurningCanId = 3;
-    // public static final int kFrontLeftDrivingCanId = 4;
-    // public static final int kRearLeftTurningCanId = 5;
-    // public static final int kRearLeftDrivingCanId = 6;
-    // public static final int kRearRightTurningCanId = 7;
-    // public static final int kRearRightDrivingCanId = 8;
-    // 9
-    // 10
-    // 11
-    // 12
-    
-    // 14    
-    
-    
-
+    // ID 1 through 8 are for swerve drive, defined in swerve config files
+    public static final int kShooterMotorCanId     =  9;
+    public static final int kFeederMotorCanId      = 10;
+    public static final int kHopperLeftMotorCanId  = 11;
+    public static final int kHopperRightMotorCanId = 12;
+    public static final int kHarvesterMotorCanId   = 13;
+    public static final int kClimbMotor1           = 14;
+    public static final int kClimbMotor2           = 15;
   }
 
   public static final class DigitalIO {
