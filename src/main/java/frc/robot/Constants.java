@@ -38,6 +38,8 @@ public final class Constants {
     // 10
     // 11
     // 12
+    public static final int hopperLeftMotorCanID = 0;
+    public static final int hopperRightMotorCanID = 0;
     
     // 14    
     
@@ -178,6 +180,14 @@ public final class Constants {
 
   public static final class ClimberConstants {
    
+  }
+
+  public static final class HopperConstants {
+    public static final String expandSpeedKey = "hopperExpandSpeed";
+    public static final double expandSpeedDefault = 0.5;
+    public static final String maxPositionKey = "hopperMaxPosition";
+    public static final double maxPositionDefault = 1000.0; //encoder units
+    public static final double minPositionDefault = 0;
   }
 
  
