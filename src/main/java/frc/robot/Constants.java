@@ -24,16 +24,16 @@ public final class Constants {
 
   public final class CanIds {
     public static final int DX_SENSOR_CAN_ID = 0;
-
+    // ids 1-8 is drivetrain, 9 is shooter, 10 is feeder
     // Ludwig DriveTrain
-    public static final int kFrontRightTurningCanId = 1;
-    public static final int kFrontRightDrivingCanId = 2;
-    public static final int kFrontLeftTurningCanId = 3;
-    public static final int kFrontLeftDrivingCanId = 4;
-    public static final int kRearLeftTurningCanId = 5;
-    public static final int kRearLeftDrivingCanId = 6;
-    public static final int kRearRightTurningCanId = 7;
-    public static final int kRearRightDrivingCanId = 8;
+    // public static final int kFrontRightTurningCanId = 1;
+    // public static final int kFrontRightDrivingCanId = 2;
+    // public static final int kFrontLeftTurningCanId = 3;
+    // public static final int kFrontLeftDrivingCanId = 4;
+    // public static final int kRearLeftTurningCanId = 5;
+    // public static final int kRearLeftDrivingCanId = 6;
+    // public static final int kRearRightTurningCanId = 7;
+    // public static final int kRearRightDrivingCanId = 8;
     // 9
     // 10
     // 11

@@ -68,11 +68,11 @@ public class RobotContainer {
    */
   public RobotContainer() {
     instance = this;
-
-    CameraServer.startAutomaticCapture();
-
+    
+    //CameraServer.startAutomaticCapture();
+    
     // The robot's subsystems
-    m_robotDrive = new DriveTrain(Configs.practiceDriveConfigFolder);
+    m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
     SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
     SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());

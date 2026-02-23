@@ -13,8 +13,11 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
@@ -26,6 +29,7 @@ import java.util.function.Supplier;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
+import swervelib.SwerveModule;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
@@ -72,14 +76,38 @@ public class DriveTrain extends SubsystemBase {
         true,
         0.1); // Correct for skew that gets worse as angular velocity increases. Start with a
               // coefficient of 0.1.
-    swerveDrive.setModuleEncoderAutoSynchronize(false,
-        1); // Enable if you want to resynchronize your absolute encoders and motor encoders
-            // periodically when they are not moving.
-    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used
-    // over the internal encoder and push the offsets onto it. Throws warning if not
-    // possible
-  }
+    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders and motor encoders periodically when they are not moving.
+    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used over the internal encoder and push the offsets onto it. Throws warning if not possible
 
+    // If we successfully created the swerveDrive, initialize odometry to the starting pose
+    if (swerveDrive != null) {
+      swerveDrive.resetOdometry(startingPose);
+    }
+
+    // Publish a simple Sendable to SmartDashboard so we can inspect module angles/velocities and robot yaw
+    SmartDashboard.putData("Swerve Drive", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("SwerveDrive");
+
+        SwerveModule[] modules = swerveDrive.getModules();
+
+        builder.addDoubleProperty("Front Left Angle", () -> modules[0].getPosition().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity", () -> modules[0].getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Front Right Angle", () -> modules[1].getPosition().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> modules[1].getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Left Angle", () -> modules[2].getPosition().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity", () -> modules[2].getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Right Angle", () -> modules[3].getPosition().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity", () -> modules[3].getState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Robot Angle", () -> swerveDrive.getYaw().getRadians(), null);
+      }
+    });
+  }
 
   @Override
   public void periodic() {
