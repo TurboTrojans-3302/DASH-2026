@@ -165,7 +165,8 @@ public final class Constants {
 
     public static final double feederSpeedDefault = 0;
     public static final String feederSpeedKey = "feederSpeed";
-    public static double manualSpeedIncrement = 20; //rpm
+    public static double manualRPMincrement = 50; //rpm
+    public static double manualPCTincrement = 0.01; //percent output
 
   }
 

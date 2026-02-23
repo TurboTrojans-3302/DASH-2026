@@ -6,14 +6,16 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -27,6 +29,7 @@ public class Shooter extends SubsystemBase {
   public double shooterSpeed = 0.0;
   public double feederSpeed = 0.0;
   public boolean PIDEnabled = true;
+  public boolean feederEnabled = true;
 
   public Shooter(int shooterMotorID, int feederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
@@ -63,11 +66,11 @@ public class Shooter extends SubsystemBase {
     return encoder.getVelocity();
   }
 
-  public void setShooterSpeed(double speed) {
-    shooterMotor.set(speed);
+  public void setMotorPctOutput(double speed) {
+    shooterMotor.set(MathUtil.clamp(speed, 0.0, 1.0)); 
   } 
 
-  public double getShooterSpeed() {
+  public double getMotorPctOutput() {
     return shooterMotor.get();
   }
 
@@ -83,6 +86,12 @@ public class Shooter extends SubsystemBase {
     PIDEnabled = enable;
   }
 
+  public void enableFeeder(Boolean enable) {
+    if(feederEnabled && !enable) {
+      setFeederSpeed(0);
+    }
+  }
+  
   public void setFeederSpeed(double speed) {
       feederMotor.set(speed);
   }
@@ -117,6 +126,26 @@ public class Shooter extends SubsystemBase {
     Preferences.setDouble(Constants.ShooterConstants.kDkey, PID.getD());
     Preferences.setDouble(Constants.ShooterConstants.kVkey, feedforward.getKv());
     Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, PID.getErrorTolerance());
+  }
+
+  public Command incrementSpeedCommand() {
+    return new RunCommand(() -> {
+      if(PIDEnabled){
+          setRPMsetpoint(getRPM() + Constants.ShooterConstants.manualRPMincrement);
+      } else {
+          setMotorPctOutput(getMotorPctOutput() + Constants.ShooterConstants.manualPCTincrement);
+      }
+    }, this);
+  }
+
+  public Command decrementSpeedCommand() {
+    return new RunCommand(() -> {
+      if(PIDEnabled){
+          setRPMsetpoint(getRPM() - Constants.ShooterConstants.manualRPMincrement);
+      } else {
+          setMotorPctOutput(getMotorPctOutput() - Constants.ShooterConstants.manualPCTincrement);
+      }
+    }, this);
   }
 
 
