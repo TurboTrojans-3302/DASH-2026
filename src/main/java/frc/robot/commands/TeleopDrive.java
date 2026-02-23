@@ -21,7 +21,6 @@ public class TeleopDrive extends Command {
   private XboxController m_driverController;
   private boolean m_fieldOrientedEnable = false; //TODO default this to true when it's working
   private boolean m_slowDriveFlag = false;
-  DriveTrain drive;
 
 
   /** Creates a new TeleopDrive. */

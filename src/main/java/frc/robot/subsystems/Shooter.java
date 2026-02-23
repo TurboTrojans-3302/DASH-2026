@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.Timer;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
@@ -20,16 +21,15 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Shooter extends SubsystemBase {
-  public SparkMax shooterMotor;
-  public SparkMax feederMotor;
-  public RelativeEncoder encoder;
-  public PIDController PID;
-  public SimpleMotorFeedforward feedforward;
-  public double mShooterSetpoint = 0.0;
-  public double shooterSpeed = 0.0;
-  public double feederSpeed = 0.0;
-  public boolean PIDEnabled = true;
-  public boolean feederEnabled = true;
+  private SparkMax shooterMotor;
+  private SparkMax feederMotor;
+  private RelativeEncoder encoder;
+  private PIDController PID;
+  private SimpleMotorFeedforward feedforward;
+  private boolean PIDEnabled = true;
+  private Timer timeAtSpeed = new Timer();
+
+  private final double spinUpTime = 1.0; // seconds that the shooter must be at the target speed before we consider it "ready" to shoot, can be tuned based on how long it takes for the shooter to stabilize at the target speed after a change
 
   public Shooter(int shooterMotorID, int feederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
@@ -58,8 +58,8 @@ public class Shooter extends SubsystemBase {
     feederMotor.set(0);
   }
 
-  public void setRPMsetpoint(double speed) {
-    PID.setSetpoint(MathUtil.clamp(speed, 0.0, Constants.ShooterConstants.maxRPM));
+  public void setRPMsetpoint(double rpm) {
+    PID.setSetpoint(MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM));
   }
 
   public double getRPM() {
@@ -68,14 +68,19 @@ public class Shooter extends SubsystemBase {
 
   public void setMotorPctOutput(double speed) {
     shooterMotor.set(MathUtil.clamp(speed, 0.0, 1.0)); 
+    timeAtSpeed.restart();
   } 
 
   public double getMotorPctOutput() {
     return shooterMotor.get();
   }
 
-  public Boolean atSetpoint() {
-    return PID.atSetpoint();
+  public Boolean ready() {
+    if(PIDEnabled){
+      return PID.atSetpoint();
+    } else {
+      return timeAtSpeed.hasElapsed(spinUpTime); 
+    }
   }
 
   public void enablePID(Boolean enable) {
@@ -86,10 +91,8 @@ public class Shooter extends SubsystemBase {
     PIDEnabled = enable;
   }
 
-  public void enableFeeder(Boolean enable) {
-    if(feederEnabled && !enable) {
-      setFeederSpeed(0);
-    }
+  public boolean isPIDEnabled() {
+    return PIDEnabled;
   }
   
   public void setFeederSpeed(double speed) {
@@ -101,7 +104,7 @@ public class Shooter extends SubsystemBase {
     double currentVelocity = encoder.getVelocity(); // rpm
     if (PIDEnabled) {
       double output = PID.calculate(currentVelocity) + feedforward.calculate(PID.getSetpoint());
-      shooterMotor.set(output);
+      setMotorPctOutput(output);
     }
   }
 
@@ -165,7 +168,7 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> PID.getSetpoint(),
         (x) -> PID.setSetpoint(x));
-    builder.addBooleanProperty("At Setpoint?", () -> atSetpoint(), null);
+    builder.addBooleanProperty("Ready?", () -> ready(), null);
     builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, null);
 
     builder.addDoubleProperty("Feeder Speed", () -> feederMotor.get(),

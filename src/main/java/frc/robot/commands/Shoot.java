@@ -4,29 +4,44 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Shooter;
+import frc.robot.Constants;
 
-// NOTE:  Consider using this command inline, rather than writing a subclass.  For more
-// information, see:
-// https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class Shoot extends SequentialCommandGroup {
-  /** Creates a new Shoot. */
+public class Shoot extends Command {
   Shooter m_shooter;
-  double shooterSpeed;
-  double feederSpeed;
-  public Shoot(Shooter shooter, double shooterSpeed, double feederSpeed) {
-    // Add your commands in the addCommands() call, e.g.
-    // addCommands(new FooCommand(), new BarCommand());
+  public Shoot(Shooter shooter) {
     m_shooter = shooter;
-    shooterSpeed = this.shooterSpeed;
-    feederSpeed = this.feederSpeed;
+    addRequirements(m_shooter);
+  }
 
-    addCommands(new SpinUpShooter(m_shooter, shooterSpeed)
-                .andThen(new toggleFeeder(m_shooter, feederSpeed))
-                .andThen(new WaitCommand(4.0)) //TODO replace with command for detecting if there are still balls in the robot
-                .andThen(new SpinUpShooter(m_shooter, 0.0))
-                .andThen(new toggleFeeder(m_shooter, 0.0)));
+  @Override
+  public void initialize() {
+    if(m_shooter.getRPM() < 2000){
+      if(m_shooter.isPIDEnabled()){
+        m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM);
+      }else{
+        m_shooter.setMotorPctOutput(Constants.ShooterConstants.defaultShootPctOutput);
+      }
+    }
+  }
+
+  @Override
+  public void execute() {
+    if(m_shooter.ready()){
+      m_shooter.setFeederSpeed(Constants.ShooterConstants.feederSpeedDefault);
+    } else {
+      m_shooter.setFeederSpeed(0.0);
+    }
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    m_shooter.setFeederSpeed(0.0);
+  }
+
+  @Override
+  public boolean isFinished() {
+    return false;
   }
 }

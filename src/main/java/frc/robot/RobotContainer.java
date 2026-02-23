@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -16,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
+import frc.robot.commands.Shoot;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
@@ -57,8 +60,6 @@ public class RobotContainer {
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
   XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
   GenericHID m_buttonBoard = new GenericHID(OIConstants.kButtonBoardPort);
-  // ReefController m_reefController = new
-  // ReefController(OIConstants.kReefControllerPort);
 
   public int targetTagId = 0;
 
@@ -73,10 +74,9 @@ public class RobotContainer {
     // The robot's subsystems
     m_robotDrive = new DriveTrain(Configs.practiceDriveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
-    // SmartDashboard.putData("Yaw PID", m_robotDrive.headingPidController);
-    SmartDashboard.putString("TeleOp Period", Robot.currentTeleOpPeriod);
-    SmartDashboard.putNumber("Time Left In Period:", Robot.timeLeftInPeriod);
-    SmartDashboard.putBoolean("Score", Robot.scoring); // tower activated, robot can score
+    SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
+    SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
+    SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
 
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
@@ -87,6 +87,7 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
+    m_shooter.setDefaultCommand(new InstantCommand(()->{m_shooter.setFeederSpeed(0.0);}));
   }
 
   public static RobotContainer getInstance() {
@@ -98,17 +99,6 @@ public class RobotContainer {
     /**
      * Driver's Controller
      */
-    new Trigger(() -> m_driverController.getPOV() == 0)
-        .onTrue(new RunCommand(() -> {
-          targetTagId = (int) LimelightHelpers.getFiducialID("limelight");
-        }));
-
-    new JoystickButton(m_driverController, XboxController.Button.kY.value)
-        .onTrue(new InstantCommand(() -> {
-          double stream = LimelightHelpers.getLimelightNTDouble("limelight", "stream");
-          LimelightHelpers.setLimelightNTDouble("limelight", "stream",
-              (stream == 0.0 ? 2.0 : 0.0));
-        }));
 
     if (INTAKE_ENABLE) {
 
@@ -142,38 +132,17 @@ public class RobotContainer {
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
       JoystickButton toggleTimerUsage = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
+      Trigger scoringAllowed = new Trigger(() -> Robot.getInstance().scoring());
+      JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
+      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to disloge blockage
+      JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter without feeding
 
-      toggleTimerUsage.onTrue(new InstantCommand(() -> ignorePeriods = !ignorePeriods));
+      feedShooter.and(scoringAllowed.or(toggleTimerUsage)).whileTrue(new Shoot(m_shooter));
 
-      // we are able to spin up the shooter in preparation for a scoring period but
-      // the feeder is disabled
-      if (Robot.scoring || ignorePeriods) {
-        m_shooter.enableFeeder(true);
-      } else {
-        m_shooter.enableFeeder(false);
-      }
-
-      JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up); // into shooter
-      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down); // out of
-                                                                                                           // shooter,
-                                                                                                           // only
-                                                                                                           // needed to
-                                                                                                           // remove a
-                                                                                                           // blockage
-                                                                                                           // in the
-                                                                                                           // feeder
-                                                                                                           // mechanism
-                                                                                                           // i think
-
-      feedShooter
-          .whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(Constants.ShooterConstants.feederSpeedDefault)));
-      feederReverse.whileTrue(
-          new InstantCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeedDefault)));
-      ((feedShooter.negate()).and(feederReverse.negate()))
-          .onTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(0.0)));
+      feederReverse.whileTrue(new RunCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));  
+      spinUpShooter.onTrue(new InstantCommand(() -> m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM)) );
 
     }
-    ;
 
   }
 
