@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.Preferences;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -10,119 +12,137 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
-public class Shooter extends SubsystemBase{
-    public SparkMax shooterMotor;
-    public SparkMax feederMotor;
-    public RelativeEncoder encoder;
-    public PIDController PID;
-    public double kP = 0.0;
-    public double kI = 0.0;
-    public double kD = 0.0;
-    public double maxRPM = 2000.0;
-    public double mSetpoint = 0.0;
-    public double shooterSpeed = 0.0;
-    public double feederSpeed = 0.0;
-    public double tolerance = Constants.ShooterConstants.PIDTolerance;
-    public boolean PIDEnabled = true;
-    public boolean feederEnabled = true;
+public class Shooter extends SubsystemBase {
+  public SparkMax shooterMotor;
+  public SparkMax feederMotor;
+  public RelativeEncoder encoder;
+  public PIDController PID;
+  public SimpleMotorFeedforward feedforward;
+  public double mShooterSetpoint = 0.0;
+  public double shooterSpeed = 0.0;
+  public double feederSpeed = 0.0;
+  public boolean PIDEnabled = true;
 
-    public Shooter(int shooterMotorID,int feederMotorID){
+  public Shooter(int shooterMotorID, int feederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
     shooterMotor.configure(new SparkMaxConfig().inverted(false)
-                                                  .idleMode(IdleMode.kBrake),
-                              ResetMode.kResetSafeParameters,
-                              PersistMode.kNoPersistParameters
-                             );
-    feederMotor = new SparkMax(feederMotorID, MotorType.kBrushless);
-    feederMotor.configure(new SparkMaxConfig().inverted(false)
-                                                  .idleMode(IdleMode.kBrake),
-                              ResetMode.kResetSafeParameters,
-                              PersistMode.kNoPersistParameters
-                             );
+        .idleMode(IdleMode.kCoast),
+        ResetMode.kResetSafeParameters,
+        PersistMode.kNoPersistParameters);
     encoder = shooterMotor.getEncoder();
 
-    PID = new PIDController(kP, kI, kD);
-    PID.setTolerance(tolerance);
+    PID = new PIDController(Constants.ShooterConstants.kPdefault,
+        Constants.ShooterConstants.kIdefault,
+        Constants.ShooterConstants.kDdefault);
+    PID.setTolerance(Constants.ShooterConstants.PIDToleranceDefault);
     PID.reset();
 
-    shooterMotor.set(shooterSpeed); //sets it to zero because it is the default
-    feederMotor.set(feederSpeed);
-    
+    feedforward = new SimpleMotorFeedforward(0.0, Constants.ShooterConstants.kVdefault);
+
+    feederMotor = new SparkMax(feederMotorID, MotorType.kBrushless);
+    feederMotor.configure(new SparkMaxConfig().inverted(false)
+        .idleMode(IdleMode.kBrake),
+        ResetMode.kResetSafeParameters,
+        PersistMode.kNoPersistParameters);
+
+    PID.setSetpoint(0.0);    
+    shooterMotor.set(0); // sets it to zero because it is the default
+    feederMotor.set(0);
+  }
+
+  public void setRPMsetpoint(double speed) {
+    PID.setSetpoint(MathUtil.clamp(speed, 0.0, Constants.ShooterConstants.maxRPM));
+  }
+
+  public double getRPM() {
+    return encoder.getVelocity();
+  }
+
+  public void setShooterSpeed(double speed) {
+    shooterMotor.set(speed);
+  } 
+
+  public double getShooterSpeed() {
+    return shooterMotor.get();
+  }
+
+  public Boolean atSetpoint() {
+    return PID.atSetpoint();
+  }
+
+  public void enablePID(Boolean enable) {
+    if(enable && !PIDEnabled) {
+      PID.reset();
+      setRPMsetpoint(getRPM());
     }
+    PIDEnabled = enable;
+  }
 
-    public void setRPM(double speed){
-       mSetpoint = MathUtil.clamp(speed, 0.0, maxRPM);
+  public void setFeederSpeed(double speed) {
+      feederMotor.set(speed);
+  }
+
+  @Override
+  public void periodic() {
+    double currentVelocity = encoder.getVelocity(); // rpm
+    if (PIDEnabled) {
+      double output = PID.calculate(currentVelocity) + feedforward.calculate(PID.getSetpoint());
+      shooterMotor.set(output);
     }
+  }
 
-    public void setMaxRPM(double RPM){
-       maxRPM = RPM;
+  public void loadPreferences() {
+    if (Preferences.containsKey(Constants.ShooterConstants.kPkey)) {
+      System.out.println("Loading shooter PID values from preferences");
+      PID.setP(Preferences.getDouble(Constants.ShooterConstants.kPkey, Constants.ShooterConstants.kPdefault));
+      PID.setI(Preferences.getDouble(Constants.ShooterConstants.kIkey, Constants.ShooterConstants.kIdefault));
+      PID.setD(Preferences.getDouble(Constants.ShooterConstants.kDkey, Constants.ShooterConstants.kDdefault));
+      feedforward.setKv(Preferences.getDouble(Constants.ShooterConstants.kVkey, Constants.ShooterConstants.kVdefault));
+      PID.setTolerance(Preferences.getDouble(Constants.ShooterConstants.PIDToleranceKey,
+          Constants.ShooterConstants.PIDToleranceDefault));
+    } else {
+      System.out.println("No shooter prefs found. Using default values");
     }
+  }
 
-    public double getMaxRPM(){
-        return maxRPM;
-    }
+  public void savePreferences() {
+    System.out.println("Saving shooter PID values to preferences");
+    Preferences.setDouble(Constants.ShooterConstants.kPkey, PID.getP());
+    Preferences.setDouble(Constants.ShooterConstants.kIkey, PID.getI());
+    Preferences.setDouble(Constants.ShooterConstants.kDkey, PID.getD());
+    Preferences.setDouble(Constants.ShooterConstants.kVkey, feedforward.getKv());
+    Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, PID.getErrorTolerance());
+  }
 
-    public double getRPM(){
-        return encoder.getVelocity();
-    }
 
-    public Boolean atSetpoint(){
-        return PID.atSetpoint();
-    }
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("kP", () -> PID.getP(),
+        (x) -> PID.setP(x));
+    builder.addDoubleProperty("kI", () -> PID.getI(),
+        (x) -> PID.setI(x));
+    builder.addDoubleProperty("kD", () -> PID.getD(),
+        (x) -> PID.setD(x));
+    builder.addDoubleProperty("kV", () -> feedforward.getKv(),
+        (x) -> feedforward.setKv(x));
+    builder.addDoubleProperty("kTolerance", () -> PID.getErrorTolerance(),
+        (x) -> PID.setTolerance(x));
+    builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
+    builder.addDoubleProperty("Shooter SetpointRPM", () -> PID.getSetpoint(),
+        (x) -> PID.setSetpoint(x));
+    builder.addBooleanProperty("At Setpoint?", () -> atSetpoint(), null);
+    builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, null);
 
-    public void setPID(Boolean EnablePID){
-        PIDEnabled = EnablePID;
-    }
+    builder.addDoubleProperty("Feeder Speed", () -> feederMotor.get(),
+        (x) -> setFeederSpeed(x));
 
-    public void toggleFeeder(Boolean activated){
-        feederEnabled = activated;
-    }
+    builder.addBooleanProperty("Save Prefs", ()->false, (x)->{if(x) savePreferences();});
+  }
 
-    public void setFeederSpeed(double speed){
-        if (feederEnabled){
-        feederMotor.set(speed);}
-        else {feederMotor.set(0.0);
-}
-    }
-
-  
-
-    @Override
-    public void periodic() {
-        double currentVelocity = encoder.getVelocity(); //rpm
-        if (PIDEnabled){
-        double output = PID.calculate(currentVelocity, mSetpoint);
-        shooterMotor.set(output);
-    } 
-    
-
-    }
-
-    @Override
-    public void initSendable(SendableBuilder builder){
-        super.initSendable(builder);
-        builder.addDoubleProperty("kP", () -> PID.getP(),
-                                        (x) -> PID.setP(x));
-        builder.addDoubleProperty("kI", () -> PID.getI(),
-                                        (x) -> PID.setI(x));
-        builder.addDoubleProperty("kD", () -> PID.getD(),
-                                        (x) -> PID.setD(x));
-        builder.addDoubleProperty("kTolerance", () -> PID.getErrorTolerance(),
-                                        (x) -> PID.setTolerance(x));
-        builder.addDoubleProperty("MaxRPM Shooter", () -> getMaxRPM(),
-                                        (x) -> setMaxRPM(x));
-        builder.addDoubleProperty("Set Shooter RPM", () -> encoder.getVelocity(),
-                                        (x) -> setRPM(x));
-        
-        builder.addDoubleProperty("Feeder Speed", () -> feederMotor.get(), 
-                                    (x) -> setFeederSpeed(x));
-
-        builder.addDoubleProperty("Current Shooter RPM", () -> getRPM(), null);
-        builder.addBooleanProperty("At Setpoint?", () -> atSetpoint(), null);                                 
-    }
-    
 }

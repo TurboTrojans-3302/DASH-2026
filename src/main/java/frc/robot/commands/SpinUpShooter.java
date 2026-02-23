@@ -22,7 +22,7 @@ public class SpinUpShooter extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_shooter.setRPM(shooterSpeed);
+    m_shooter.setRPMsetpoint(shooterSpeed);
   }
 
   // Called every time the scheduler runs while the command is scheduled.

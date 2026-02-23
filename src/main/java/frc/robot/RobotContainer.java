@@ -158,19 +158,19 @@ if (SHOOTER_ENABLE){
   JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);        
   //Set PID or Manual
   if (m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
-    m_shooter.setPID(true);
+    m_shooter.enablePID(true);
   } else if (m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
-    m_shooter.setPID(false);
+    m_shooter.enablePID(false);
     increaseShooterSpeed.whileTrue(new InstantCommand(() -> {
-    m_shooter.setRPM(m_shooter.getRPM() + ShooterConstants.manualSpeedIncrement);
+    m_shooter.setRPMsetpoint(m_shooter.getRPM() + ShooterConstants.manualSpeedIncrement);
 
     }));
     decreaseShooterSpeed.whileTrue(new InstantCommand(() -> {
-    m_shooter.setRPM(m_shooter.getRPM() - ShooterConstants.manualSpeedIncrement);
+    m_shooter.setRPMsetpoint(m_shooter.getRPM() - ShooterConstants.manualSpeedIncrement);
 
     }));
   } else {
-    m_shooter.setRPM(0.0);
+    m_shooter.setRPMsetpoint(0.0);
   }
 
 
@@ -196,8 +196,8 @@ if (SHOOTER_ENABLE){
  
  
 
-  feedShooter.whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(Constants.ShooterConstants.feederSpeed)));
-  feederReverse.whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeed)));
+  feedShooter.whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(Constants.ShooterConstants.feederSpeedDefault)));
+  feederReverse.whileTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeedDefault)));
   ((feedShooter.negate()).and(feederReverse.negate())).onTrue(new InstantCommand(() -> m_shooter.setFeederSpeed(0.0)));
   
 

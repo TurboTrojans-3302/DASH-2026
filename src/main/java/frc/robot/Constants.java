@@ -151,10 +151,24 @@ public final class Constants {
   }
 
   public static final class ShooterConstants {
-    public static final double feederSpeed = 0;
-    public static double PIDTolerance = 0.0;
+    public static final double kPdefault = 0;
+    public static final double kIdefault = 0;
+    public static final double kDdefault = 0;
+    public static final double kVdefault = 0;
+    public static double PIDToleranceDefault = 0.0;
+    public static final String kPkey = "shooter_kP";
+    public static final String kIkey = "shooter_kI";
+    public static final String kDkey = "shooter_kD";
+    public static final String kVkey = "shooter_kV";
+    public static final String PIDToleranceKey = "shooter_PIDTolerance";
+    public static final double maxRPM = 4000.0;
+
+    public static final double feederSpeedDefault = 0;
+    public static final String feederSpeedKey = "feederSpeed";
     public static double manualSpeedIncrement = 20; //rpm
+
   }
+
   public static final class IntakeConstants {
     
   }
