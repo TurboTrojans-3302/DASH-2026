@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import java.util.function.BooleanSupplier;
-
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -26,6 +23,7 @@ import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Hopper;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -36,8 +34,6 @@ import frc.robot.subsystems.Shooter;
 public class RobotContainer {
 
   private static boolean INTAKE_ENABLE = true;
-  private static boolean INTAKE_ARM_ENABLE = true;
-  private static boolean CLIMBERS_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
   public static boolean ignorePeriods = false;
 
@@ -49,6 +45,7 @@ public class RobotContainer {
   public IntakeArm m_intakeArm;
   public Climbers m_climbers;
   public Shooter m_shooter;
+  public Hopper m_hopper;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -68,12 +65,18 @@ public class RobotContainer {
    */
   public RobotContainer() {
     instance = this;
-    
-    //CameraServer.startAutomaticCapture();
-    
+
+    // CameraServer.startAutomaticCapture();
+
     // The robot's subsystems
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
+
+    
+
+    m_hopper = new Hopper();
+    SmartDashboard.putData("Hopper", m_hopper);
+
     SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
     SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
     SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
@@ -92,7 +95,11 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
-    m_shooter.setDefaultCommand(new InstantCommand(()->{m_shooter.setFeederSpeed(0.0);}));
+    m_shooter.setDefaultCommand(new InstantCommand(() -> {
+      m_shooter.setFeederSpeed(0.0);
+    }));
+    // Keep hopper motors idle when no commands are active
+    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
   }
 
   public static RobotContainer getInstance() {
@@ -114,14 +121,6 @@ public class RobotContainer {
      *
      */
 
-    if (CLIMBERS_ENABLE) {
-
-    }
-
-    if (INTAKE_ARM_ENABLE) {
-
-    }
-
     if (SHOOTER_ENABLE) {
       JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);
       JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);
@@ -133,21 +132,32 @@ public class RobotContainer {
       enablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true)));
       disablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false)));
 
-
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
       JoystickButton toggleTimerUsage = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
       Trigger scoringAllowed = new Trigger(() -> Robot.getInstance().scoring());
       JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
-      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to disloge blockage
-      JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter without feeding
+      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to
+                                                                                                      // disloge
+                                                                                                      // blockage
+      JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
+                                                                                                     // without feeding
 
       feedShooter.and(scoringAllowed.or(toggleTimerUsage)).whileTrue(new Shoot(m_shooter));
 
-      feederReverse.whileTrue(new RunCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));  
-      spinUpShooter.onTrue(new InstantCommand(() -> m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM)) );
+      feederReverse.whileTrue(
+          new RunCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));
+      spinUpShooter
+          .onTrue(new InstantCommand(() -> m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM)));
 
     }
+
+    // Hopper controls: Left2 expand, Right2 retract while held
+    JoystickButton hopperExpand = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left2);
+    JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
+
+    hopperExpand.whileTrue(m_hopper.expandCommand());
+    hopperRetract.whileTrue(m_hopper.retractCommand());
 
   }
 

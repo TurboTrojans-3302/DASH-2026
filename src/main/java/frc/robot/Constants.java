@@ -169,6 +169,14 @@ public final class Constants {
    
   }
 
+  public static final class HopperConstants {
+    public static final String expandSpeedKey = "hopperExpandSpeed";
+    public static final double expandSpeedDefault = 0.5;
+    public static final String maxPositionKey = "hopperMaxPosition";
+    public static final double maxPositionDefault = 1000.0; //encoder units
+    public static final double minPositionDefault = 0;
+  }
+
  
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;
