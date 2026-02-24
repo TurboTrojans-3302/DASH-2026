@@ -161,9 +161,10 @@ public final class Constants {
 
   }
 
-  public static final class IntakeConstants {
-    
-  }
+  public static final class HarvesterConstants {
+    public static final double defaultIntakeSpeed = 0.5;
+    public static final String intakeSpeedKey = "intakeSpeed";
+  } 
 
   public static final class ClimberConstants {
    
@@ -174,7 +175,8 @@ public final class Constants {
     public static final double expandSpeedDefault = 0.5;
     public static final String maxPositionKey = "hopperMaxPosition";
     public static final double maxPositionDefault = 1000.0; //encoder units
-    public static final double minPositionDefault = 0;
+    public static final String minPositionKey = "hopperMinPosition";
+    public static final double minPositionDefault = 100.0; //encoder units
   }
 
  

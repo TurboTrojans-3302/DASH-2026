@@ -4,6 +4,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.HopperConstants;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.PersistMode;
@@ -12,6 +13,7 @@ import com.revrobotics.ResetMode;
 
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -29,28 +31,42 @@ public class Hopper extends SubsystemBase {
     private double maxPosition = HopperConstants.maxPositionDefault;
     private double minPosition = HopperConstants.minPositionDefault;
 
-
     // default percent output to use for extend/retract if caller doesn't specify
     private double expandSpeed = HopperConstants.expandSpeedDefault;
 
     public Hopper(int leftMotorID, int rightMotorID) {
-        SparkMaxConfig sparkConfig = new SparkMaxConfig();
-        // Basic configuration: brake when idle for holding position
-        sparkConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
+        loadPreferences();
 
         leftMotor = new SparkMax(leftMotorID, MotorType.kBrushless);
-        leftMotor.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        rightMotor = new SparkMax(rightMotorID, MotorType.kBrushless);
+
+        configureSparkMaxes();
+
         leftMotor.set(0);
         leftEncoder = leftMotor.getEncoder();
+        leftEncoder.setPosition(0); // reset encoder position on startup
 
-        rightMotor = new SparkMax(rightMotorID, MotorType.kBrushless);
-        // right motor inverted to mirror left (common for two-sided mechanisms)
-        rightMotor.configure(new SparkMaxConfig().inverted(true).idleMode(IdleMode.kBrake).smartCurrentLimit(20),
-                ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         rightMotor.set(0);
         rightEncoder = rightMotor.getEncoder();
+        rightEncoder.setPosition(0); // reset encoder position on startup
 
-        loadPreferences();
+    }
+
+    private void configureSparkMaxes() {
+        SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
+        leftSparkConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
+        leftSparkConfig.apply(new SoftLimitConfig().forwardSoftLimit(maxPosition)
+                .forwardSoftLimitEnabled(true)
+                .reverseSoftLimit(minPosition)
+                .reverseSoftLimitEnabled(true));
+
+        SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
+        rightSparkConfig.inverted(true); // invert right motor so that positive speed extends both sides in the same
+                                         // direction
+        rightSparkConfig.encoder.inverted(true);
+
+        leftMotor.configure(leftSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     /**
@@ -61,7 +77,6 @@ public class Hopper extends SubsystemBase {
         this(Constants.CanIds.hopperLeftMotorCanID, Constants.CanIds.hopperRightMotorCanID);
     }
 
-    
     public boolean isEmpty() {
         // Placeholder for actual sensor check to determine if hopper is empty
         // This could be implemented with a limit switch, ultrasonic sensor, etc.
@@ -101,9 +116,11 @@ public class Hopper extends SubsystemBase {
     public boolean atMinPositionL() {
         return leftEncoder.getPosition() <= minPosition;
     }
+
     public boolean atMinPositionR() {
         return rightEncoder.getPosition() <= minPosition;
     }
+
     public boolean atMinPosition() {
         return atMinPositionL() && atMinPositionR();
     }
@@ -113,24 +130,30 @@ public class Hopper extends SubsystemBase {
      */
     public Command expandCommand() {
         return new FunctionalCommand(() -> setSpeed(expandSpeed), // init: set speed to expand
-                                        () -> { if(atMaxPositionL()) leftMotor.set(0);
-                                                if(atMaxPositionR()) rightMotor.set(0); },
-                                        (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
-                                        () -> atMaxPosition(), // End condition: stop when hopper reaches max position
-                                        this
-        );
+                () -> {
+                    if (atMaxPositionL())
+                        leftMotor.set(0);
+                    if (atMaxPositionR())
+                        rightMotor.set(0);
+                },
+                (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
+                () -> atMaxPosition(), // End condition: stop when hopper reaches max position
+                this);
     }
 
     public Command retractCommand() {
         return new FunctionalCommand(() -> setSpeed(-expandSpeed), // init: set speed to retract
-                                        () -> { if(atMinPositionL()) leftMotor.set(0);
-                                                if(atMinPositionR()) rightMotor.set(0); },
-                                        (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
-                                        () -> atMinPosition(), // End condition: stop when hopper reaches min position
-                                        this
-        );
+                () -> {
+                    if (atMinPositionL())
+                        leftMotor.set(0);
+                    if (atMinPositionR())
+                        rightMotor.set(0);
+                },
+                (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
+                () -> atMinPosition(), // End condition: stop when hopper reaches min position
+                this);
     }
-    
+
     public Command stopCommand() {
         return new InstantCommand(this::stop, this);
     }
@@ -138,8 +161,12 @@ public class Hopper extends SubsystemBase {
     public void loadPreferences() {
         if (Preferences.containsKey(Constants.HopperConstants.expandSpeedKey)) {
             System.out.println("Loading Hopper  values from preferences");
-            expandSpeed = Preferences.getDouble(Constants.HopperConstants.expandSpeedKey, HopperConstants.expandSpeedDefault);
-            maxPosition = Preferences.getDouble(Constants.HopperConstants.maxPositionKey, HopperConstants.maxPositionDefault);
+            expandSpeed = Preferences.getDouble(Constants.HopperConstants.expandSpeedKey,
+                    HopperConstants.expandSpeedDefault);
+            maxPosition = Preferences.getDouble(Constants.HopperConstants.maxPositionKey,
+                    HopperConstants.maxPositionDefault);
+            minPosition = Preferences.getDouble(Constants.HopperConstants.minPositionKey,
+                    HopperConstants.minPositionDefault);
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -154,11 +181,14 @@ public class Hopper extends SubsystemBase {
     @Override
     public void initSendable(SendableBuilder builder) {
         super.initSendable(builder);
-        builder.addDoubleProperty("Expand Speed", () -> expandSpeed, (x) -> expandSpeed = x);
-        builder.addDoubleProperty("Max Position", () -> maxPosition, (x) -> maxPosition = x);
-        builder.addDoubleProperty("Min Position", () -> minPosition, (x) -> minPosition = x);
+        builder.addDoubleProperty("Expand Speed", () -> expandSpeed, (x) -> { expandSpeed = x; configureSparkMaxes(); });
+        builder.addDoubleProperty("Max Position", () -> maxPosition, (x) -> { maxPosition = x; configureSparkMaxes(); });
+        builder.addDoubleProperty("Min Position", () -> minPosition, (x) -> { minPosition = x; configureSparkMaxes(); });
         builder.addDoubleProperty("Left Motor Position", () -> leftEncoder.getPosition(), null);
         builder.addDoubleProperty("Right Motor Position", () -> rightEncoder.getPosition(), null);
-        builder.addBooleanProperty("Save Prefs", ()->false,  (x)->{if(x) savePreferences();});
+        builder.addBooleanProperty("Save Prefs", () -> false, (x) -> {
+            if (x)
+                savePreferences();
+        });
     }
 }
