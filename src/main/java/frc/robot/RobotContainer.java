@@ -37,8 +37,9 @@ public class RobotContainer {
 
   private static boolean INTAKE_ENABLE = true;
   private static boolean INTAKE_ARM_ENABLE = true;
-  private static boolean CLIMBERS_ENABLE = true;
-  private static boolean SHOOTER_ENABLE = true;
+  private static boolean CLIMBERS_ENABLE = false;
+  private static boolean SHOOTER_ENABLE = false;
+  public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
 
   private static RobotContainer instance;
@@ -58,8 +59,9 @@ public class RobotContainer {
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
+//  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
   GenericHID m_buttonBoard = new GenericHID(OIConstants.kButtonBoardPort);
+
 
   public int targetTagId = 0;
 
