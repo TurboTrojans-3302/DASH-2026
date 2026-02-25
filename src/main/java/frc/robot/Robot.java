@@ -43,7 +43,9 @@ public class Robot extends TimedRobot {
   private RobotContainer m_robotContainer;
 
 
-  Robot(){}
+  Robot(){
+    instance = this;
+  }
 
   Robot(double period) {
     super(period);
