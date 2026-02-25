@@ -13,14 +13,12 @@ import com.revrobotics.ResetMode;
 
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
-
+//TODO reimplement this whole thing with closed-loop position control.
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
  */
@@ -74,7 +72,7 @@ public class Hopper extends SubsystemBase {
      * {@link frc.robot.Constants.HopperConstants}.
      */
     public Hopper() {
-        this(Constants.CanIds.hopperLeftMotorCanID, Constants.CanIds.hopperRightMotorCanID);
+        this(Constants.CanIds.kHopperLeftMotorCanId, Constants.CanIds.kHopperRightMotorCanId);
     }
 
     public boolean isEmpty() {
