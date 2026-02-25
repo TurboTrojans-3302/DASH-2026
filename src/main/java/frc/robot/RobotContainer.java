@@ -23,8 +23,6 @@ import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DriveTrain;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.Shooter;
 
 /*
@@ -35,8 +33,7 @@ import frc.robot.subsystems.Shooter;
  */
 public class RobotContainer {
 
-  private static boolean INTAKE_ENABLE = true;
-  private static boolean INTAKE_ARM_ENABLE = true;
+  private static boolean HARVESTER_ENABLE = true;
   private static boolean CLIMBERS_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
   public static boolean ignorePeriods = false;
@@ -45,8 +42,7 @@ public class RobotContainer {
 
   // The robot's subsystems
   public DriveTrain m_robotDrive;
-  public Intake m_intake;
-  public IntakeArm m_intakeArm;
+  public Harvester m_harvester;
   public Climbers m_climbers;
   public Shooter m_shooter;
 
@@ -83,6 +79,9 @@ public class RobotContainer {
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
     }
 
+    if(HARVESTER_ENABLE){
+      m_harvester = new Harvester(m_robotDrive);
+    }
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
 
@@ -105,7 +104,7 @@ public class RobotContainer {
      * Driver's Controller
      */
 
-    if (INTAKE_ENABLE) {
+    if (HARVESTER_ENABLE) {
 
     }
 
@@ -118,9 +117,6 @@ public class RobotContainer {
 
     }
 
-    if (INTAKE_ARM_ENABLE) {
-
-    }
 
     if (SHOOTER_ENABLE) {
       JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);

@@ -157,7 +157,6 @@ public class Robot extends TimedRobot {
     
     m_robotContainer.configureButtonBindings();
     m_robotContainer.setDefaultCommands();
-    //m_robotContainer.m_intakeArm.stop();
     
     setLED(LEDmode.Teleop);
     // This makes sure that the autonomous stops running when
