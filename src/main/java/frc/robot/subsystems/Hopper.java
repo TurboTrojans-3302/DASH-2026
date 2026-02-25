@@ -174,6 +174,7 @@ public class Hopper extends SubsystemBase {
         System.out.println("Saving hopper values to preferences");
         Preferences.setDouble(Constants.HopperConstants.expandSpeedKey, expandSpeed);
         Preferences.setDouble(Constants.HopperConstants.maxPositionKey, maxPosition);
+        Preferences.setDouble(Constants.HopperConstants.minPositionKey, minPosition);
     }
 
     @Override
