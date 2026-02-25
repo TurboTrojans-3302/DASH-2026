@@ -94,7 +94,9 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
-    m_shooter.setDefaultCommand(new InstantCommand(()->{m_shooter.setFeederSpeed(0.0);}));
+    if(SHOOTER_ENABLE){
+      m_shooter.setDefaultCommand(new InstantCommand(()->{m_shooter.setFeederSpeed(0.0);}));
+    }
   }
 
   public static RobotContainer getInstance() {
