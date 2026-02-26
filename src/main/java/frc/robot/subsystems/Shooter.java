@@ -26,7 +26,7 @@ public class Shooter extends SubsystemBase {
   private RelativeEncoder encoder;
   private PIDController PID;
   private SimpleMotorFeedforward feedforward;
-  private boolean PIDEnabled = true;
+  private boolean PIDEnabled = false;
   private Timer timeAtSpeed = new Timer();
 
   private final double spinUpTime = 1.0; // seconds that the shooter must be at the target speed before we consider it "ready" to shoot, can be tuned based on how long it takes for the shooter to stabilize at the target speed after a change
@@ -99,6 +99,11 @@ public class Shooter extends SubsystemBase {
       feederMotor.set(speed);
   }
 
+  public void stop() {
+    setRPMsetpoint(0.0);
+    setFeederSpeed(0.0);
+  }
+
   @Override
   public void periodic() {
     double currentVelocity = encoder.getVelocity(); // rpm
@@ -134,7 +139,7 @@ public class Shooter extends SubsystemBase {
   public Command incrementSpeedCommand() {
     return new RunCommand(() -> {
       if(PIDEnabled){
-          setRPMsetpoint(getRPM() + Constants.ShooterConstants.manualRPMincrement);
+          setRPMsetpoint(getRPMsetpoint() + Constants.ShooterConstants.manualRPMincrement);
       } else {
           setMotorPctOutput(getMotorPctOutput() + Constants.ShooterConstants.manualPCTincrement);
       }
@@ -175,6 +180,10 @@ public class Shooter extends SubsystemBase {
         (x) -> setFeederSpeed(x));
 
     builder.addBooleanProperty("Save Prefs", ()->false, (x)->{if(x) savePreferences();});
+    builder.addDoubleProperty("motor output", ()->shooterMotor.get(), null);
   }
 
+    public double getRPMsetpoint() {
+      return PID.getSetpoint();
+    }
 }
