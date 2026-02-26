@@ -152,12 +152,10 @@ public final class Constants {
     public static final String PIDToleranceKey = "shooter_PIDTolerance";
     public static final double maxRPM = 6000.0;
     public static final double defaultShootRPM = 4900.0;
-    public static final double defaultShootPctOutput = 0.5;
 
     public static final double feederSpeedDefault = 0;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 50; //rpm
-    public static double manualPCTincrement = 0.005; //percent output
 
   }
 

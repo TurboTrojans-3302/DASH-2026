@@ -18,11 +18,7 @@ public class Shoot extends Command {
   @Override
   public void initialize() {
     if(m_shooter.getRPM() < 2000){
-      if(m_shooter.isPIDEnabled()){
-        m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM);
-      }else{
-        m_shooter.setMotorPctOutput(Constants.ShooterConstants.defaultShootPctOutput);
-      }
+      m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM);
     }
   }
 

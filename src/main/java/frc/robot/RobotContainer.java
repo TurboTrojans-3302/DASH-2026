@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import java.util.function.BooleanSupplier;
-
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;

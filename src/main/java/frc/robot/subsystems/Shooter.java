@@ -29,7 +29,9 @@ public class Shooter extends SubsystemBase {
   private boolean PIDEnabled = false;
   private Timer timeAtSpeed = new Timer();
 
-  private final double spinUpTime = 1.0; // seconds that the shooter must be at the target speed before we consider it "ready" to shoot, can be tuned based on how long it takes for the shooter to stabilize at the target speed after a change
+  private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
+                                         // "ready" to shoot, can be tuned based on how long it takes for the shooter to
+                                         // stabilize at the target speed after a change
 
   public Shooter(int shooterMotorID, int feederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
@@ -53,7 +55,7 @@ public class Shooter extends SubsystemBase {
         ResetMode.kResetSafeParameters,
         PersistMode.kNoPersistParameters);
 
-    PID.setSetpoint(0.0);    
+    PID.setSetpoint(0.0);
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
   }
@@ -66,25 +68,25 @@ public class Shooter extends SubsystemBase {
     return encoder.getVelocity();
   }
 
-  public void setMotorPctOutput(double speed) {
-    shooterMotor.set(MathUtil.clamp(speed, 0.0, 1.0)); 
+  private void setMotorPctOutput(double speed) {
+    shooterMotor.set(MathUtil.clamp(speed, 0.0, 1.0));
     timeAtSpeed.restart();
-  } 
+  }
 
   public double getMotorPctOutput() {
     return shooterMotor.get();
   }
 
   public Boolean ready() {
-    if(PIDEnabled){
+    if (isPIDEnabled()) {
       return PID.atSetpoint();
     } else {
-      return timeAtSpeed.hasElapsed(spinUpTime); 
+      return timeAtSpeed.hasElapsed(spinUpTime);
     }
   }
 
   public void enablePID(Boolean enable) {
-    if(enable && !PIDEnabled) {
+    if (enable && !PIDEnabled) {
       PID.reset();
       setRPMsetpoint(getRPM());
     }
@@ -94,9 +96,9 @@ public class Shooter extends SubsystemBase {
   public boolean isPIDEnabled() {
     return PIDEnabled;
   }
-  
+
   public void setFeederSpeed(double speed) {
-      feederMotor.set(speed);
+    feederMotor.set(speed);
   }
 
   public void stop() {
@@ -107,10 +109,13 @@ public class Shooter extends SubsystemBase {
   @Override
   public void periodic() {
     double currentVelocity = encoder.getVelocity(); // rpm
-    if (PIDEnabled) {
-      double output = PID.calculate(currentVelocity) + feedforward.calculate(PID.getSetpoint());
-      setMotorPctOutput(output);
+    double output = feedforward.calculate(PID.getSetpoint());
+
+    if (isPIDEnabled()) {
+      output += PID.calculate(currentVelocity);
     }
+
+    setMotorPctOutput(output);
   }
 
   public void loadPreferences() {
@@ -138,24 +143,15 @@ public class Shooter extends SubsystemBase {
 
   public Command incrementSpeedCommand() {
     return new RunCommand(() -> {
-      if(PIDEnabled){
-          setRPMsetpoint(getRPMsetpoint() + Constants.ShooterConstants.manualRPMincrement);
-      } else {
-          setMotorPctOutput(getMotorPctOutput() + Constants.ShooterConstants.manualPCTincrement);
-      }
+      setRPMsetpoint(getRPMsetpoint() + Constants.ShooterConstants.manualRPMincrement);
     }, this);
   }
 
   public Command decrementSpeedCommand() {
     return new RunCommand(() -> {
-      if(PIDEnabled){
-          setRPMsetpoint(getRPM() - Constants.ShooterConstants.manualRPMincrement);
-      } else {
-          setMotorPctOutput(getMotorPctOutput() - Constants.ShooterConstants.manualPCTincrement);
-      }
+      setRPMsetpoint(getRPMsetpoint() - Constants.ShooterConstants.manualRPMincrement);
     }, this);
   }
-
 
   @Override
   public void initSendable(SendableBuilder builder) {
@@ -179,11 +175,14 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("Feeder Speed", () -> feederMotor.get(),
         (x) -> setFeederSpeed(x));
 
-    builder.addBooleanProperty("Save Prefs", ()->false, (x)->{if(x) savePreferences();});
-    builder.addDoubleProperty("motor output", ()->shooterMotor.get(), null);
+    builder.addBooleanProperty("Save Prefs", () -> false, (x) -> {
+      if (x)
+        savePreferences();
+    });
+    builder.addDoubleProperty("motor output", () -> shooterMotor.get(), null);
   }
 
-    public double getRPMsetpoint() {
-      return PID.getSetpoint();
-    }
+  public double getRPMsetpoint() {
+    return PID.getSetpoint();
+  }
 }
