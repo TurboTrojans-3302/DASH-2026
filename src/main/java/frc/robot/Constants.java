@@ -143,7 +143,7 @@ public final class Constants {
     public static final double kPdefault = 0.001;
     public static final double kIdefault = 0;
     public static final double kDdefault = 0.0002;
-    public static final double kVdefault = 0;
+    public static final double kVdefault = 0.00018;
     public static double PIDToleranceDefault = 0.0;
     public static final String kPkey = "shooter_kP";
     public static final String kIkey = "shooter_kI";
