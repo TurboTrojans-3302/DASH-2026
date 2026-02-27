@@ -4,7 +4,11 @@ import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Timer;
 
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.config.*;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.PersistMode;
@@ -12,8 +16,6 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -24,10 +26,15 @@ public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
   private SparkMax feederMotor;
   private RelativeEncoder encoder;
-  private PIDController PID;
-  private SimpleMotorFeedforward feedforward;
+  private SparkClosedLoopController closedLoopController;
+  private double rpmSetpoint = 0.0;
   private boolean PIDEnabled = false;
   private Timer timeAtSpeed = new Timer();
+  private double kP;
+  private double kI;
+  private double kD;
+  private double kV;
+  private double kTol;
 
   private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
@@ -41,13 +48,14 @@ public class Shooter extends SubsystemBase {
         PersistMode.kNoPersistParameters);
     encoder = shooterMotor.getEncoder();
 
-    PID = new PIDController(Constants.ShooterConstants.kPdefault,
-        Constants.ShooterConstants.kIdefault,
-        Constants.ShooterConstants.kDdefault);
-    PID.setTolerance(Constants.ShooterConstants.PIDToleranceDefault);
-    PID.reset();
-
-    feedforward = new SimpleMotorFeedforward(0.0, Constants.ShooterConstants.kVdefault);
+    // Initialize local gain values from defaults and configure controller
+    kP = Constants.ShooterConstants.kPdefault;
+    kI = Constants.ShooterConstants.kIdefault;
+    kD = Constants.ShooterConstants.kDdefault;
+    kV = Constants.ShooterConstants.kVdefault;
+    kTol = Constants.ShooterConstants.PIDToleranceDefault;
+    setPIDVT(kP, kI, kD, kV, kTol);
+    closedLoopController = shooterMotor.getClosedLoopController();
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushless);
     feederMotor.configure(new SparkMaxConfig().inverted(false)
@@ -55,22 +63,59 @@ public class Shooter extends SubsystemBase {
         ResetMode.kResetSafeParameters,
         PersistMode.kNoPersistParameters);
 
-    PID.setSetpoint(0.0);
+    rpmSetpoint = 0.0;
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
   }
 
   public void setRPMsetpoint(double rpm) {
-    PID.setSetpoint(MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM));
+    rpmSetpoint = MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM);
+    closedLoopController.setSetpoint(rpmSetpoint, SparkBase.ControlType.kVelocity,
+        isPIDEnabled() ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1);
+  }
+
+  /**
+   * Configure the SparkMax closed-loop PID and feedforward values.
+   * This centralizes configuration so sendable/profile updates and preference
+   * loads
+   * can reuse the same routine.
+   */
+  private void setPIDVT(double p, double i, double d, double v, double tol) {
+    // store locally
+    kP = p;
+    kI = i;
+    kD = d;
+    kV = v;
+    kTol = tol;
+
+    // Build a single SparkMaxConfig and apply both slot configs into it
+    SparkMaxConfig cfg = new SparkMaxConfig();
+
+    ClosedLoopConfig cl0 = new ClosedLoopConfig()
+        .pid(kP, kI, kD, ClosedLoopSlot.kSlot0)
+        .apply(new FeedForwardConfig().kV(kV, ClosedLoopSlot.kSlot0))
+        .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot0);
+    cfg.apply(cl0);
+
+    ClosedLoopConfig cl1 = new ClosedLoopConfig()
+        .pid(0.0, 0.0, 0.0, ClosedLoopSlot.kSlot1)
+        .apply(new FeedForwardConfig().kV(kV, ClosedLoopSlot.kSlot1))
+        .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot1);
+    cfg.apply(cl1);
+
+    shooterMotor.configure(cfg, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+  }
+
+  /**
+   * Convenience overload that reapplies the currently-stored kP/kI/kD/kV/kTol
+   * values to the motor controller.
+   */
+  private void setPIDVT() {
+    setPIDVT(kP, kI, kD, kV, kTol);
   }
 
   public double getRPM() {
     return encoder.getVelocity();
-  }
-
-  private void setMotorPctOutput(double speed) {
-    shooterMotor.set(MathUtil.clamp(speed, 0.0, 1.0));
-    timeAtSpeed.restart();
   }
 
   public double getMotorPctOutput() {
@@ -79,18 +124,19 @@ public class Shooter extends SubsystemBase {
 
   public Boolean ready() {
     if (isPIDEnabled()) {
-      return PID.atSetpoint();
+      return closedLoopController.isAtSetpoint();
     } else {
       return timeAtSpeed.hasElapsed(spinUpTime);
     }
   }
 
   public void enablePID(Boolean enable) {
-    if (enable && !PIDEnabled) {
-      PID.reset();
+    if (enable ^ PIDEnabled) {
+      // changing state: either enabling or disabling PID
+      PIDEnabled = enable;
       setRPMsetpoint(getRPM());
+      closedLoopController.setIAccum(0.0);
     }
-    PIDEnabled = enable;
   }
 
   public boolean isPIDEnabled() {
@@ -108,25 +154,23 @@ public class Shooter extends SubsystemBase {
 
   @Override
   public void periodic() {
-    double currentVelocity = encoder.getVelocity(); // rpm
-    double output = feedforward.calculate(PID.getSetpoint());
-
-    if (isPIDEnabled()) {
-      output += PID.calculate(currentVelocity);
-    }
-
-    setMotorPctOutput(output);
+    // Closed-loop control is handled on the SparkMax when PIDEnabled is true.
+    // For open-loop (PID disabled) we do not alter motor output here; callers
+    // should
+    // use setMotorPctOutput(...) to set direct percent output.
   }
 
   public void loadPreferences() {
     if (Preferences.containsKey(Constants.ShooterConstants.kPkey)) {
       System.out.println("Loading shooter PID values from preferences");
-      PID.setP(Preferences.getDouble(Constants.ShooterConstants.kPkey, Constants.ShooterConstants.kPdefault));
-      PID.setI(Preferences.getDouble(Constants.ShooterConstants.kIkey, Constants.ShooterConstants.kIdefault));
-      PID.setD(Preferences.getDouble(Constants.ShooterConstants.kDkey, Constants.ShooterConstants.kDdefault));
-      feedforward.setKv(Preferences.getDouble(Constants.ShooterConstants.kVkey, Constants.ShooterConstants.kVdefault));
-      PID.setTolerance(Preferences.getDouble(Constants.ShooterConstants.PIDToleranceKey,
-          Constants.ShooterConstants.PIDToleranceDefault));
+      kP = Preferences.getDouble(Constants.ShooterConstants.kPkey, Constants.ShooterConstants.kPdefault);
+      kI = Preferences.getDouble(Constants.ShooterConstants.kIkey, Constants.ShooterConstants.kIdefault);
+      kD = Preferences.getDouble(Constants.ShooterConstants.kDkey, Constants.ShooterConstants.kDdefault);
+      kV = Preferences.getDouble(Constants.ShooterConstants.kVkey, Constants.ShooterConstants.kVdefault);
+    // Apply loaded gains and tolerance to the motor controller
+    double tol = Preferences.getDouble(Constants.ShooterConstants.PIDToleranceKey,
+      Constants.ShooterConstants.PIDToleranceDefault);
+    setPIDVT(kP, kI, kD, kV, tol);
     } else {
       System.out.println("No shooter prefs found. Using default values");
     }
@@ -134,11 +178,13 @@ public class Shooter extends SubsystemBase {
 
   public void savePreferences() {
     System.out.println("Saving shooter PID values to preferences");
-    Preferences.setDouble(Constants.ShooterConstants.kPkey, PID.getP());
-    Preferences.setDouble(Constants.ShooterConstants.kIkey, PID.getI());
-    Preferences.setDouble(Constants.ShooterConstants.kDkey, PID.getD());
-    Preferences.setDouble(Constants.ShooterConstants.kVkey, feedforward.getKv());
-    Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, PID.getErrorTolerance());
+    Preferences.setDouble(Constants.ShooterConstants.kPkey, kP);
+    Preferences.setDouble(Constants.ShooterConstants.kIkey, kI);
+    Preferences.setDouble(Constants.ShooterConstants.kDkey, kD);
+    Preferences.setDouble(Constants.ShooterConstants.kVkey, kV);
+    // No direct API to read closed-loop allowed error from the controller here;
+    // save the default
+    Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, Constants.ShooterConstants.PIDToleranceDefault);
   }
 
   public Command incrementSpeedCommand() {
@@ -156,19 +202,21 @@ public class Shooter extends SubsystemBase {
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    builder.addDoubleProperty("kP", () -> PID.getP(),
-        (x) -> PID.setP(x));
-    builder.addDoubleProperty("kI", () -> PID.getI(),
-        (x) -> PID.setI(x));
-    builder.addDoubleProperty("kD", () -> PID.getD(),
-        (x) -> PID.setD(x));
-    builder.addDoubleProperty("kV", () -> feedforward.getKv(),
-        (x) -> feedforward.setKv(x));
-    builder.addDoubleProperty("kTolerance", () -> PID.getErrorTolerance(),
-        (x) -> PID.setTolerance(x));
+    // Expose closed-loop gains and allow updating them by reconfiguring the
+    // SparkMax
+    builder.addDoubleProperty("kP", () -> kP,
+        (x) -> { kP = x; setPIDVT(); });
+    builder.addDoubleProperty("kI", () -> kI,
+        (x) -> { kI = x; setPIDVT(); });
+    builder.addDoubleProperty("kD", () -> kD,
+        (x) -> { kD = x; setPIDVT(); });
+    builder.addDoubleProperty("kV", () -> kV,
+        (x) -> { kV = x; setPIDVT(); });
+    builder.addDoubleProperty("kTolerance", () -> kTol,
+        (x) -> { kTol = x; setPIDVT(); });
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
-    builder.addDoubleProperty("Shooter SetpointRPM", () -> PID.getSetpoint(),
-        (x) -> PID.setSetpoint(x));
+    builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
+        (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> ready(), null);
     builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, null);
 
@@ -183,6 +231,6 @@ public class Shooter extends SubsystemBase {
   }
 
   public double getRPMsetpoint() {
-    return PID.getSetpoint();
+    return rpmSetpoint;
   }
 }
