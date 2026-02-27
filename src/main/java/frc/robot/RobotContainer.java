@@ -35,6 +35,7 @@ public class RobotContainer {
 
   private static boolean INTAKE_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
+  public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
 
   private static RobotContainer instance;
@@ -55,8 +56,9 @@ public class RobotContainer {
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
+//  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
   GenericHID m_buttonBoard = new GenericHID(OIConstants.kButtonBoardPort);
+
 
   public int targetTagId = 0;
 
@@ -122,15 +124,18 @@ public class RobotContainer {
      */
 
     if (SHOOTER_ENABLE) {
-      JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);
-      JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);
+      JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);
+      JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);
+      JoystickButton stopShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobPush);
       JoystickButton enablePID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Up);
       JoystickButton disablePID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Down);
 
       increaseShooterSpeed.whileTrue(m_shooter.incrementSpeedCommand());
       decreaseShooterSpeed.whileTrue(m_shooter.decrementSpeedCommand());
-      enablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true)));
-      disablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false)));
+      stopShooter.onTrue(new InstantCommand(() -> m_shooter.stop(), m_shooter));
+      enablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true), m_shooter));
+      disablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false), m_shooter ));
+
 
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
