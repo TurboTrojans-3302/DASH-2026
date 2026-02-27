@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.Shoot;
@@ -33,7 +35,7 @@ import frc.robot.subsystems.Hopper;
  */
 public class RobotContainer {
 
-  private static boolean INTAKE_ENABLE = true;
+  private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
   public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
@@ -114,9 +116,7 @@ public class RobotContainer {
      * Driver's Controller
      */
 
-    if (INTAKE_ENABLE) {
-
-    }
+  
 
     /**
      * Copilot's Controller
@@ -157,13 +157,16 @@ public class RobotContainer {
 
     }
 
-    // Hopper controls: Left2 expand, Right2 retract while held
-    JoystickButton hopperExpand = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left2);
-    JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
+    if(HOPPER_ENABLE){
+      // Hopper controls: 
+      POVButton hopperExpand = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
+      POVButton hopperRetract = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
+      POVButton hopperStop = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickCenter);
 
-    hopperExpand.whileTrue(m_hopper.expandCommand());
-    hopperRetract.whileTrue(m_hopper.retractCommand());
-
+      hopperExpand.whileTrue(m_hopper.expandCommand());
+      hopperRetract.whileTrue(m_hopper.retractCommand());
+      hopperStop.onChange(m_hopper.stopCommand());
+    }
   }
 
   public void configureTestControls() {

@@ -12,6 +12,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,11 +27,15 @@ public class Hopper extends SubsystemBase {
     private final SparkMax leftMotor;
     private final SparkMax rightMotor;
     private final RelativeEncoder leftEncoder, rightEncoder;
-    private double maxPosition = HopperConstants.maxPositionDefault;
-    private double minPosition = HopperConstants.minPositionDefault;
+    private final DigitalInput leftContractedLimitSwitch = new DigitalInput(Constants.DigitalIO.kHopperLeftContractedLimitSwitchDio);
+    private final DigitalInput rightContractedLimitSwitch = new DigitalInput(Constants.DigitalIO.kHopperRightContractedLimitSwitchDio);
+    private double softMax = HopperConstants.maxPositionDefault;
+    private double softMin = HopperConstants.minPositionDefault;
+    private double kV = HopperConstants.kVdefault;
+
 
     // default percent output to use for extend/retract if caller doesn't specify
-    private double expandSpeed = HopperConstants.expandSpeedDefault;
+    private double moveIncrement = HopperConstants.moveIncrementDefault;
 
     public Hopper(int leftMotorID, int rightMotorID) {
         loadPreferences();
@@ -53,10 +58,7 @@ public class Hopper extends SubsystemBase {
     private void configureSparkMaxes() {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
         leftSparkConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
-        leftSparkConfig.apply(new SoftLimitConfig().forwardSoftLimit(maxPosition)
-                .forwardSoftLimitEnabled(true)
-                .reverseSoftLimit(minPosition)
-                .reverseSoftLimitEnabled(true));
+        leftSparkConfig.apply(new SoftLimitConfig());
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
         rightSparkConfig.inverted(true); // invert right motor so that positive speed extends both sides in the same
@@ -81,57 +83,71 @@ public class Hopper extends SubsystemBase {
         return false; // Assume not empty for now
     }
 
+    public void move(double increment) {
+        // If we're at the max position and trying to extend, don't allow it
+        if (atMaxPosition() && increment > 0) {
+            stop();
+            return;
+        }
+
+        // If we're at the min position and trying to retract, don't allow it
+        if (atMinPosition() && increment < 0) {
+            stop();
+            return;
+        }
+
+        double motorSpeed = MathUtil.clamp(kV * Math.signum(increment), -1.0, 1.0); // simple feedforward based on direction of movement
+        leftMotor.set(motorSpeed);
+        rightMotor.set(motorSpeed);
+    }
+
     /**
      * Stop both hopper motors.
      */
     public void stop() {
-        setSpeed(0.0);
+        leftMotor.set(0);
+        rightMotor.set(0);
     }
 
-    /**
-     * Set the percent output for both motors. Values are clamped to [-1, 1].
-     *
-     * @param speed percent output in range [-1..1]
-     */
-    public void setSpeed(double speed) {
-        double s = MathUtil.clamp(speed, -1.0, 1.0);
-        leftMotor.set(s);
-        rightMotor.set(s);
+    @Override
+    public void periodic() {
+        if(leftHardLimit()) { leftEncoder.setPosition(0); } 
+        if(rightHardLimit()) { rightEncoder.setPosition(0); }
     }
 
-    public boolean atMaxPositionL() {
-        return leftEncoder.getPosition() >= maxPosition;
+    public boolean atSoftMaxL() {
+        return leftEncoder.getPosition() >= softMax;
     }
 
-    public boolean atMaxPositionR() {
-        return rightEncoder.getPosition() >= maxPosition;
+    public boolean atSoftMaxR() {
+        return rightEncoder.getPosition() >= softMax;
     }
 
     public boolean atMaxPosition() {
-        return atMaxPositionL() && atMaxPositionR();
+        return atSoftMaxL() && atSoftMaxR();
     }
 
-    public boolean atMinPositionL() {
-        return leftEncoder.getPosition() <= minPosition;
+    public boolean atSoftMinL() {
+        return leftEncoder.getPosition() <= softMin;
     }
 
-    public boolean atMinPositionR() {
-        return rightEncoder.getPosition() <= minPosition;
+    public boolean atSoftMinR() {
+        return rightEncoder.getPosition() <= softMin;
     }
 
     public boolean atMinPosition() {
-        return atMinPositionL() && atMinPositionR();
+        return atSoftMinL() && atSoftMinR();
     }
 
     /**
      * Command that expands the hopper at the default speed while scheduled.
      */
     public Command expandCommand() {
-        return new FunctionalCommand(() -> setSpeed(expandSpeed), // init: set speed to expand
+        return new FunctionalCommand(() -> move(moveIncrement), // init: set speed to expand
                 () -> {
-                    if (atMaxPositionL())
+                    if (atSoftMaxL())
                         leftMotor.set(0);
-                    if (atMaxPositionR())
+                    if (atSoftMaxR())
                         rightMotor.set(0);
                 },
                 (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
@@ -140,11 +156,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public Command retractCommand() {
-        return new FunctionalCommand(() -> setSpeed(-expandSpeed), // init: set speed to retract
+        return new FunctionalCommand(() -> move(-moveIncrement), // init: set speed to retract
                 () -> {
-                    if (atMinPositionL())
+                    if (atSoftMinL())
                         leftMotor.set(0);
-                    if (atMinPositionR())
+                    if (atSoftMinR())
                         rightMotor.set(0);
                 },
                 (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
@@ -157,14 +173,15 @@ public class Hopper extends SubsystemBase {
     }
 
     public void loadPreferences() {
-        if (Preferences.containsKey(Constants.HopperConstants.expandSpeedKey)) {
+        if (Preferences.containsKey(Constants.HopperConstants.moveIncrementKey)) {
             System.out.println("Loading Hopper  values from preferences");
-            expandSpeed = Preferences.getDouble(Constants.HopperConstants.expandSpeedKey,
-                    HopperConstants.expandSpeedDefault);
-            maxPosition = Preferences.getDouble(Constants.HopperConstants.maxPositionKey,
+            moveIncrement = Preferences.getDouble(Constants.HopperConstants.moveIncrementKey,
+                    HopperConstants.moveIncrementDefault);
+            softMax = Preferences.getDouble(Constants.HopperConstants.maxPositionKey,
                     HopperConstants.maxPositionDefault);
-            minPosition = Preferences.getDouble(Constants.HopperConstants.minPositionKey,
+            softMin = Preferences.getDouble(Constants.HopperConstants.minPositionKey,
                     HopperConstants.minPositionDefault);
+            kV = Preferences.getDouble(Constants.HopperConstants.kVkey, HopperConstants.kVdefault);
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -172,22 +189,31 @@ public class Hopper extends SubsystemBase {
 
     public void savePreferences() {
         System.out.println("Saving hopper values to preferences");
-        Preferences.setDouble(Constants.HopperConstants.expandSpeedKey, expandSpeed);
-        Preferences.setDouble(Constants.HopperConstants.maxPositionKey, maxPosition);
-        Preferences.setDouble(Constants.HopperConstants.minPositionKey, minPosition);
+        Preferences.setDouble(Constants.HopperConstants.moveIncrementKey, moveIncrement);
+        Preferences.setDouble(Constants.HopperConstants.maxPositionKey, softMax);
+        Preferences.setDouble(Constants.HopperConstants.minPositionKey, softMin);
+        Preferences.setDouble(Constants.HopperConstants.kVkey, kV);
+    }
+
+    public boolean leftHardLimit() {
+        return leftContractedLimitSwitch.get();
+    }
+
+    public boolean rightHardLimit() {
+        return rightContractedLimitSwitch.get();
     }
 
     @Override
     public void initSendable(SendableBuilder builder) {
         super.initSendable(builder);
-        builder.addDoubleProperty("Expand Speed", () -> expandSpeed, (x) -> { expandSpeed = x; configureSparkMaxes(); });
-        builder.addDoubleProperty("Max Position", () -> maxPosition, (x) -> { maxPosition = x; configureSparkMaxes(); });
-        builder.addDoubleProperty("Min Position", () -> minPosition, (x) -> { minPosition = x; configureSparkMaxes(); });
+        builder.addDoubleProperty("Expand Speed", () -> moveIncrement, (x) -> { moveIncrement = x; });
+        builder.addDoubleProperty("Max Position", () -> softMax, (x) -> { softMax = x; });
+        builder.addDoubleProperty("Min Position", () -> softMin, (x) -> { softMin = x; });
         builder.addDoubleProperty("Left Motor Position", () -> leftEncoder.getPosition(), null);
         builder.addDoubleProperty("Right Motor Position", () -> rightEncoder.getPosition(), null);
-        builder.addBooleanProperty("Save Prefs", () -> false, (x) -> {
-            if (x)
-                savePreferences();
-        });
+        builder.addDoubleProperty("kV", () -> kV, (x) -> { kV = x; });
+        builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
+        builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
+        builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
     }
 }
