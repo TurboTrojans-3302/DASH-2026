@@ -159,13 +159,12 @@ public class RobotContainer {
 
     if(HOPPER_ENABLE){
       // Hopper controls: 
-      POVButton hopperExpand = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
-      POVButton hopperRetract = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
-      POVButton hopperStop = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickCenter);
+      POVButton hopperManualExpand = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
+      POVButton hopperManualRetract = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
 
-      hopperExpand.whileTrue(m_hopper.expandCommand());
-      hopperRetract.whileTrue(m_hopper.retractCommand());
-      hopperStop.onChange(m_hopper.stopCommand());
+      hopperManualExpand.whileTrue(m_hopper.manualExpandCommand());
+      hopperManualRetract.whileTrue(m_hopper.manualRetractCommand());
+  
     }
   }
 

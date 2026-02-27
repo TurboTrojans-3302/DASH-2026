@@ -179,6 +179,13 @@ public final class Constants {
     public static final double minPositionDefault = 100.0; // encoder units
     public static final String kVkey = "hopperKv";
     public static final double kVdefault = 0.001;
+    public static final double posToleranceDefault = 100;
+    public static final String kPkey = "hopperKp";
+    public static final double kPdefault = 0.0;
+    public static final String kIkey = "hopperKi";
+    public static final double kIdefault = 0.0;
+    public static final String kDkey = "hopperKd";
+    public static final double kDdefault = 0.0;
   }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;

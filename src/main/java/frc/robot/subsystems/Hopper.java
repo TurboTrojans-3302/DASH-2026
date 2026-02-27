@@ -15,11 +15,12 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
-//TODO reimplement this whole thing with closed-loop position control.
+
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
  */
@@ -32,6 +33,11 @@ public class Hopper extends SubsystemBase {
     private double softMax = HopperConstants.maxPositionDefault;
     private double softMin = HopperConstants.minPositionDefault;
     private double kV = HopperConstants.kVdefault;
+    private double kP = HopperConstants.kPdefault;
+    private double kI = HopperConstants.kIdefault;
+    private double kD = HopperConstants.kDdefault;
+    private double posTolerance = HopperConstants.posToleranceDefault;
+    private boolean PIDEnabled = false;
 
 
     // default percent output to use for extend/retract if caller doesn't specify
@@ -84,29 +90,30 @@ public class Hopper extends SubsystemBase {
     }
 
     public void move(double increment) {
-        // If we're at the max position and trying to extend, don't allow it
-        if (atMaxPosition() && increment > 0) {
-            stop();
+        if(PIDEnabled) {
+            // Placeholder
             return;
+        }else{
+            double motorSpeed = MathUtil.clamp(kV * Math.signum(increment), -1.0, 1.0); // simple feedforward based on direction of movement
+            setMotorPctOutput(motorSpeed, motorSpeed);
         }
-
-        // If we're at the min position and trying to retract, don't allow it
-        if (atMinPosition() && increment < 0) {
-            stop();
-            return;
-        }
-
-        double motorSpeed = MathUtil.clamp(kV * Math.signum(increment), -1.0, 1.0); // simple feedforward based on direction of movement
-        leftMotor.set(motorSpeed);
-        rightMotor.set(motorSpeed);
     }
 
     /**
      * Stop both hopper motors.
      */
     public void stop() {
-        leftMotor.set(0);
-        rightMotor.set(0);
+        setMotorPctOutput(0, 0);
+    }
+
+    private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
+        if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
+        if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
+        if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
+        if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
+
+        leftMotor.set(leftSpeed);
+        rightMotor.set(rightSpeed);
     }
 
     @Override
@@ -172,16 +179,39 @@ public class Hopper extends SubsystemBase {
         return new InstantCommand(this::stop, this);
     }
 
+    public Command manualMoveCommand(double increment) {
+        return new FunctionalCommand(() -> move(increment), 
+                                     () -> {},
+                                     (interrupted) -> stop(), 
+                                     () -> false, 
+                                     this);
+    }
+
+    public Command manualExpandCommand() {
+        return manualMoveCommand(moveIncrement);
+    }
+
+    public Command manualRetractCommand() {
+        return manualMoveCommand(-moveIncrement);
+    }
+
+    public Command setPositionCommand(double targetPosition) {
+        return new WaitCommand(2); // Placeholder for actual implementation of moving to a specific position with closed-loop control
+    }
+
     public void loadPreferences() {
-        if (Preferences.containsKey(Constants.HopperConstants.moveIncrementKey)) {
+        if (Preferences.containsKey(HopperConstants.moveIncrementKey)) {
             System.out.println("Loading Hopper  values from preferences");
-            moveIncrement = Preferences.getDouble(Constants.HopperConstants.moveIncrementKey,
+            moveIncrement = Preferences.getDouble(HopperConstants.moveIncrementKey,
                     HopperConstants.moveIncrementDefault);
-            softMax = Preferences.getDouble(Constants.HopperConstants.maxPositionKey,
+            softMax = Preferences.getDouble(HopperConstants.maxPositionKey,
                     HopperConstants.maxPositionDefault);
-            softMin = Preferences.getDouble(Constants.HopperConstants.minPositionKey,
+            softMin = Preferences.getDouble(HopperConstants.minPositionKey,
                     HopperConstants.minPositionDefault);
-            kV = Preferences.getDouble(Constants.HopperConstants.kVkey, HopperConstants.kVdefault);
+            kV = Preferences.getDouble(HopperConstants.kVkey, HopperConstants.kVdefault);
+            kP = Preferences.getDouble(HopperConstants.kPkey, HopperConstants.kPdefault);
+            kI = Preferences.getDouble(HopperConstants.kIkey, HopperConstants.kIdefault);
+            kD = Preferences.getDouble(HopperConstants.kDkey, HopperConstants.kDdefault);
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -189,10 +219,13 @@ public class Hopper extends SubsystemBase {
 
     public void savePreferences() {
         System.out.println("Saving hopper values to preferences");
-        Preferences.setDouble(Constants.HopperConstants.moveIncrementKey, moveIncrement);
-        Preferences.setDouble(Constants.HopperConstants.maxPositionKey, softMax);
-        Preferences.setDouble(Constants.HopperConstants.minPositionKey, softMin);
-        Preferences.setDouble(Constants.HopperConstants.kVkey, kV);
+        Preferences.setDouble(HopperConstants.moveIncrementKey, moveIncrement);
+        Preferences.setDouble(HopperConstants.maxPositionKey, softMax);
+        Preferences.setDouble(HopperConstants.minPositionKey, softMin);
+        Preferences.setDouble(HopperConstants.kVkey, kV);
+        Preferences.setDouble(HopperConstants.kPkey, kP);
+        Preferences.setDouble(HopperConstants.kIkey, kI);
+        Preferences.setDouble(HopperConstants.kDkey, kD);
     }
 
     public boolean leftHardLimit() {
@@ -212,6 +245,9 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("Left Motor Position", () -> leftEncoder.getPosition(), null);
         builder.addDoubleProperty("Right Motor Position", () -> rightEncoder.getPosition(), null);
         builder.addDoubleProperty("kV", () -> kV, (x) -> { kV = x; });
+        builder.addDoubleProperty("kP", () -> kP, (x) -> { kP = x; });
+        builder.addDoubleProperty("kI", () -> kI, (x) -> { kI = x; });
+        builder.addDoubleProperty("kD", () -> kD, (x) -> { kD = x; });
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
         builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
