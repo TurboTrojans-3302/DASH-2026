@@ -4,15 +4,18 @@ import frc.robot.Constants;
 import frc.robot.Constants.HopperConstants;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -75,11 +78,9 @@ public class Hopper extends SubsystemBase {
     private void configureSparkMaxes() {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
         leftSparkConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
-        leftSparkConfig.apply(new SoftLimitConfig());
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
-        rightSparkConfig.inverted(true); // invert right motor so that positive speed extends both sides in the same
-                                         // direction
+        rightSparkConfig.inverted(true); // invert right motor 
         rightSparkConfig.encoder.inverted(true);
 
         leftMotor.configure(leftSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -111,9 +112,13 @@ public class Hopper extends SubsystemBase {
     }
 
     public void setPosition(double pos) {
-        positionSetpoint = MathUtil.clamp(pos, softMin, softMax);
-        leftPID.setGoal(positionSetpoint);
-        rightPID.setGoal(positionSetpoint);
+        if(PIDEnabled) {
+            positionSetpoint = MathUtil.clamp(pos, softMin, softMax);
+            leftPID.setGoal(positionSetpoint);
+            rightPID.setGoal(positionSetpoint);
+        }else{
+            DriverStation.reportWarning("Can't set hopper position while PID is disabled!", false);
+        }
     }
 
     public boolean isPIDEnabled() {
@@ -122,6 +127,7 @@ public class Hopper extends SubsystemBase {
 
     public void setPIDEnabled(boolean enabled) {
         if (enabled && !PIDEnabled) {
+            PIDEnabled = enabled;
             // Snap setpoint to current average position and reset controllers
             double currentPos = (leftEncoder.getPosition() + rightEncoder.getPosition()) / 2.0;
             setPosition(currentPos);
@@ -190,37 +196,37 @@ public class Hopper extends SubsystemBase {
         return new InstantCommand(this::stop, this);
     }
 
-    public Command manualMoveCommand(double increment) {
-        return new FunctionalCommand(() -> move(increment), 
-                                     () -> {},
+    public Command manualMoveCommand(DoubleSupplier increment) {
+        return new FunctionalCommand(() -> {},
+                                     () -> move(increment.getAsDouble()), 
                                      (interrupted) -> stop(), 
                                      () -> false, 
                                      this);
     }
 
     public Command manualExpandCommand() {
-        return manualMoveCommand(moveIncrement);
+        return manualMoveCommand(() -> moveIncrement);
     }
 
     public Command manualRetractCommand() {
-        return manualMoveCommand(-moveIncrement);
+        return manualMoveCommand(() -> -moveIncrement);
     }
 
-    public Command setPositionCommand(double targetPosition) {
+    public Command setPositionCommand(DoubleSupplier targetPosition) {
         return new FunctionalCommand(
-            () -> { setPosition(targetPosition); },
+            () -> { setPosition(targetPosition.getAsDouble()); },
             () -> {}, // periodic() handles the output
             (interrupted) -> { stop(); },
-            () -> leftPID.atGoal() && rightPID.atGoal(),
+            () -> (leftPID.atGoal() && rightPID.atGoal()) || !PIDEnabled, // end command when at position or if PID is disabled
             this);
     }
 
     public Command expandCommand() {
-        return setPositionCommand(softMax);
+        return setPositionCommand(() -> softMax);
     }
 
     public Command retractCommand() {
-        return setPositionCommand(softMin);
+        return setPositionCommand(() -> softMin);
     }
 
     /** Apply current kP/kI/kD/tolerance/constraints to both PID controllers. */
@@ -234,7 +240,7 @@ public class Hopper extends SubsystemBase {
         rightPID.setConstraints(constraints);
     }
 
-    public void loadPreferences() {
+    private void loadPreferences() {
         if (Preferences.containsKey(HopperConstants.moveIncrementKey)) {
             System.out.println("Loading Hopper  values from preferences");
             moveIncrement = Preferences.getDouble(HopperConstants.moveIncrementKey,
@@ -247,14 +253,16 @@ public class Hopper extends SubsystemBase {
             kP = Preferences.getDouble(HopperConstants.kPkey, HopperConstants.kPdefault);
             kI = Preferences.getDouble(HopperConstants.kIkey, HopperConstants.kIdefault);
             kD = Preferences.getDouble(HopperConstants.kDkey, HopperConstants.kDdefault);
+            posTolerance = Preferences.getDouble(HopperConstants.posToleranceKey, HopperConstants.posToleranceDefault);
             maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
             maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
+            applyPIDGains();
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
     }
 
-    public void savePreferences() {
+    private void savePreferences() {
         System.out.println("Saving hopper values to preferences");
         Preferences.setDouble(HopperConstants.moveIncrementKey, moveIncrement);
         Preferences.setDouble(HopperConstants.maxPositionKey, softMax);
@@ -263,6 +271,7 @@ public class Hopper extends SubsystemBase {
         Preferences.setDouble(HopperConstants.kPkey, kP);
         Preferences.setDouble(HopperConstants.kIkey, kI);
         Preferences.setDouble(HopperConstants.kDkey, kD);
+        Preferences.setDouble(HopperConstants.posToleranceKey, posTolerance);
         Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
         Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
     }
@@ -289,7 +298,7 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("kD", () -> kD, (x) -> { kD = x; applyPIDGains(); });
         builder.addDoubleProperty("Max Velocity",     () -> maxVelocity,     (x) -> { maxVelocity     = x; applyPIDGains(); });
         builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
-        builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, (x) -> PIDEnabled = x);
+        builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
