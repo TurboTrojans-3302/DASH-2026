@@ -127,14 +127,14 @@ public class RobotContainer {
       JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);
       JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);
       JoystickButton stopShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobPush);
-      JoystickButton enablePID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Up);
-      JoystickButton disablePID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Down);
+      JoystickButton enableShooterPID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Up);
+      JoystickButton disableShooterPID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Down);
 
       increaseShooterSpeed.whileTrue(m_shooter.incrementSpeedCommand());
       decreaseShooterSpeed.whileTrue(m_shooter.decrementSpeedCommand());
       stopShooter.onTrue(new InstantCommand(() -> m_shooter.stop(), m_shooter));
-      enablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true), m_shooter));
-      disablePID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false), m_shooter ));
+      enableShooterPID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true), m_shooter));
+      disableShooterPID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false), m_shooter ));
 
 
       // toggle between using timer to limit feeder and ignoring timer (feeder is
@@ -161,10 +161,13 @@ public class RobotContainer {
       // Hopper controls: 
       POVButton hopperManualExpand = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
       POVButton hopperManualRetract = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
-
       hopperManualExpand.whileTrue(m_hopper.manualExpandCommand());
       hopperManualRetract.whileTrue(m_hopper.manualRetractCommand());
-  
+    
+      JoystickButton hopperExpand = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left2);
+      JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
+      hopperExpand.onTrue(m_hopper.expandCommand());
+      hopperRetract.onTrue(m_hopper.retractCommand());
     }
   }
 

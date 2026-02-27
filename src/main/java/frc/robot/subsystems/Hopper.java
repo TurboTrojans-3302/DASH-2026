@@ -15,11 +15,11 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
@@ -38,6 +38,10 @@ public class Hopper extends SubsystemBase {
     private double kD = HopperConstants.kDdefault;
     private double posTolerance = HopperConstants.posToleranceDefault;
     private boolean PIDEnabled = false;
+    private double positionSetpoint = 0.0;
+
+    private final PIDController leftPID  = new PIDController(HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault);
+    private final PIDController rightPID = new PIDController(HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault);
 
 
     // default percent output to use for extend/retract if caller doesn't specify
@@ -90,13 +94,34 @@ public class Hopper extends SubsystemBase {
     }
 
     public void move(double increment) {
-        if(PIDEnabled) {
-            // Placeholder
-            return;
-        }else{
-            double motorSpeed = MathUtil.clamp(kV * Math.signum(increment), -1.0, 1.0); // simple feedforward based on direction of movement
+        if (PIDEnabled) {
+            // PID runs in periodic(); nudge the setpoint by increment
+            setPosition(positionSetpoint + increment);
+        } else {
+            double motorSpeed = MathUtil.clamp(kV * Math.signum(increment), -1.0, 1.0);
             setMotorPctOutput(motorSpeed, motorSpeed);
         }
+    }
+
+    public void setPosition(double pos) {
+        positionSetpoint = MathUtil.clamp(pos, softMin, softMax);
+        leftPID.setSetpoint(positionSetpoint);
+        rightPID.setSetpoint(positionSetpoint);
+    }
+
+    public boolean isPIDEnabled() {
+        return PIDEnabled;
+    }
+
+    public void setPIDEnabled(boolean enabled) {
+        if (enabled && !PIDEnabled) {
+            // Snap setpoint to current average position and reset controllers
+            double currentPos = (leftEncoder.getPosition() + rightEncoder.getPosition()) / 2.0;
+            setPosition(currentPos);
+            leftPID.reset();
+            rightPID.reset();
+        }
+        PIDEnabled = enabled;
     }
 
     /**
@@ -107,6 +132,8 @@ public class Hopper extends SubsystemBase {
     }
 
     private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
+        leftSpeed  = MathUtil.clamp(leftSpeed,  -1.0, 1.0);
+        rightSpeed = MathUtil.clamp(rightSpeed, -1.0, 1.0);
         if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
         if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
         if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
@@ -118,8 +145,14 @@ public class Hopper extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if(leftHardLimit()) { leftEncoder.setPosition(0); } 
-        if(rightHardLimit()) { rightEncoder.setPosition(0); }
+        if (leftHardLimit())  { leftEncoder.setPosition(0); }
+        if (rightHardLimit()) { rightEncoder.setPosition(0); }
+
+        if (PIDEnabled) {
+            double leftOutput  = leftPID.calculate(leftEncoder.getPosition());
+            double rightOutput = rightPID.calculate(rightEncoder.getPosition());
+            setMotorPctOutput(leftOutput, rightOutput);
+        }
     }
 
     public boolean atSoftMaxL() {
@@ -146,35 +179,6 @@ public class Hopper extends SubsystemBase {
         return atSoftMinL() && atSoftMinR();
     }
 
-    /**
-     * Command that expands the hopper at the default speed while scheduled.
-     */
-    public Command expandCommand() {
-        return new FunctionalCommand(() -> move(moveIncrement), // init: set speed to expand
-                () -> {
-                    if (atSoftMaxL())
-                        leftMotor.set(0);
-                    if (atSoftMaxR())
-                        rightMotor.set(0);
-                },
-                (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
-                () -> atMaxPosition(), // End condition: stop when hopper reaches max position
-                this);
-    }
-
-    public Command retractCommand() {
-        return new FunctionalCommand(() -> move(-moveIncrement), // init: set speed to retract
-                () -> {
-                    if (atSoftMinL())
-                        leftMotor.set(0);
-                    if (atSoftMinR())
-                        rightMotor.set(0);
-                },
-                (interrupted) -> stop(), // On end (whether interrupted or not), stop the motors
-                () -> atMinPosition(), // End condition: stop when hopper reaches min position
-                this);
-    }
-
     public Command stopCommand() {
         return new InstantCommand(this::stop, this);
     }
@@ -196,7 +200,28 @@ public class Hopper extends SubsystemBase {
     }
 
     public Command setPositionCommand(double targetPosition) {
-        return new WaitCommand(2); // Placeholder for actual implementation of moving to a specific position with closed-loop control
+        return new FunctionalCommand(
+            () -> { setPosition(targetPosition); },
+            () -> {}, // periodic() handles the output
+            (interrupted) -> { stop(); },
+            () -> leftPID.atSetpoint() && rightPID.atSetpoint(),
+            this);
+    }
+
+    public Command expandCommand() {
+        return setPositionCommand(softMax);
+    }
+
+    public Command retractCommand() {
+        return setPositionCommand(softMin);
+    }
+
+    /** Apply current kP/kI/kD/tolerance to both PID controllers. */
+    private void applyPIDGains() {
+        leftPID.setPID(kP, kI, kD);
+        rightPID.setPID(kP, kI, kD);
+        leftPID.setTolerance(posTolerance);
+        rightPID.setTolerance(posTolerance);
     }
 
     public void loadPreferences() {
@@ -245,9 +270,11 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("Left Motor Position", () -> leftEncoder.getPosition(), null);
         builder.addDoubleProperty("Right Motor Position", () -> rightEncoder.getPosition(), null);
         builder.addDoubleProperty("kV", () -> kV, (x) -> { kV = x; });
-        builder.addDoubleProperty("kP", () -> kP, (x) -> { kP = x; });
-        builder.addDoubleProperty("kI", () -> kI, (x) -> { kI = x; });
-        builder.addDoubleProperty("kD", () -> kD, (x) -> { kD = x; });
+        builder.addDoubleProperty("kP", () -> kP, (x) -> { kP = x; applyPIDGains(); });
+        builder.addDoubleProperty("kI", () -> kI, (x) -> { kI = x; applyPIDGains(); });
+        builder.addDoubleProperty("kD", () -> kD, (x) -> { kD = x; applyPIDGains(); });
+        builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, (x) -> PIDEnabled = x);
+        builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
         builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
