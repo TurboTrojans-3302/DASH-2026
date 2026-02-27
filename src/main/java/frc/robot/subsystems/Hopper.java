@@ -19,7 +19,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
@@ -37,11 +38,17 @@ public class Hopper extends SubsystemBase {
     private double kI = HopperConstants.kIdefault;
     private double kD = HopperConstants.kDdefault;
     private double posTolerance = HopperConstants.posToleranceDefault;
+    private double maxVelocity     = HopperConstants.maxVelocityDefault;
+    private double maxAcceleration = HopperConstants.maxAccelerationDefault;
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
 
-    private final PIDController leftPID  = new PIDController(HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault);
-    private final PIDController rightPID = new PIDController(HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault);
+    private final ProfiledPIDController leftPID  = new ProfiledPIDController(
+            HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault,
+            new TrapezoidProfile.Constraints(HopperConstants.maxVelocityDefault, HopperConstants.maxAccelerationDefault));
+    private final ProfiledPIDController rightPID = new ProfiledPIDController(
+            HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault,
+            new TrapezoidProfile.Constraints(HopperConstants.maxVelocityDefault, HopperConstants.maxAccelerationDefault));
 
 
     // default percent output to use for extend/retract if caller doesn't specify
@@ -105,8 +112,8 @@ public class Hopper extends SubsystemBase {
 
     public void setPosition(double pos) {
         positionSetpoint = MathUtil.clamp(pos, softMin, softMax);
-        leftPID.setSetpoint(positionSetpoint);
-        rightPID.setSetpoint(positionSetpoint);
+        leftPID.setGoal(positionSetpoint);
+        rightPID.setGoal(positionSetpoint);
     }
 
     public boolean isPIDEnabled() {
@@ -118,8 +125,8 @@ public class Hopper extends SubsystemBase {
             // Snap setpoint to current average position and reset controllers
             double currentPos = (leftEncoder.getPosition() + rightEncoder.getPosition()) / 2.0;
             setPosition(currentPos);
-            leftPID.reset();
-            rightPID.reset();
+            leftPID.reset(currentPos);
+            rightPID.reset(currentPos);
         }
         PIDEnabled = enabled;
     }
@@ -204,7 +211,7 @@ public class Hopper extends SubsystemBase {
             () -> { setPosition(targetPosition); },
             () -> {}, // periodic() handles the output
             (interrupted) -> { stop(); },
-            () -> leftPID.atSetpoint() && rightPID.atSetpoint(),
+            () -> leftPID.atGoal() && rightPID.atGoal(),
             this);
     }
 
@@ -216,12 +223,15 @@ public class Hopper extends SubsystemBase {
         return setPositionCommand(softMin);
     }
 
-    /** Apply current kP/kI/kD/tolerance to both PID controllers. */
+    /** Apply current kP/kI/kD/tolerance/constraints to both PID controllers. */
     private void applyPIDGains() {
         leftPID.setPID(kP, kI, kD);
         rightPID.setPID(kP, kI, kD);
         leftPID.setTolerance(posTolerance);
         rightPID.setTolerance(posTolerance);
+        TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration);
+        leftPID.setConstraints(constraints);
+        rightPID.setConstraints(constraints);
     }
 
     public void loadPreferences() {
@@ -237,6 +247,8 @@ public class Hopper extends SubsystemBase {
             kP = Preferences.getDouble(HopperConstants.kPkey, HopperConstants.kPdefault);
             kI = Preferences.getDouble(HopperConstants.kIkey, HopperConstants.kIdefault);
             kD = Preferences.getDouble(HopperConstants.kDkey, HopperConstants.kDdefault);
+            maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
+            maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -251,6 +263,8 @@ public class Hopper extends SubsystemBase {
         Preferences.setDouble(HopperConstants.kPkey, kP);
         Preferences.setDouble(HopperConstants.kIkey, kI);
         Preferences.setDouble(HopperConstants.kDkey, kD);
+        Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
+        Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
     }
 
     public boolean leftHardLimit() {
@@ -273,6 +287,8 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("kP", () -> kP, (x) -> { kP = x; applyPIDGains(); });
         builder.addDoubleProperty("kI", () -> kI, (x) -> { kI = x; applyPIDGains(); });
         builder.addDoubleProperty("kD", () -> kD, (x) -> { kD = x; applyPIDGains(); });
+        builder.addDoubleProperty("Max Velocity",     () -> maxVelocity,     (x) -> { maxVelocity     = x; applyPIDGains(); });
+        builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
         builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, (x) -> PIDEnabled = x);
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
