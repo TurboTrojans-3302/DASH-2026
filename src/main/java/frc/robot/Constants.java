@@ -30,12 +30,20 @@ public final class Constants {
     public static final int kHopperLeftMotorCanId  = 11;
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId   = 13;
-    public static final int kClimbMotor1           = 14;
-    public static final int kClimbMotor2           = 15;
+    public static final int kClimbMotor            = 14;
   }
 
+  public static final class PWMChannels {
+    public static final int PWMServoInnerLeft = 0;
+    public static final int PWMServoInnerRight = 1;
+    public static final int PWMServoOuterLeft = 2;
+    public static final int PWMServoOuterRight = 3;
+
+  }
+
+
   public static final class DigitalIO {
-        
+        public static final int kClimberLimitSwitch = 0;
         
       }
   public static final class DriveConstants {
@@ -166,7 +174,13 @@ public final class Constants {
   }
 
   public static final class ClimberConstants {
-   
+   public static final double hookRetractedAngle = 0.0;
+   public static final double hookDeployedAngle = 75.0;
+   public static final double hookEngagedAngle = 135.0;
+  public static final double kP = 0;
+public static final double kI = 0;
+public static final double kD = 0;
+public static final double kTolerance = 0;
   }
 
  
