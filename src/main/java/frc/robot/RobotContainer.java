@@ -147,15 +147,17 @@ public class RobotContainer {
       JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                      // without feeding
-      enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(true), m_shooter));
-      enableDangerMode.onFalse(new InstantCommand(() -> m_shooter.setDangerMode(false), m_shooter));
+      enableDangerMode.onChange(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
 
       feedShooter.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
-      feederReverse.whileTrue(
-          new RunCommand(() -> m_shooter.startFeeder(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));
+      feederReverse.whileTrue(m_shooter.reverseFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
 
+      JoystickButton testPlus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up);
+      JoystickButton testMinus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down);
+      testPlus.whileTrue(new RunCommand(()->{m_shooter.startFeeder();}, m_shooter));
+      testMinus.whileTrue(new RunCommand(()->{m_shooter.stopFeeder();}, m_shooter));
     }
 
     if(HOPPER_ENABLE){
@@ -178,8 +180,6 @@ public class RobotContainer {
   }
 
   public void configureTestControls() {
-    JoystickButton testPlus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up);
-    JoystickButton testMinus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down);
   }
 
   /**

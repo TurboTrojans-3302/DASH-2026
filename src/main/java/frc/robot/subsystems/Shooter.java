@@ -32,7 +32,7 @@ public class Shooter extends SubsystemBase {
   private SimpleMotorFeedforward feedforward;
   private boolean PIDEnabled = false;
   private double feederSpeed = Constants.ShooterConstants.feederSpeedDefault;
-  private boolean dangerMode = false;
+  private boolean dangerMode = true;
   private Timer timeAtSpeed = new Timer();
   private boolean coasting = false;
   private LaserCan dxSensor;
@@ -62,8 +62,8 @@ public class Shooter extends SubsystemBase {
 
     loadPreferences();
 
-    feederMotor = new SparkMax(feederMotorID, MotorType.kBrushless);
-    feederMotor.configure(new SparkMaxConfig().inverted(false)
+    feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
+    feederMotor.configure(new SparkMaxConfig().inverted(true)
         .idleMode(IdleMode.kBrake),
         ResetMode.kResetSafeParameters,
         PersistMode.kNoPersistParameters);
@@ -267,6 +267,15 @@ public class Shooter extends SubsystemBase {
       double targetRPM = getRPMforRange(range);
       setRPMsetpoint(targetRPM);
     }, this);
+  }
+
+  public Command reverseFeedCommand(){
+    return new FunctionalCommand(
+      ()->{},
+      ()->{startFeeder(-feederSpeed);},
+      (interrupted)->{stopFeeder();},
+      ()->false,
+      this);
   }
 
   public Double getRPMforRange(double range){

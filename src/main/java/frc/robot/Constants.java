@@ -161,9 +161,9 @@ public final class Constants {
     public static final double maxRPM = 6000.0;
     public static final double defaultShootRPM = 4900.0;
 
-    public static final double feederSpeedDefault = 0.1;
+    public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
-    public static double manualRPMincrement = 50; // rpm
+    public static double manualRPMincrement = 10; // rpm
 
   }
 

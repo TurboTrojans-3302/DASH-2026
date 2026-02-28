@@ -524,4 +524,9 @@ public class DriveTrain extends SubsystemBase {
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
 
+  // @Override
+  // public void initSendable(SendableBuilder builder) {
+  //   super.initSendable(builder);
+  //   builder.addRawProperty("gyro", swerveDrive.getGyro().getClass().getSimpleName(), () -> swerveDrive.getGyro(), null);
+  // }
 }
