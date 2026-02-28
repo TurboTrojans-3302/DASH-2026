@@ -24,6 +24,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,11 +36,12 @@ import frc.robot.Constants;
 public class Climbers extends SubsystemBase{
 
   SparkMax climberMotor;
+  double climberSpeed = Constants.ClimberConstants.climberDefaultSpeed;
   PIDController climberPID;
-  double kP = Constants.ClimberConstants.kP;
-  double kI = Constants.ClimberConstants.kI;
-  double kD = Constants.ClimberConstants.kD;
-  double kTolerance = Constants.ClimberConstants.kTolerance;
+  double kP = Constants.ClimberConstants.kPdefault;
+  double kI = Constants.ClimberConstants.kIdefault;
+  double kD = Constants.ClimberConstants.kDdefault;
+  double kTolerance = Constants.ClimberConstants.kToleranceDefault;
   Servo servoInnerLeft;
   Servo servoInnerRight;
   Servo servoOuterLeft;
@@ -184,6 +186,31 @@ public class Climbers extends SubsystemBase{
 
   public boolean ClimberAtSetpoint(){
     return climberPID.atSetpoint();
+  }
+
+  public void loadPreferences() {
+    if (Preferences.containsKey(Constants.ClimberConstants.kPkey)) {
+      System.out.println("Loading climber PID values from preferences");
+      climberPID.setP(Preferences.getDouble(Constants.ClimberConstants.kPkey, Constants.ClimberConstants.kPdefault));
+      climberPID.setI(Preferences.getDouble(Constants.ClimberConstants.kIkey, Constants.ClimberConstants.kIdefault));
+      climberPID.setD(Preferences.getDouble(Constants.ClimberConstants.kDkey, Constants.ClimberConstants.kDdefault));
+      climberPID.setTolerance(Preferences.getDouble(Constants.ClimberConstants.PIDToleranceKey,
+          Constants.ClimberConstants.kToleranceDefault));
+      climberSpeed = Preferences.getDouble(Constants.ShooterConstants.feederSpeedKey,
+          Constants.ShooterConstants.feederSpeedDefault); // TODO here
+    } else {
+      System.out.println("No climber prefs found. Using default values");
+    }
+  }
+
+  public void savePreferences() {
+    System.out.println("Saving climber PID values to preferences");
+    Preferences.setDouble(Constants.ClimberConstants.kPkey, climberPID.getP());
+    Preferences.setDouble(Constants.ClimberConstants.kIkey, climberPID.getI());
+    Preferences.setDouble(Constants.ClimberConstants.kDkey, climberPID.getD());
+    Preferences.setDouble(Constants.ClimberConstants.PIDToleranceKey, climberPID.getErrorTolerance());
+    //TODO add climber speed here
+
   }
 
 

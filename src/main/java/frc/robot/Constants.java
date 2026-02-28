@@ -184,11 +184,21 @@ public final class Constants {
   public static final class ClimberConstants {
    public static final double hookRetractedAngle = 0.0;
    public static final double hookDeployedAngle = 75.0;
+
    
-  public static final double kP = 0;
-public static final double kI = 0;
-public static final double kD = 0;
-public static final double kTolerance = 0;
+    public static final double kPdefault = 0;
+    public static final double kIdefault = 0;
+    public static final double kDdefault = 0;
+    public static final String kPkey = "shooter_kP";
+    public static final String kIkey = "shooter_kI";
+    public static final String kDkey = "shooter_kD";
+    public static final String kVkey = "shooter_kV";
+    public static final String PIDToleranceKey = "shooter_PIDTolerance";
+    public static final double kToleranceDefault = 0;
+
+    public static final double climberDefaultSpeed = 0.3; //manual
+
+
   }
 
   public static final class HopperConstants {
