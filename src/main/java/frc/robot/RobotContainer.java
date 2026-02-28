@@ -34,9 +34,9 @@ import frc.robot.subsystems.Hopper;
  */
 public class RobotContainer {
 
-  private static boolean HOPPER_ENABLE = true;
+  private static boolean HOPPER_ENABLE = false;
   private static boolean SHOOTER_ENABLE = true;
-  public static boolean feederEnabled = true;
+
   public static boolean ignorePeriods = false;
 
   private static RobotContainer instance;
@@ -76,14 +76,15 @@ public class RobotContainer {
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
     
-
+    if(HOPPER_ENABLE){
     m_hopper = new Hopper();
     SmartDashboard.putData("Hopper", m_hopper);
+    }
 
     SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
     SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
     SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
-
+     
     if(SHOOTER_ENABLE){
       m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId);
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
@@ -100,11 +101,13 @@ public class RobotContainer {
 
     m_shooter.setDefaultCommand(new InstantCommand(() -> {
       m_shooter.stopFeeder();
-    }));
+    }, m_shooter));
     // Keep hopper motors idle when no commands are active
-    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
+    if (HOPPER_ENABLE) {
+      m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
+    }
   }
-
+  
   public static RobotContainer getInstance() {
     return instance;
   }
