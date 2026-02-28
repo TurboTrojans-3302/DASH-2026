@@ -36,8 +36,10 @@ import frc.robot.Constants;
 public class Climbers extends SubsystemBase{
 
   SparkMax climberMotor;
-  double climberSpeed = Constants.ClimberConstants.climberDefaultSpeed;
+  double climberSpeed = 0;
+  double climberSetpoint = 0;
   PIDController climberPID;
+  boolean PIDEnabled = true;
   double kP = Constants.ClimberConstants.kPdefault;
   double kI = Constants.ClimberConstants.kIdefault;
   double kD = Constants.ClimberConstants.kDdefault;
@@ -177,10 +179,43 @@ public class Climbers extends SubsystemBase{
     return outerHooksAtSetpoint;
   }
 
-  public void setClimberPosition(double setpoint){
+  public String innerHooksCurrentLocation(){
+    if ((servoInnerLeftSetpoint == Constants.ClimberConstants.hookRetractedAngle) 
+     && (servoInnerRightSetpoint == Constants.ClimberConstants.hookRetractedAngle)
+     && InnerHooksAtSetpoint()){
+      return "retracted";
+     } else if ((servoInnerLeftSetpoint == Constants.ClimberConstants.hookDeployedAngle) 
+     && (servoInnerRightSetpoint == Constants.ClimberConstants.hookDeployedAngle)
+     && InnerHooksAtSetpoint()){
+      return "deployed";
+     } else {
+      return "neither";
+     }
+  }
+
+  public String outerHooksCurrentLocation(){
+    if ((servoOuterLeftSetpoint == Constants.ClimberConstants.hookRetractedAngle) 
+     && (servoOuterRightSetpoint == Constants.ClimberConstants.hookRetractedAngle)
+     && OuterHooksAtSetpoint()){
+      return "retracted";
+     } else if ((servoOuterLeftSetpoint == Constants.ClimberConstants.hookDeployedAngle) 
+     && (servoOuterRightSetpoint == Constants.ClimberConstants.hookDeployedAngle)
+     && OuterHooksAtSetpoint()){
+      return "deployed";
+     } else {
+      return "neither";
+     }
+  }
+
+
+  public void moveClimberPID(double setpoint){
+
+    climberSetpoint = setpoint;
     climberMotor.set(
-      climberPID.calculate(climberEncoder.getPosition(), setpoint)
+      climberPID.calculate(climberEncoder.getPosition(), climberSetpoint)
     );
+
+
   }
 
   public boolean ClimberAtSetpoint(){
@@ -189,6 +224,33 @@ public class Climbers extends SubsystemBase{
 
   public double getClimberManualSpeed(){
     return climberSpeed;
+  }
+
+  public void stopClimbers(){
+    climberMotor.stopMotor();
+  }
+
+  public void togglePID(boolean enabled){
+    PIDEnabled = enabled;
+  }
+
+  public boolean PIDEnabled(){
+    return PIDEnabled;
+  }
+
+  public void climberManualControl(double speed){
+    climberMotor.set(speed);
+    togglePID(false);
+  }
+
+  @Override 
+  public void periodic(){
+    if (PIDEnabled()){
+      moveClimberPID(climberSetpoint);
+    } else {
+      climberManualControl(climberSpeed);
+    }
+
   }
 
   //TODO add climber manual control in robot container
@@ -223,6 +285,7 @@ public class Climbers extends SubsystemBase{
   @Override
   public void initSendable(SendableBuilder builder){
     super.initSendable(builder);
+    builder.addBooleanProperty("PID Enabled", () -> PIDEnabled(), (x)-> togglePID(x));
     builder.addDoubleProperty("kP", ()-> climberPID.getP(), (x)-> climberPID.setP(x));
     builder.addDoubleProperty("kI", ()-> climberPID.getI(), (x)-> climberPID.setI(x));
     builder.addDoubleProperty("kD", ()-> climberPID.getD(), (x)-> climberPID.setD(x));

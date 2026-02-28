@@ -36,6 +36,7 @@ public class RobotContainer {
 
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
+  private static boolean CLIMBER_ENABLE = true;
   public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
 
@@ -57,7 +58,7 @@ public class RobotContainer {
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-//  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
+  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
   GenericHID m_buttonBoard = new GenericHID(OIConstants.kButtonBoardPort);
 
 
@@ -89,6 +90,11 @@ public class RobotContainer {
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
     }
 
+    if (CLIMBER_ENABLE){
+      m_climbers = new Climbers();
+      SmartDashboard.putData("ClimbersSubsystem", m_climbers);
+    }
+
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
 
@@ -103,6 +109,8 @@ public class RobotContainer {
     }));
     // Keep hopper motors idle when no commands are active
     m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
+
+    m_climbers.setDefaultCommand(new RunCommand(()-> m_climbers.stopClimbers(), m_climbers));
   }
 
   public static RobotContainer getInstance() {
@@ -171,6 +179,44 @@ public class RobotContainer {
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
       hopperPIDenable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(true), m_hopper));
       hopperPIDdisable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(false), m_hopper));
+    }
+
+    //only automatic sequence for servos, automatic and manual for climber pid?
+    if (CLIMBER_ENABLE){
+      //climber up
+      if (m_copilotController.getLeftTriggerAxis() > Constants.OIConstants.kClimbersDeadband){
+        new RunCommand(()-> m_climbers.climberManualControl(-Constants.ClimberConstants.climberDefaultSpeed), m_climbers);
+      }
+      //climber down
+      else if (m_copilotController.getRightTriggerAxis() > Constants.OIConstants.kClimbersDeadband){
+        new RunCommand(()-> m_climbers.climberManualControl(Constants.ClimberConstants.climberDefaultSpeed), m_climbers);
+      } else {
+        new RunCommand(()-> m_climbers.stopClimbers(), m_climbers);
+      }
+
+      //retract/engage inner hooks based on previous position
+      if (m_copilotController.getLeftBumperButton()){
+        if (m_climbers.innerHooksCurrentLocation() == "retracted"){
+          m_climbers.DeployInnerHooks();
+        } else if (m_climbers.innerHooksCurrentLocation() == "deployed"){
+          m_climbers.RetractInnerHooks();
+        }else{
+          System.out.print("its broken! :)");
+        }
+      }
+
+      if (m_copilotController.getRightBumperButton()){
+        if (m_climbers.outerHooksCurrentLocation() == "retracted"){
+          m_climbers.DeployOuterHooks();
+        } else if (m_climbers.outerHooksCurrentLocation() == "deployed"){
+          m_climbers.RetractOuterHooks();
+        }else{
+          System.out.print("its broken :)");
+        }
+      }
+
+      //retract/engage outer hooks
+
     }
   }
 

@@ -61,6 +61,7 @@ public final class Constants {
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
     public static final double kDriveDeadband = 0.05;
+    public static final double kClimbersDeadband = 0.2; //only want one speed so a high value because we only need to be sure the button is pressed
     public static final int kCopilotControllerPort = 1;
     public static final int kReefControllerPort = 3;
     public static final int kButtonBoardPort = 2;
