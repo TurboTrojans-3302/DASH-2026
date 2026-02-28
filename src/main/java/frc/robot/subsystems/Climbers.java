@@ -52,7 +52,6 @@ public class Climbers extends SubsystemBase{
   double servoInnerRightSetpoint = 0.0;
   double servoOuterLeftSetpoint = 0.0;
   double servoOuterRightSetpoint = 0.0;
-  double servoAngleTolerance = 1.0;
   Timer servoTimer;
   DigitalInput lowerLimitSwitch;
   double hookRetractedAngle = Constants.ClimberConstants.hookRetractedAngle;
@@ -85,7 +84,7 @@ public class Climbers extends SubsystemBase{
     
 
     DigitalInput lowerLimitSwitch = new DigitalInput(Constants.DigitalIO.kClimberLimitSwitch);
-
+    servoTimer = new Timer();
     servoTimer.restart();
     
     
@@ -188,6 +187,12 @@ public class Climbers extends SubsystemBase{
     return climberPID.atSetpoint();
   }
 
+  public double getClimberManualSpeed(){
+    return climberSpeed;
+  }
+
+  //TODO add climber manual control in robot container
+
   public void loadPreferences() {
     if (Preferences.containsKey(Constants.ClimberConstants.kPkey)) {
       System.out.println("Loading climber PID values from preferences");
@@ -196,8 +201,8 @@ public class Climbers extends SubsystemBase{
       climberPID.setD(Preferences.getDouble(Constants.ClimberConstants.kDkey, Constants.ClimberConstants.kDdefault));
       climberPID.setTolerance(Preferences.getDouble(Constants.ClimberConstants.PIDToleranceKey,
           Constants.ClimberConstants.kToleranceDefault));
-      climberSpeed = Preferences.getDouble(Constants.ShooterConstants.feederSpeedKey,
-          Constants.ShooterConstants.feederSpeedDefault); // TODO here
+      climberSpeed = Preferences.getDouble(Constants.ClimberConstants.climberSpeedKey,
+          Constants.ClimberConstants.climberDefaultSpeed);
     } else {
       System.out.println("No climber prefs found. Using default values");
     }
@@ -209,8 +214,26 @@ public class Climbers extends SubsystemBase{
     Preferences.setDouble(Constants.ClimberConstants.kIkey, climberPID.getI());
     Preferences.setDouble(Constants.ClimberConstants.kDkey, climberPID.getD());
     Preferences.setDouble(Constants.ClimberConstants.PIDToleranceKey, climberPID.getErrorTolerance());
-    //TODO add climber speed here
+    Preferences.setDouble(Constants.ClimberConstants.climberSpeedKey, climberSpeed);
+  
 
+  }
+
+  //PID values, climber default speed, servo setpoints
+  @Override
+  public void initSendable(SendableBuilder builder){
+    super.initSendable(builder);
+    builder.addDoubleProperty("kP", ()-> climberPID.getP(), (x)-> climberPID.setP(x));
+    builder.addDoubleProperty("kI", ()-> climberPID.getI(), (x)-> climberPID.setI(x));
+    builder.addDoubleProperty("kD", ()-> climberPID.getD(), (x)-> climberPID.setD(x));
+    builder.addDoubleProperty("kTolerance", ()-> climberPID.getErrorTolerance(), (x)-> climberPID.setTolerance(x));
+    builder.addDoubleProperty("climber manual speed", ()-> getClimberManualSpeed(), (x)-> climberSpeed = x);
+    builder.addDoubleProperty("servo IL setpoint", ()-> servoInnerLeftSetpoint, (x)-> servoInnerLeftSetpoint = x);
+    builder.addDoubleProperty("servo IR setpoint", ()-> servoInnerRightSetpoint, (x)-> servoInnerRightSetpoint = x);
+    builder.addDoubleProperty("servo OL setpoint", ()-> servoOuterLeftSetpoint, (x)-> servoOuterLeftSetpoint = x);
+    builder.addDoubleProperty("servo OR setpoint", ()-> servoOuterRightSetpoint, (x)-> servoOuterRightSetpoint = x);
+    builder.addDoubleProperty("retracted angle", ()-> hookRetractedAngle, (x)-> hookRetractedAngle = x);
+    builder.addDoubleProperty("deployed angle", ()-> hookDeployedAngle, (x)-> hookDeployedAngle = x);
   }
 
 
