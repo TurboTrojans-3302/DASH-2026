@@ -45,7 +45,8 @@ public final class Constants {
   public static final class DigitalIO {
     public static final int kHopperLeftContractedLimitSwitchDio = 0;
     public static final int kHopperRightContractedLimitSwitchDio = 1;
-  }public static final int kClimberLimitSwitch = 0;
+    public static final int kClimberLimitSwitch = 2;
+  }
 
   public static final class DriveConstants {
     public static final String maxSpeedKey = "driveMaxSpeed";
@@ -183,7 +184,7 @@ public final class Constants {
   public static final class ClimberConstants {
    public static final double hookRetractedAngle = 0.0;
    public static final double hookDeployedAngle = 75.0;
-   public static final double hookEngagedAngle = 135.0;
+   
   public static final double kP = 0;
 public static final double kI = 0;
 public static final double kD = 0;

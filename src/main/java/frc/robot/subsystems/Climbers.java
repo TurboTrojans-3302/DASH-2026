@@ -21,10 +21,13 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -41,15 +44,18 @@ public class Climbers extends SubsystemBase{
   Servo servoInnerRight;
   Servo servoOuterLeft;
   Servo servoOuterRight;
+  boolean innerHooksAtSetpoint = true;
+  boolean outerHooksAtSetpoint = true;
   double servoInnerLeftSetpoint = 0.0;
   double servoInnerRightSetpoint = 0.0;
   double servoOuterLeftSetpoint = 0.0;
   double servoOuterRightSetpoint = 0.0;
   double servoAngleTolerance = 1.0;
+  Timer servoTimer;
   DigitalInput lowerLimitSwitch;
   double hookRetractedAngle = Constants.ClimberConstants.hookRetractedAngle;
   double hookDeployedAngle = Constants.ClimberConstants.hookDeployedAngle;
-  double hookEngagedAngle = Constants.ClimberConstants.hookEngagedAngle;
+  
 
   RelativeEncoder climberEncoder;
 
@@ -78,10 +84,19 @@ public class Climbers extends SubsystemBase{
 
     DigitalInput lowerLimitSwitch = new DigitalInput(Constants.DigitalIO.kClimberLimitSwitch);
 
+    servoTimer.restart();
     
     
   }
 
+  public void resetServoTimer(){
+    servoTimer.reset();
+    servoTimer.start();
+  }
+
+  public boolean waitForServo(){
+    return servoTimer.advanceIfElapsed(0.5);
+  }
   public boolean atLowerLimit(){
     return lowerLimitSwitch.get();
   }
@@ -100,58 +115,75 @@ public class Climbers extends SubsystemBase{
 
   }
 
-  public void RetractInnerHooks(){
-    setInnerServosPosition(hookRetractedAngle);
+  // public void RetractInnerHooks(){
+  //   setInnerServosPosition(hookRetractedAngle);
+  // 
+  public Command RetractInnerHooks(){
+    return new FunctionalCommand(
+                                ()-> {setInnerServosPosition(hookRetractedAngle);
+                                      resetServoTimer();
+                                      innerHooksAtSetpoint = false;},
+                                ()-> {},
+                                (x)-> {innerHooksAtSetpoint = true;},
+                                ()-> waitForServo(),
+                                this                           
+    );
   }
 
-  public void RetractOuterHooks(){
-    setOuterServosPosition(hookRetractedAngle);
+  
+
+  public Command RetractOuterHooks(){
+    return new FunctionalCommand(
+                                ()-> {setOuterServosPosition(hookRetractedAngle);
+                                      resetServoTimer();
+                                      outerHooksAtSetpoint = false;},
+                                ()-> {},
+                                (x)-> {outerHooksAtSetpoint = true;},
+                                ()-> waitForServo(),
+                                this                           
+    );
   }
 
-  public void DeployInnerHooks(){
-    setInnerServosPosition(hookDeployedAngle);
+  public Command DeployInnerHooks(){
+    return new FunctionalCommand(
+                                ()-> {setInnerServosPosition(hookDeployedAngle);
+                                      resetServoTimer();
+                                      innerHooksAtSetpoint = false;},
+                                ()-> {},
+                                (x)-> {innerHooksAtSetpoint = true;},
+                                ()-> waitForServo(),
+                                this                           
+    );
   }
 
-  public void DeployOuterHooks(){
-    setOuterServosPosition(hookDeployedAngle);
-  }
-
-  public void EngageInnerHooks(){
-    setInnerServosPosition(hookEngagedAngle);
-  }
-
-  public void EngageOuterHooks(){
-    setOuterServosPosition(hookEngagedAngle);
+  public Command DeployOuterHooks(){
+    return new FunctionalCommand(
+                                ()-> {setOuterServosPosition(hookDeployedAngle);
+                                      resetServoTimer();
+                                      outerHooksAtSetpoint = false;},
+                                ()-> {},
+                                (x)-> {outerHooksAtSetpoint = true;},
+                                ()-> waitForServo(),
+                                this                           
+    );
   }
 
   public Boolean InnerHooksAtSetpoint(){
-    //surely there is a neater way to do this
-    //there has to be some sort of math function that can check if a value is within a certain range but I havent found it yet
-    return (((servoInnerLeftSetpoint - servoAngleTolerance) <= (servoInnerLeft.getAngle())) 
-    && (servoInnerLeft.getAngle()) <= (servoInnerLeftSetpoint + servoAngleTolerance)) 
-    
-    &&
-
-    (((servoInnerLeftSetpoint - servoAngleTolerance) <= (servoInnerLeft.getAngle())) 
-    && (servoInnerLeft.getAngle()) <= (servoInnerLeftSetpoint + servoAngleTolerance));
+   return innerHooksAtSetpoint;
   } 
 
   public Boolean OuterHooksAtSetpoint(){
-    
-    return((((servoInnerLeftSetpoint - servoAngleTolerance) <= (servoInnerLeft.getAngle())) 
-    && (servoInnerLeft.getAngle()) <= (servoInnerLeftSetpoint + servoAngleTolerance)) 
-    
-    &&
-
-    (((servoInnerLeftSetpoint - servoAngleTolerance) <= (servoInnerLeft.getAngle())) 
-    && (servoInnerLeft.getAngle()) <= (servoInnerLeftSetpoint + servoAngleTolerance)));
-  } 
-
+    return outerHooksAtSetpoint;
+  }
 
   public void setClimberPosition(double setpoint){
     climberMotor.set(
       climberPID.calculate(climberEncoder.getPosition(), setpoint)
     );
+  }
+
+  public boolean ClimberAtSetpoint(){
+    return climberPID.atSetpoint();
   }
 
 
