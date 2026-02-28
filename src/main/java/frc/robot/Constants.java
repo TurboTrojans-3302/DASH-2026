@@ -40,7 +40,13 @@ public final class Constants {
   }
 
   public static final class DriveConstants {
-    public static final double kMaxSpeed = 4.0; // m/s
+    public static final String maxSpeedKey = "driveMaxSpeed";
+    public static final double kMaxSpeedDefault = 4.0; // m/s
+  }
+
+  public static final class TeleopConstants {
+    public static final double kDefaultDriveSpeedScale = 1.0;
+    public static final double kDefaultTurnSpeedScale = 1.0;
   }
 
   public static final class OIConstants {
