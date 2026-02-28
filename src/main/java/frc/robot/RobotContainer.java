@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
-import frc.robot.commands.Shoot;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
@@ -100,7 +99,7 @@ public class RobotContainer {
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
     m_shooter.setDefaultCommand(new InstantCommand(() -> {
-      m_shooter.setFeederSpeed(0.0);
+      m_shooter.stopFeeder();
     }));
     // Keep hopper motors idle when no commands are active
     m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
@@ -139,21 +138,20 @@ public class RobotContainer {
 
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
-      JoystickButton toggleTimerUsage = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
+      JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
       Trigger scoringAllowed = new Trigger(() -> Robot.getInstance().scoring());
       JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
-      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to
-                                                                                                      // disloge
-                                                                                                      // blockage
+      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                      // without feeding
+      enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(true), m_shooter));
+      enableDangerMode.onFalse(new InstantCommand(() -> m_shooter.setDangerMode(false), m_shooter));
 
-      feedShooter.and(scoringAllowed.or(toggleTimerUsage)).whileTrue(new Shoot(m_shooter));
+      feedShooter.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
       feederReverse.whileTrue(
-          new RunCommand(() -> m_shooter.setFeederSpeed(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));
-      spinUpShooter
-          .onTrue(new InstantCommand(() -> m_shooter.setRPMsetpoint(Constants.ShooterConstants.defaultShootRPM)));
+          new RunCommand(() -> m_shooter.startFeeder(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));
+      spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
 
     }
 
