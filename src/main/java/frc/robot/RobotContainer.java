@@ -21,6 +21,7 @@ import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Hopper;
 
