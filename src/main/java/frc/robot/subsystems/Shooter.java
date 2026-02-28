@@ -1,25 +1,25 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj.Timer;
+import java.util.function.DoubleSupplier;
 
+import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import java.util.function.DoubleSupplier;
-
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -36,6 +36,7 @@ public class Shooter extends SubsystemBase {
   private Timer timeAtSpeed = new Timer();
   private boolean coasting = false;
 
+  private final InterpolatingDoubleTreeMap rangeRPMtable = new InterpolatingDoubleTreeMap();
 
   private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
@@ -68,6 +69,9 @@ public class Shooter extends SubsystemBase {
     PID.setSetpoint(0.0);
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
+
+    rangeRPMtable.put(1.0, 2000.0);
+    rangeRPMtable.put(2.0, 3000.0);
   }
 
   public void setRPMsetpoint(double rpm) {
@@ -245,5 +249,17 @@ public class Shooter extends SubsystemBase {
       (interrupted)->{stopFeeder();},
       ()->false,
       this);
+  }
+
+  public Command setRangeCommand(DoubleSupplier rangeSupplier){
+    return new InstantCommand(() -> {
+      double range = rangeSupplier.getAsDouble();
+      double targetRPM = getRPMforRange(range);
+      setRPMsetpoint(targetRPM);
+    }, this);
+  }
+
+  public Double getRPMforRange(double range){
+    return rangeRPMtable.get(range);
   }
 }
