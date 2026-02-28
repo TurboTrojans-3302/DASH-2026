@@ -25,23 +25,29 @@ public final class Constants {
   public final class CanIds {
     public static final int DX_SENSOR_CAN_ID = 0;
     // ID 1 through 8 are for swerve drive, defined in swerve config files
-    public static final int kShooterMotorCanId     =  9;
-    public static final int kFeederMotorCanId      = 10;
-    public static final int kHopperLeftMotorCanId  = 11;
+    public static final int kShooterMotorCanId = 9;
+    public static final int kFeederMotorCanId = 10;
+    public static final int kHopperLeftMotorCanId = 11;
     public static final int kHopperRightMotorCanId = 12;
-    public static final int kHarvesterMotorCanId   = 13;
-    public static final int kClimbMotor1           = 14;
-    public static final int kClimbMotor2           = 15;
+    public static final int kHarvesterMotorCanId = 13;
+    public static final int kClimbMotor1 = 14;
+    public static final int kClimbMotor2 = 15;
   }
 
   public static final class DigitalIO {
-        
-        
-      }
-  public static final class DriveConstants {
-    public static final double kMaxSpeed = 4.0; // m/s
+    public static final int kHopperLeftContractedLimitSwitchDio = 0;
+    public static final int kHopperRightContractedLimitSwitchDio = 1;
   }
 
+  public static final class DriveConstants {
+    public static final String maxSpeedKey = "driveMaxSpeed";
+    public static final double kMaxSpeedDefault = 4.0; // m/s
+  }
+
+  public static final class TeleopConstants {
+    public static final double kDefaultDriveSpeedScale = 1.0;
+    public static final double kDefaultTurnSpeedScale = 1.0;
+  }
 
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
@@ -49,6 +55,7 @@ public final class Constants {
     public static final int kCopilotControllerPort = 1;
     public static final int kReefControllerPort = 3;
     public static final int kButtonBoardPort = 2;
+
     public static final class ButtonBox {
       public static final int Left1 = 1;
       public static final int Right1 = 2;
@@ -85,6 +92,7 @@ public final class Constants {
       public static final int StickDownLeft = 225;
       public static final int StickLeft = 270;
       public static final int StickUpLeft = 315;
+      public static final int StickCenter = -1;
     }
   }
 
@@ -110,7 +118,7 @@ public final class Constants {
     // for the station with april tag 13 these values both stay positive
     public static final double poseOffsetStationRightX = 0.5;
     public static final double poseOffsetStationRightY = 0.5;
-    //relative in the y-direction
+    // relative in the y-direction
     public static final double yOffsetReefPoleLeft = 0.3;
     public static final double yOffsetReefPoleRight = -0.3;
   }
@@ -120,12 +128,12 @@ public final class Constants {
 
     public static final class Offset {
 
-      //measured to the center of the lens
+      // measured to the center of the lens
 
-      //inches
-      public static final double forward = 4; 
-      public static final double side = -7.5; //right is negative
-      public static final double up = 37.25; 
+      // inches
+      public static final double forward = 4;
+      public static final double side = -7.5; // right is negative
+      public static final double up = 37.25;
 
       public static final double roll = 0.0;
       public static final double pitch = 0.0;
@@ -140,10 +148,10 @@ public final class Constants {
   }
 
   public static final class ShooterConstants {
-    public static final double kPdefault = 0;
+    public static final double kPdefault = 0.001;
     public static final double kIdefault = 0;
-    public static final double kDdefault = 0;
-    public static final double kVdefault = 0;
+    public static final double kDdefault = 0.0002;
+    public static final double kVdefault = 0.00018;
     public static double PIDToleranceDefault = 0.0;
     public static final String kPkey = "shooter_kP";
     public static final String kIkey = "shooter_kI";
@@ -152,21 +160,44 @@ public final class Constants {
     public static final String PIDToleranceKey = "shooter_PIDTolerance";
     public static final double maxRPM = 6000.0;
     public static final double defaultShootRPM = 4900.0;
-    public static final double defaultShootPctOutput = 0.5;
 
     public static final double feederSpeedDefault = 0;
     public static final String feederSpeedKey = "feederSpeed";
-    public static double manualRPMincrement = 50; //rpm
-    public static double manualPCTincrement = 0.01; //percent output
+    public static double manualRPMincrement = 50; // rpm
 
   }
 
+  public static final class HarvesterConstants {
+    public static final double defaultIntakeSpeed = 0.5;
+    public static final String intakeSpeedKey = "intakeSpeed";
+  }
 
   public static final class ClimberConstants {
-   
+
   }
 
- 
+  public static final class HopperConstants {
+    public static final String moveIncrementKey = "hopperMoveIncrement";
+    public static final double moveIncrementDefault = 0.5;
+    public static final String maxPositionKey = "hopperMaxPosition";
+    public static final double maxPositionDefault = 1000.0; // encoder units
+    public static final String minPositionKey = "hopperMinPosition";
+    public static final double minPositionDefault = 100.0; // encoder units
+    public static final String kVkey = "hopperKv";
+    public static final double kVdefault = 0.001;
+    public static final String posToleranceKey = "hopperPosTolerance";
+    public static final double posToleranceDefault = 100;
+    public static final String kPkey = "hopperKp";
+    public static final double kPdefault = 0.0;
+    public static final String kIkey = "hopperKi";
+    public static final double kIdefault = 0.0;
+    public static final String kDkey = "hopperKd";
+    public static final double kDdefault = 0.0;
+    public static final String maxVelocityKey = "hopperMaxVelocity";
+    public static final double maxVelocityDefault = 500.0; // encoder units per second
+    public static final String maxAccelerationKey = "hopperMaxAcceleration";
+    public static final double maxAccelerationDefault = 1000.0; // encoder units per second squared
+  }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;
 }
