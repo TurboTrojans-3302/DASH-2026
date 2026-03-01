@@ -46,8 +46,8 @@ public class TeleopDrive extends Command {
     }
     double speedScale = m_slowDriveFlag ? 0.5 : 1.0;
 
-    double forward = stick2speed(speedScale * m_driverController.getLeftY());
-    double leftward = stick2speed(speedScale * m_driverController.getLeftX());
+    double forward = m_robotDrive.getMaxSpeed() * stick2speed(speedScale * m_driverController.getLeftY());
+    double leftward = m_robotDrive.getMaxSpeed() * stick2speed(speedScale * m_driverController.getLeftX());
     double rotate = stick2speed(speedScale * m_driverController.getRightX());
 
     if (m_fieldOrientedEnable) {
