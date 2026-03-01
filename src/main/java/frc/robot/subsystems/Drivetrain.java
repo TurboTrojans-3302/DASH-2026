@@ -17,6 +17,7 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -41,6 +42,7 @@ public class DriveTrain extends SubsystemBase {
    * Swerve drive object.
    */
   private SwerveDrive swerveDrive;
+  private Double kMaxSpeed = Constants.DriveConstants.kMaxSpeedDefault;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -51,7 +53,7 @@ public class DriveTrain extends SubsystemBase {
     File configFileObject = new File(Filesystem.getDeployDirectory(), directory);
     try {
       System.out.println("loading SwerveDrive: " + configFileObject);
-      swerveDrive = new SwerveParser(configFileObject).createSwerveDrive(Constants.DriveConstants.kMaxSpeed);
+      swerveDrive = new SwerveParser(configFileObject).createSwerveDrive(Constants.DriveConstants.kMaxSpeedDefault);
     } catch (Exception e) {
       System.out.println("Swerve Configuration failed! " + e); // todo throw a fatal exception here?
     }
@@ -402,6 +404,10 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
+  public Double getMaxSpeed() {
+    return kMaxSpeed;
+  }
+
   /**
    * Get the chassis speeds based on controller input of 2 joysticks. One for
    * speeds in which direction. The other for
@@ -420,7 +426,7 @@ public class DriveTrain extends SubsystemBase {
         headingX,
         headingY,
         getHeading().getRadians(),
-        Constants.DriveConstants.kMaxSpeed);
+        kMaxSpeed);
   }
 
   /**
@@ -440,7 +446,7 @@ public class DriveTrain extends SubsystemBase {
         scaledInputs.getY(),
         angle.getRadians(),
         getHeading().getRadians(),
-        Constants.DriveConstants.kMaxSpeed);
+        kMaxSpeed);
   }
 
   /**
@@ -503,4 +509,24 @@ public class DriveTrain extends SubsystemBase {
   public SwerveDrive getSwerveDrive() {
     return swerveDrive;
   }
+
+  public void loadPreferences() {
+    if (Preferences.containsKey(Constants.DriveConstants.maxSpeedKey)) {
+      System.out.println("Loading DriveTrain values from preferences");
+      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault);
+    } else {
+      System.out.println("No DriveTrain prefs found. Using default values");
+    }
+  }
+
+  public void savePreferences() {
+    System.out.println("Saving DriveTrain values to preferences");
+    Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
+  }
+//TODO show the gyro
+  // @Override
+  // public void initSendable(SendableBuilder builder) {
+  //   super.initSendable(builder);
+  //   builder.addRawProperty("gyro", swerveDrive.getGyro().getClass().getSimpleName(), () -> swerveDrive.getGyro(), null);
+  // }
 }
