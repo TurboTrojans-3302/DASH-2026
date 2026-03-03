@@ -21,8 +21,6 @@ import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Hopper;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.Shooter;
 
 /*
@@ -42,8 +40,6 @@ public class RobotContainer {
 
   // The robot's subsystems
   public DriveTrain m_robotDrive;
-  public Intake m_intake;
-  public IntakeArm m_intakeArm;
   public Climbers m_climbers;
   public Shooter m_shooter;
   public Hopper m_hopper;
