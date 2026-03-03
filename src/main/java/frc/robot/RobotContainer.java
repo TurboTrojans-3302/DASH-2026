@@ -5,7 +5,6 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -21,9 +20,9 @@ import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.Hopper;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -37,7 +36,7 @@ public class RobotContainer {
   private static boolean CLIMBERS_ENABLE = true;
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
-  public static boolean feederEnabled = true;
+
   public static boolean ignorePeriods = false;
 
   private static RobotContainer instance;
@@ -76,14 +75,15 @@ public class RobotContainer {
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
     
-
+    if(HOPPER_ENABLE){
     m_hopper = new Hopper();
     SmartDashboard.putData("Hopper", m_hopper);
+    }
 
     SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
     SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
     SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
-
+     
     if(SHOOTER_ENABLE){
       m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId);
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
@@ -103,11 +103,13 @@ public class RobotContainer {
 
     m_shooter.setDefaultCommand(new InstantCommand(() -> {
       m_shooter.stopFeeder();
-    }));
+    }, m_shooter));
     // Keep hopper motors idle when no commands are active
-    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
+    if (HOPPER_ENABLE) {
+      m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
+    }
   }
-
+  
   public static RobotContainer getInstance() {
     return instance;
   }
@@ -149,13 +151,11 @@ public class RobotContainer {
       JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                      // without feeding
-      enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(true), m_shooter));
-      enableDangerMode.onFalse(new InstantCommand(() -> m_shooter.setDangerMode(false), m_shooter));
+      enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
 
       feedShooter.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
-      feederReverse.whileTrue(
-          new RunCommand(() -> m_shooter.startFeeder(-Constants.ShooterConstants.feederSpeedDefault), m_shooter));
+      feederReverse.whileTrue(m_shooter.reverseFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
 
     }
@@ -180,8 +180,6 @@ public class RobotContainer {
   }
 
   public void configureTestControls() {
-    JoystickButton testPlus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up);
-    JoystickButton testMinus = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down);
   }
 
   /**

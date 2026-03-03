@@ -523,5 +523,10 @@ public class DriveTrain extends SubsystemBase {
     System.out.println("Saving DriveTrain values to preferences");
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
-
+//TODO show the gyro
+  // @Override
+  // public void initSendable(SendableBuilder builder) {
+  //   super.initSendable(builder);
+  //   builder.addRawProperty("gyro", swerveDrive.getGyro().getClass().getSimpleName(), () -> swerveDrive.getGyro(), null);
+  // }
 }
