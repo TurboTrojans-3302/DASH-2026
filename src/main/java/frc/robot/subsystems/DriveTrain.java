@@ -109,6 +109,10 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Robot Angle", () -> swerveDrive.getYaw().getRadians(), null);
       }
     });
+
+    // Publish the raw NavX AHRS object so Elastic renders a Gyro widget.
+    // AHRS implements NTSendable and advertises SmartDashboardType "Gyro".
+    SmartDashboard.putData("Gyro", (com.studica.frc.AHRS) swerveDrive.getGyro().getIMU());
   }
 
   @Override
@@ -523,10 +527,5 @@ public class DriveTrain extends SubsystemBase {
     System.out.println("Saving DriveTrain values to preferences");
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
-//TODO show the gyro
-  // @Override
-  // public void initSendable(SendableBuilder builder) {
-  //   super.initSendable(builder);
-  //   builder.addRawProperty("gyro", swerveDrive.getGyro().getClass().getSimpleName(), () -> swerveDrive.getGyro(), null);
-  // }
+
 }
