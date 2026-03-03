@@ -56,7 +56,7 @@ public class RobotContainer {
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-//  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
+  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
   GenericHID m_buttonBoard = new GenericHID(OIConstants.kButtonBoardPort);
 
 
@@ -76,8 +76,8 @@ public class RobotContainer {
 
     
     if(HOPPER_ENABLE){
-    m_hopper = new Hopper();
-    SmartDashboard.putData("Hopper", m_hopper);
+      m_hopper = new Hopper();
+      SmartDashboard.putData("Hopper", m_hopper);
     }
 
     SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
@@ -90,7 +90,7 @@ public class RobotContainer {
     }
 
     if(HARVESTER_ENABLE){
-      m_harvester = new Harvester(m_robotDrive);
+      m_harvester = new Harvester(m_robotDrive, m_hopper);
     }
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
@@ -121,11 +121,40 @@ public class RobotContainer {
      */
 
     if (HARVESTER_ENABLE) {
-
+      Trigger harvestForward = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.1);
+      Trigger harvestReverse = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.1);
+      harvestForward.whileTrue(m_harvester.PullInCommand());
+      harvestReverse.whileTrue(m_harvester.PushOutCommand());
     }
 
+    if (HOPPER_ENABLE){
+      Trigger extendHopper = new Trigger(() -> m_driverController.getRightBumper());
+      Trigger retractHopper = new Trigger(() -> m_driverController.getLeftBumper());
+      extendHopper.onTrue(m_hopper.expandCommand());
+      retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
+    }
     /**
      * Copilot's Controller
+     *
+     */
+
+     if (HARVESTER_ENABLE) {
+      Trigger copilotHarvest = new Trigger(() -> m_copilotController.getLeftTriggerAxis() > 0.1);
+      Trigger copilotHarvestReverse = new Trigger(() -> m_copilotController.getRightTriggerAxis() > 0.1);
+      copilotHarvest.whileTrue(m_harvester.PullInCommand());
+      copilotHarvestReverse.whileTrue(m_harvester.PushOutCommand());
+    }
+
+    if (HOPPER_ENABLE){
+      Trigger extendHopperCopilot = new Trigger(() -> m_driverController.getRightBumper());
+      Trigger retractHopperCopilot = new Trigger(() -> m_driverController.getLeftBumper());
+      extendHopperCopilot.onTrue(m_hopper.expandCommand());
+      retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
+    }
+    
+
+    /**
+     * Button Board
      *
      */
 

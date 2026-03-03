@@ -168,8 +168,9 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double defaultIntakeSpeed = 0.5;
-    public static final String intakeSpeedKey = "intakeSpeed";
+    public static final double speedConversionConstantDefault = .001;
+    public static final String speedConversionConstantKeyDefault = "harvesterSpeedConversionConstantKey";
+    public static final double pullInRPMDefault = 1000;
   }
 
   public static final class ClimberConstants {
