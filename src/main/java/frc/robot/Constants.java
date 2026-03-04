@@ -53,7 +53,6 @@ public final class Constants {
     public static final int kDriverControllerPort = 0;
     public static final double kDriveDeadband = 0.05;
     public static final int kCopilotControllerPort = 1;
-    public static final int kReefControllerPort = 3;
     public static final int kButtonBoardPort = 2;
 
     public static final class ButtonBox {
@@ -115,12 +114,6 @@ public final class Constants {
 
   public static final class FieldConstants {
     public static final Pose2d ZeroZero = new Pose2d(0.0, 0.0, new Rotation2d());
-    // for the station with april tag 13 these values both stay positive
-    public static final double poseOffsetStationRightX = 0.5;
-    public static final double poseOffsetStationRightY = 0.5;
-    // relative in the y-direction
-    public static final double yOffsetReefPoleLeft = 0.3;
-    public static final double yOffsetReefPoleRight = -0.3;
   }
 
   public static final class LimelightConstants {
