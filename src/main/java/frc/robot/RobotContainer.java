@@ -211,5 +211,4 @@ public class RobotContainer {
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
   }
-
 }
