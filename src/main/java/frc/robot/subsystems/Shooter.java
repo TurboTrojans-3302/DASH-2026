@@ -13,7 +13,6 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.config.*;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.math.MathUtil;
@@ -23,6 +22,7 @@ import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -277,15 +277,15 @@ public class Shooter extends SubsystemBase {
     // Expose closed-loop gains and allow updating them by reconfiguring the
     // SparkMax
     builder.addDoubleProperty("kP", () -> kP,
-        (x) -> { kP = x; setPIDVT(); });
+        (x) ->  { if (x != kP) { kP = x; setPIDVT(); } } );
     builder.addDoubleProperty("kI", () -> kI,
-        (x) -> { kI = x; setPIDVT(); });
+        (x) -> { if (x != kI) { kI = x; setPIDVT(); } } );
     builder.addDoubleProperty("kD", () -> kD,
-        (x) -> { kD = x; setPIDVT(); });
+        (x) -> { if (x != kD) { kD = x; setPIDVT(); } } );
     builder.addDoubleProperty("kV", () -> kV,
-        (x) -> { kV = x; setPIDVT(); });
+        (x) -> { if (x != kV) { kV = x; setPIDVT(); } } );
     builder.addDoubleProperty("kTolerance", () -> kTol,
-        (x) -> { kTol = x; setPIDVT(); });
+        (x) -> { if (x != kTol) { kTol = x; setPIDVT(); } } );
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
@@ -308,7 +308,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command spinUpCommand(DoubleSupplier rpmSupplier) {
-    return new RunCommand(() -> {
+    return new InstantCommand(() -> {
       setRPMsetpoint(rpmSupplier.getAsDouble());
     }, this);
   }
