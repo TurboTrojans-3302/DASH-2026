@@ -11,7 +11,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants;
@@ -30,6 +29,7 @@ public class GoToCommand extends Command {
   private TrapezoidProfile m_trapezoid;
   protected boolean m_relativeFlag;
   protected Navigation m_nav;
+  private double m_totalDistance;  // total distance to goal at initialize()
 
   static double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
   static double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
@@ -77,6 +77,7 @@ public class GoToCommand extends Command {
       Pose2d currPose2d = m_nav.getPose();
       m_dest = currPose2d.plus(m_delta);
     }
+    m_totalDistance = distance();
     System.out.println("Starting go to: " + m_dest);
     m_nav.m_dashboardField.getObject("dest").setPose(m_dest);
   }
@@ -118,18 +119,20 @@ public class GoToCommand extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-
-    State currentState = new State(0.0, speedTowardTarget());
-    State goalState = new State(distance(), 0.0);
-
-    double speed = m_trapezoid.calculate(dT, currentState, goalState).velocity;
-
     Translation2d toDest = translation2dest();
-    if(toDest.getNorm() < 1e-6){
+    double distanceToDest = toDest.getNorm();
+
+    if(distanceToDest < kDistanceTolerance){
       return; // do nothing
     }
 
-    Translation2d unitTranslation = toDest.div(toDest.getNorm());
+    double traveledDistance = Math.max(0.0, m_totalDistance - distanceToDest);
+    State currentState = new State(traveledDistance, speedTowardTarget());
+    State goalState = new State(m_totalDistance, 0.0);
+
+    double speed = m_trapezoid.calculate(dT, currentState, goalState).velocity;
+
+    Translation2d unitTranslation = toDest.div(distanceToDest);
 
     m_drive.driveHeading(unitTranslation.times(speed), destHeadingRadians());
   }
@@ -148,15 +151,4 @@ public class GoToCommand extends Command {
         Math.abs(deltaHeading()) < kHeadingTolerance;
   }
 
-  @Override
-  public void initSendable(SendableBuilder builder){
-    super.initSendable(builder);
-    builder.addDoubleProperty("speedLimit", () -> speedLimit, (x) -> speedLimit = x );
-    builder.addDoubleProperty("accelLimit", () -> accelLimit, (x) -> accelLimit = x );
-    builder.addDoubleProperty("kDistanceTolerance", () -> kDistanceTolerance, (x) -> kDistanceTolerance = x );
-    builder.addDoubleProperty("kHeadingTolerance", () -> kHeadingTolerance, (x) -> kHeadingTolerance = x );
-    builder.addDoubleProperty("dest X", ()->m_dest.getX(), (x)->{m_dest = new Pose2d(x, m_dest.getY(), m_dest.getRotation()); });
-    builder.addDoubleProperty("dest Y", ()->m_dest.getY(), (y)->{m_dest = new Pose2d(m_dest.getX(), y, m_dest.getRotation()); });
-    builder.addDoubleProperty("dest ϴ", ()->m_dest.getRotation().getDegrees(), (t)->{m_dest = new Pose2d(m_dest.getX(), m_dest.getY(), Rotation2d.fromDegrees(t)); });
-  }
 }
