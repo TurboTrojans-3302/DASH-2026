@@ -6,6 +6,7 @@ public class rangeRPMtable {
     private final InterpolatingDoubleTreeMap table = new InterpolatingDoubleTreeMap();
     public final double MIN = 1.219;
     public final double MAX = 2.133;
+    public final double OPTIMAL = (MIN + MAX) / 2;
 
     rangeRPMtable() {
         table.put(1.219, 1550.0);
