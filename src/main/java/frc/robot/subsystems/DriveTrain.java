@@ -12,11 +12,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -41,6 +43,7 @@ public class DriveTrain extends SubsystemBase {
    * Swerve drive object.
    */
   private SwerveDrive swerveDrive;
+  private Double kMaxSpeed = Constants.DriveConstants.kMaxSpeedDefault;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -51,7 +54,7 @@ public class DriveTrain extends SubsystemBase {
     File configFileObject = new File(Filesystem.getDeployDirectory(), directory);
     try {
       System.out.println("loading SwerveDrive: " + configFileObject);
-      swerveDrive = new SwerveParser(configFileObject).createSwerveDrive(Constants.DriveConstants.kMaxSpeed);
+      swerveDrive = new SwerveParser(configFileObject).createSwerveDrive(Constants.DriveConstants.kMaxSpeedDefault);
     } catch (Exception e) {
       System.out.println("Swerve Configuration failed! " + e); // todo throw a fatal exception here?
     }
@@ -107,6 +110,10 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Robot Angle", () -> swerveDrive.getYaw().getRadians(), null);
       }
     });
+
+    // Publish the raw NavX AHRS object so Elastic renders a Gyro widget.
+    // AHRS implements NTSendable and advertises SmartDashboardType "Gyro".
+    SmartDashboard.putData("Gyro", (com.studica.frc.AHRS) swerveDrive.getGyro().getIMU());
   }
 
   @Override
@@ -365,21 +372,6 @@ public class DriveTrain extends SubsystemBase {
     return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
   }
 
-  /**
-   * This will zero (calibrate) the robot to assume the current position is facing
-   * forward
-   * <p>
-   * If red alliance rotate the robot 180 after the drviebase zero command
-   */
-  public void zeroGyroWithAlliance() {
-    if (isRedAlliance()) {
-      zeroGyro();
-      // Set the pose 180 degrees
-      resetOdometry(new Pose2d(getPose().getTranslation(), Rotation2d.fromDegrees(180)));
-    } else {
-      zeroGyro();
-    }
-  }
 
   /**
    * Sets the drive motors to brake/coast mode.
@@ -402,6 +394,10 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
+  public Double getMaxSpeed() {
+    return kMaxSpeed;
+  }
+
   /**
    * Get the chassis speeds based on controller input of 2 joysticks. One for
    * speeds in which direction. The other for
@@ -420,7 +416,7 @@ public class DriveTrain extends SubsystemBase {
         headingX,
         headingY,
         getHeading().getRadians(),
-        Constants.DriveConstants.kMaxSpeed);
+        kMaxSpeed);
   }
 
   /**
@@ -440,7 +436,7 @@ public class DriveTrain extends SubsystemBase {
         scaledInputs.getY(),
         angle.getRadians(),
         getHeading().getRadians(),
-        Constants.DriveConstants.kMaxSpeed);
+        kMaxSpeed);
   }
 
   /**
@@ -503,4 +499,29 @@ public class DriveTrain extends SubsystemBase {
   public SwerveDrive getSwerveDrive() {
     return swerveDrive;
   }
+
+  /** @return current gyro yaw in degrees */
+  public double getGyroAngleDegrees() {
+    return swerveDrive.getYaw().getDegrees();
+  }
+
+  /** @return current swerve module positions (distance + angle per module) */
+  public SwerveModulePosition[] getSwerveModulePositions() {
+    return swerveDrive.getModulePositions();
+  }
+
+  public void loadPreferences() {
+    if (Preferences.containsKey(Constants.DriveConstants.maxSpeedKey)) {
+      System.out.println("Loading DriveTrain values from preferences");
+      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault);
+    } else {
+      System.out.println("No DriveTrain prefs found. Using default values");
+    }
+  }
+
+  public void savePreferences() {
+    System.out.println("Saving DriveTrain values to preferences");
+    Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
+  }
+
 }

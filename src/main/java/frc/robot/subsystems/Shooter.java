@@ -1,21 +1,27 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj.Timer;
+import java.util.function.DoubleSupplier;
 
+import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.interfaces.LaserCanInterface;
+import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -26,10 +32,16 @@ public class Shooter extends SubsystemBase {
   private RelativeEncoder encoder;
   private PIDController PID;
   private SimpleMotorFeedforward feedforward;
-  private boolean PIDEnabled = true;
+  private boolean PIDEnabled = false;
+  private double feederSpeed = Constants.ShooterConstants.feederSpeedDefault;
+  private boolean dangerMode = false;
   private Timer timeAtSpeed = new Timer();
-
-  private final double spinUpTime = 1.0; // seconds that the shooter must be at the target speed before we consider it "ready" to shoot, can be tuned based on how long it takes for the shooter to stabilize at the target speed after a change
+  private boolean coasting = false;
+  private LaserCan dxSensor;
+  private LinearFilter dxFilter = LinearFilter.movingAverage(5); // simple moving average filter with a window size of 5, can be tuned based on noise characteristics of the sensor
+  private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
+                                         // "ready" to shoot, can be tuned based on how long it takes for the shooter to
+                                         // stabilize at the target speed after a change
 
   public Shooter(int shooterMotorID, int feederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
@@ -47,44 +59,56 @@ public class Shooter extends SubsystemBase {
 
     feedforward = new SimpleMotorFeedforward(0.0, Constants.ShooterConstants.kVdefault);
 
-    feederMotor = new SparkMax(feederMotorID, MotorType.kBrushless);
-    feederMotor.configure(new SparkMaxConfig().inverted(false)
+    loadPreferences();
+
+    feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
+    feederMotor.configure(new SparkMaxConfig().inverted(true)
         .idleMode(IdleMode.kBrake),
         ResetMode.kResetSafeParameters,
         PersistMode.kNoPersistParameters);
 
-    PID.setSetpoint(0.0);    
+    PID.setSetpoint(0.0);
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
+
+    dxSensor = new LaserCan(Constants.CanIds.DX_SENSOR_CAN_ID);
   }
 
   public void setRPMsetpoint(double rpm) {
+    coasting = false;
     PID.setSetpoint(MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM));
+
+    if(!PIDEnabled){
+      setMotorPctOutput(feedforward.calculate(PID.getSetpoint()));
+    }
   }
 
   public double getRPM() {
     return encoder.getVelocity();
   }
 
-  public void setMotorPctOutput(double speed) {
-    shooterMotor.set(MathUtil.clamp(speed, 0.0, 1.0)); 
+  private void setMotorPctOutput(double speed) {
+    shooterMotor.set(MathUtil.clamp(speed, -1.0, 1.0));
     timeAtSpeed.restart();
-  } 
+  }
 
   public double getMotorPctOutput() {
     return shooterMotor.get();
   }
 
-  public Boolean ready() {
-    if(PIDEnabled){
+  public boolean isReady() {
+    if(isDangerMode()){
+      return true;
+    }
+    if (isPIDEnabled()) {
       return PID.atSetpoint();
     } else {
-      return timeAtSpeed.hasElapsed(spinUpTime); 
+      return timeAtSpeed.hasElapsed(spinUpTime);
     }
   }
 
-  public void enablePID(Boolean enable) {
-    if(enable && !PIDEnabled) {
+  public void enablePID(boolean enable) {
+    if (enable && !PIDEnabled) {
       PID.reset();
       setRPMsetpoint(getRPM());
     }
@@ -94,16 +118,61 @@ public class Shooter extends SubsystemBase {
   public boolean isPIDEnabled() {
     return PIDEnabled;
   }
-  
+
+  public boolean isDangerMode() {
+    return dangerMode;
+  }
+
+  public void setDangerMode(boolean enabled) {
+    dangerMode = enabled;
+  }
+
+  public void feedForward() {
+    feederMotor.set(feederSpeed);
+  }
+
+  public void feedBackward() {
+    feederMotor.set(-feederSpeed);
+  }
+
   public void setFeederSpeed(double speed) {
-      feederMotor.set(speed);
+    feederSpeed = speed;
+  }
+
+  public double getFeederSpeed() {
+    return feederSpeed;
+  } 
+
+  public void stopFeeder() {
+    feederMotor.set(0.0);
+  } 
+
+  public void stop() {
+    coast();
+    stopFeeder();
+  }
+
+  public double getDXsensor(){
+    Measurement mes = dxSensor.getMeasurement();
+    if(mes.status == LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT){
+      return dxFilter.calculate(dxSensor.getMeasurement().distance_mm);
+    }else{
+      return 999.9;
+    }
+  }
+
+  private void coast() {
+    coasting = true;
+    setMotorPctOutput(0);
   }
 
   @Override
   public void periodic() {
-    double currentVelocity = encoder.getVelocity(); // rpm
-    if (PIDEnabled) {
-      double output = PID.calculate(currentVelocity) + feedforward.calculate(PID.getSetpoint());
+
+    if (isPIDEnabled() && !coasting) {
+      double currentVelocity = encoder.getVelocity(); // rpm
+      double output = feedforward.calculate(PID.getSetpoint());
+      output += PID.calculate(currentVelocity);
       setMotorPctOutput(output);
     }
   }
@@ -117,6 +186,8 @@ public class Shooter extends SubsystemBase {
       feedforward.setKv(Preferences.getDouble(Constants.ShooterConstants.kVkey, Constants.ShooterConstants.kVdefault));
       PID.setTolerance(Preferences.getDouble(Constants.ShooterConstants.PIDToleranceKey,
           Constants.ShooterConstants.PIDToleranceDefault));
+      feederSpeed = Preferences.getDouble(Constants.ShooterConstants.feederSpeedKey,
+          Constants.ShooterConstants.feederSpeedDefault);
     } else {
       System.out.println("No shooter prefs found. Using default values");
     }
@@ -129,28 +200,20 @@ public class Shooter extends SubsystemBase {
     Preferences.setDouble(Constants.ShooterConstants.kDkey, PID.getD());
     Preferences.setDouble(Constants.ShooterConstants.kVkey, feedforward.getKv());
     Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, PID.getErrorTolerance());
+    Preferences.setDouble(Constants.ShooterConstants.feederSpeedKey, feederSpeed);
   }
 
   public Command incrementSpeedCommand() {
     return new RunCommand(() -> {
-      if(PIDEnabled){
-          setRPMsetpoint(getRPM() + Constants.ShooterConstants.manualRPMincrement);
-      } else {
-          setMotorPctOutput(getMotorPctOutput() + Constants.ShooterConstants.manualPCTincrement);
-      }
+      setRPMsetpoint(getRPMsetpoint() + Constants.ShooterConstants.manualRPMincrement);
     }, this);
   }
 
   public Command decrementSpeedCommand() {
     return new RunCommand(() -> {
-      if(PIDEnabled){
-          setRPMsetpoint(getRPM() - Constants.ShooterConstants.manualRPMincrement);
-      } else {
-          setMotorPctOutput(getMotorPctOutput() - Constants.ShooterConstants.manualPCTincrement);
-      }
+      setRPMsetpoint(getRPMsetpoint() - Constants.ShooterConstants.manualRPMincrement);
     }, this);
   }
-
 
   @Override
   public void initSendable(SendableBuilder builder) {
@@ -166,15 +229,52 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> PID.getErrorTolerance(),
         (x) -> PID.setTolerance(x));
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
-    builder.addDoubleProperty("Shooter SetpointRPM", () -> PID.getSetpoint(),
-        (x) -> PID.setSetpoint(x));
-    builder.addBooleanProperty("Ready?", () -> ready(), null);
-    builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, null);
+    builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
+        (x) -> setRPMsetpoint(x));
+    builder.addBooleanProperty("Ready?", () -> isReady(), null);
+    builder.addBooleanProperty("PID Enabled", () -> PIDEnabled, null); // this is read-only on the dashboard.
+    builder.addDoubleProperty("Feeder Speed", () -> feederSpeed,
+        (x) -> feederSpeed = x);
+    builder.addBooleanProperty("Danger Mode", () -> isDangerMode(), (x) -> setDangerMode(x));
+    builder.addBooleanProperty("Save Prefs", () -> false, (x) -> {
+      if (x)
+        savePreferences();
+    });
+    builder.addDoubleProperty("shoot motor output", () -> shooterMotor.get(), null);
+    builder.addDoubleProperty ("feed motor output",()->feederMotor.get(), null);
+    builder.addDoubleProperty("dx sensor", ()->getDXsensor(), null);
+  }
 
-    builder.addDoubleProperty("Feeder Speed", () -> feederMotor.get(),
-        (x) -> setFeederSpeed(x));
+  public double getRPMsetpoint() {
+    return PID.getSetpoint();
+  }
 
-    builder.addBooleanProperty("Save Prefs", ()->false, (x)->{if(x) savePreferences();});
+  public Command spinUpCommand(DoubleSupplier rpmSupplier) {
+    return new RunCommand(() -> {
+      setRPMsetpoint(rpmSupplier.getAsDouble());
+    }, this);
+  }
+
+  public Command shootCommand(){
+    return new FunctionalCommand(
+      ()->{},
+      ()->{ if(isReady()){
+              feedForward();
+            }else{
+              stopFeeder();
+            }},
+      (interrupted)->{stopFeeder();},
+      ()->false,
+      this);
+  }
+
+  public Command reverseFeedCommand(){
+    return new FunctionalCommand(
+      ()->{},
+      ()->{feedBackward();},
+      (interrupted)->{stopFeeder();},
+      ()->false,
+      this);
   }
 
 }
