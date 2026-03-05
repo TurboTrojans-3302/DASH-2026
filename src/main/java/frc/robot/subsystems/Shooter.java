@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.Objects;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -152,9 +153,10 @@ public class Shooter extends SubsystemBase {
     stopFeeder();
   }
 
+  //todo do this null check more carefully
   public double getDXsensor(){
     Measurement mes = dxSensor.getMeasurement();
-    if(mes.status == LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT){
+    if(!Objects.isNull(mes) && mes.status == LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT){
       return dxFilter.calculate(dxSensor.getMeasurement().distance_mm);
     }else{
       return 999.9;

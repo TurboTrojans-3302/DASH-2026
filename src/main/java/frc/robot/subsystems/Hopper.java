@@ -78,9 +78,9 @@ public class Hopper extends SubsystemBase {
     private void configureSparkMaxes() {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
         leftSparkConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
+        leftSparkConfig.inverted(true);
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
-        rightSparkConfig.inverted(true); // invert right motor 
 
         leftMotor.configure(leftSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -296,11 +296,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean leftHardLimit() {
-        return leftContractedLimitSwitch.get();
+        return !leftContractedLimitSwitch.get();
     }
 
     public boolean rightHardLimit() {
-        return rightContractedLimitSwitch.get();
+        return !rightContractedLimitSwitch.get();
     }
 
     @Override
