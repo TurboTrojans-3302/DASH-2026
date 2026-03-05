@@ -148,8 +148,7 @@ public class Shooter extends SubsystemBase {
   } 
 
   public void stop() {
-    coasting = true;
-    setMotorPctOutput(0);
+    coast();
     stopFeeder();
   }
 

@@ -192,7 +192,9 @@ public class Hopper extends SubsystemBase {
     }
 
     public Command stopCommand() {
-        return new InstantCommand(this::stop, this);
+        Command cmd = new InstantCommand(this::stop, this);
+        cmd.setName("stopCommand");
+        return cmd;
     }
 
     public Command manualMoveCommand(DoubleSupplier increment) {
@@ -212,20 +214,26 @@ public class Hopper extends SubsystemBase {
     }
 
     public Command setPositionCommand(DoubleSupplier targetPosition) {
-        return new FunctionalCommand(
+        FunctionalCommand cmd = new FunctionalCommand(
             () -> { setPosition(targetPosition.getAsDouble()); },
             () -> {}, // periodic() handles the output
             (interrupted) -> { stop(); },
             () -> (leftPID.atGoal() && rightPID.atGoal()) || !PIDEnabled, // end command when at position or if PID is disabled
             this);
+        cmd.setName("setPositionCommand");
+        return cmd;
     }
 
     public Command expandCommand() {
-        return setPositionCommand(() -> softMax);
+        Command cmd = setPositionCommand(() -> softMax);
+        cmd.setName("expandCommand");
+        return cmd;
     }
 
     public Command retractCommand() {
-        return setPositionCommand(() -> softMin);
+        Command cmd = setPositionCommand(() -> softMin);
+        cmd.setName("retractCommand");
+        return cmd;
     }
 
     /** Apply current kP/kI/kD/tolerance/constraints to both PID controllers. */
@@ -289,8 +297,11 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("Expand Speed", () -> moveIncrement, (x) -> { moveIncrement = x; });
         builder.addDoubleProperty("Max Position", () -> softMax, (x) -> { softMax = x; });
         builder.addDoubleProperty("Min Position", () -> softMin, (x) -> { softMin = x; });
-        builder.addDoubleProperty("Left Motor Position", () -> leftEncoder.getPosition(), null);
-        builder.addDoubleProperty("Right Motor Position", () -> rightEncoder.getPosition(), null);
+        builder.addDoubleProperty("Left Position", () -> leftEncoder.getPosition(), null);
+        builder.addDoubleProperty("Right Position", () -> rightEncoder.getPosition(), null);
+        builder.addDoubleProperty("Position Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
+        builder.addDoubleProperty("L Motor Out", () -> leftMotor.get(), null);
+        builder.addDoubleProperty("R Motor Out", () -> rightMotor.get(), null);
         builder.addDoubleProperty("kV", () -> kV, (x) -> { kV = x; });
         builder.addDoubleProperty("kP", () -> kP, (x) -> { kP = x; applyPIDGains(); });
         builder.addDoubleProperty("kI", () -> kI, (x) -> { kI = x; applyPIDGains(); });

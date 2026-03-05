@@ -133,12 +133,7 @@ public class RobotContainer {
       Trigger extendHopper = new Trigger(() -> m_driverController.getRightBumper());
       Trigger retractHopper = new Trigger(() -> m_driverController.getLeftBumper());
       extendHopper.onTrue(m_hopper.expandCommand());
-      retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
-      JoystickButton hopperEnablePIDButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
-      JoystickButton hopperDisablePIDButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
-      hopperEnablePIDButton.onTrue(new InstantCommand(()->m_hopper.setPIDEnabled(true), m_hopper));
-      hopperDisablePIDButton.onTrue(new InstantCommand(()->m_hopper.setPIDEnabled(false), m_hopper));
-      
+      retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
     /**
      * Copilot's Controller
