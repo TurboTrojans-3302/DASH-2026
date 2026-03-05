@@ -81,7 +81,6 @@ public class Hopper extends SubsystemBase {
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
         rightSparkConfig.inverted(true); // invert right motor 
-        rightSparkConfig.encoder.inverted(true);
 
         leftMotor.configure(leftSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);

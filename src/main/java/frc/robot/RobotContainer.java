@@ -35,9 +35,9 @@ import frc.robot.subsystems.Shooter;
 public class RobotContainer {
 
   private static boolean HARVESTER_ENABLE = true;
-  private static boolean CLIMBERS_ENABLE = true;
+  private static boolean CLIMBERS_ENABLE = false;
   private static boolean HOPPER_ENABLE = true;
-  private static boolean SHOOTER_ENABLE = true;
+  private static boolean SHOOTER_ENABLE = false;
 
   public static boolean ignorePeriods = false;
 
@@ -134,6 +134,11 @@ public class RobotContainer {
       Trigger retractHopper = new Trigger(() -> m_driverController.getLeftBumper());
       extendHopper.onTrue(m_hopper.expandCommand());
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
+      JoystickButton hopperEnablePIDButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
+      JoystickButton hopperDisablePIDButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
+      hopperEnablePIDButton.onTrue(new InstantCommand(()->m_hopper.setPIDEnabled(true), m_hopper));
+      hopperDisablePIDButton.onTrue(new InstantCommand(()->m_hopper.setPIDEnabled(false), m_hopper));
+      
     }
     /**
      * Copilot's Controller
