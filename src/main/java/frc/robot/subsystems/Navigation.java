@@ -10,11 +10,13 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -107,6 +109,11 @@ public class Navigation extends SubsystemBase {
     return hubPose.getTranslation().getDistance(botPose.getTranslation());
   }
 
+  public Rotation2d getHeadingToTarget() {
+    Translation2d delta = FieldConstants.HubCenterPoint.getTranslation().minus(getPose().getTranslation());
+    return delta.getAngle();
+  }
+  
   @Override
   public void initSendable(SendableBuilder builder) {
       super.initSendable(builder);

@@ -7,23 +7,24 @@ package frc.robot.commands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
-import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.Navigation;
 
 public class TeleopDrive extends Command {
   private DriveTrain m_robotDrive;
   private XboxController m_driverController;
+  private Navigation m_nav;
   private boolean m_fieldOrientedEnable = false; // TODO default this to true when it's working
   private boolean m_slowDriveFlag = false;
 
   /** Creates a new TeleopDrive. */
-  public TeleopDrive(DriveTrain robotDrive, XboxController driverController) {
+  public TeleopDrive(DriveTrain robotDrive, XboxController driverController, Navigation nav) {
     m_driverController = driverController;
     m_robotDrive = robotDrive;
+    m_nav = nav;
     addRequirements(m_robotDrive);
   }
 
@@ -50,9 +51,13 @@ public class TeleopDrive extends Command {
     double leftward = m_robotDrive.getMaxSpeed() * stick2speed(speedScale * m_driverController.getLeftX());
     double rotate = stick2speed(speedScale * m_driverController.getRightX());
 
+
     if (m_fieldOrientedEnable) {
-      double reverse = (Robot.alliance == Alliance.Red) ? -1.0 : 1.0;
-      m_robotDrive.drive(new Translation2d(reverse * forward, reverse * leftward), rotate, true);
+      if(m_driverController.getAButton()){
+        m_robotDrive.driveHeading(new Translation2d(forward, leftward), m_nav.getHeadingToTarget());
+      } else {
+        m_robotDrive.drive(new Translation2d(forward, leftward), rotate, true);
+      }
     } else {
       m_robotDrive.driveRobotOriented(forward, leftward, rotate);
     }

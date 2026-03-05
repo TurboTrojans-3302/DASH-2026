@@ -103,7 +103,7 @@ public class RobotContainer {
 
   public void setDefaultCommands() {
     // Configure default commands
-    Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController);
+    Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController, m_navigation);
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
   }
