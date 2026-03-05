@@ -19,6 +19,8 @@ public class TeleopDrive extends Command {
   private Navigation m_nav;
   private boolean m_fieldOrientedEnable = false; // TODO default this to true when it's working
   private boolean m_slowDriveFlag = false;
+  private boolean m_DpadDriveFlag = false;
+  private final double kDPADdriveSpeed = 2.0; // m/s, speed when driving strictly north/south/east/west with field-oriented control, can be tuned based on driver preference
 
   /** Creates a new TeleopDrive. */
   public TeleopDrive(DriveTrain robotDrive, XboxController driverController, Navigation nav) {
@@ -53,6 +55,12 @@ public class TeleopDrive extends Command {
 
 
     if (m_fieldOrientedEnable) {
+      if(m_driverController.getPOV() != -1 && m_DpadDriveFlag){
+        double povAngle = Math.toRadians(m_driverController.getPOV());
+        forward = kDPADdriveSpeed * Math.cos(povAngle);
+        leftward = kDPADdriveSpeed * -Math.sin(povAngle);
+      }
+
       if(m_driverController.getAButton()){
         m_robotDrive.driveHeading(new Translation2d(forward, leftward), m_nav.getHeadingToTarget());
       } else {
@@ -87,6 +95,9 @@ public class TeleopDrive extends Command {
     });
     builder.addBooleanProperty("SlowDriveFlag", () -> m_slowDriveFlag, (x) -> {
       m_slowDriveFlag = x;
+    });
+    builder.addBooleanProperty("DpadDriveFlag", () -> m_DpadDriveFlag, (x) -> {
+      m_DpadDriveFlag = x;
     });
   }
 }
