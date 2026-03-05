@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -105,11 +106,6 @@ public class RobotContainer {
     Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController);
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
-
-    // Keep hopper motors idle when no commands are active
-    if (HOPPER_ENABLE) {
-      m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
-    }
   }
   
   public static RobotContainer getInstance() {
@@ -148,10 +144,14 @@ public class RobotContainer {
     }
 
     if (HOPPER_ENABLE){
-      Trigger extendHopperCopilot = new Trigger(() -> m_driverController.getRightBumper());
-      Trigger retractHopperCopilot = new Trigger(() -> m_driverController.getLeftBumper());
+      Trigger extendHopperCopilot = new Trigger(() -> m_copilotController.getRightBumper());
+      Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
       extendHopperCopilot.onTrue(m_hopper.expandCommand());
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
+
+      final double hopperManualJoystickDeadband = 0.1;
+      Trigger hopperManualControl = new Trigger(() -> Math.abs(m_copilotController.getLeftY()) > hopperManualJoystickDeadband);
+      hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY(), hopperManualJoystickDeadband)));
     }
     
 
@@ -193,11 +193,6 @@ public class RobotContainer {
 
     if(HOPPER_ENABLE){
       // Hopper controls: 
-      POVButton hopperManualExpand = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
-      POVButton hopperManualRetract = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
-      hopperManualExpand.whileTrue(m_hopper.manualExpandCommand());
-      hopperManualRetract.whileTrue(m_hopper.manualRetractCommand());
-    
       JoystickButton hopperExpand = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left2);
       JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
       hopperExpand.onTrue(m_hopper.expandCommand());
