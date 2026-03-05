@@ -148,7 +148,6 @@ public class RobotContainer {
       Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
       extendHopperCopilot.onTrue(m_hopper.expandCommand());
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
-
       final double hopperManualJoystickDeadband = 0.1;
       Trigger hopperManualControl = new Trigger(() -> Math.abs(m_copilotController.getLeftY()) > hopperManualJoystickDeadband);
       hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY(), hopperManualJoystickDeadband)));
@@ -173,7 +172,7 @@ public class RobotContainer {
       enableShooterPID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true), m_shooter));
       disableShooterPID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false), m_shooter ));
 
-
+      
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
       JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
@@ -202,6 +201,8 @@ public class RobotContainer {
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
       hopperPIDenable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(true), m_hopper));
       hopperPIDdisable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(false), m_hopper));
+
+      
     }
   }
 
@@ -243,6 +244,22 @@ public class RobotContainer {
    */
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
+  }
+
+  public void onDSAttached() {
+    // Read the actual switch state at binding time so PID starts in the correct mode
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
+        m_hopper.setPIDEnabled(true);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Down)){
+        m_hopper.setPIDEnabled(false);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
+        m_shooter.enablePID(true);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
+        m_shooter.enablePID(false);
+      }
   }
 
 }
