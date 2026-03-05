@@ -25,14 +25,14 @@ public class Navigation extends SubsystemBase {
   private DriveTrain m_drive;
   public Field2d m_dashboardField = new Field2d();
   protected SwerveDrivePoseEstimator m_poseEstimator;
-  private static AprilTagFieldLayout m_fieldLayout;
+  private static AprilTagFieldLayout m_aprilTagLayout;
 
   /** Creates a new Navigation. */
   public Navigation(DriveTrain drive) {
     this.m_drive = drive;
 
     m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
-    m_fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
 
@@ -41,9 +41,9 @@ public class Navigation extends SubsystemBase {
 
   public void setAlliance(DriverStation.Alliance alliance) {
     if (alliance == DriverStation.Alliance.Red) {
-      m_fieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
+      m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
     } else {
-      m_fieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
+      m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
     }
   }
   @Override
@@ -74,7 +74,7 @@ public class Navigation extends SubsystemBase {
 
 
   public static Pose2d getTagPose2d(int tagId) {
-    return m_fieldLayout.getTagPose(tagId)
+    return m_aprilTagLayout.getTagPose(tagId)
     .orElseThrow(() -> new RuntimeException("No AprilTag with ID " + tagId))
     .toPose2d();
   }
@@ -99,6 +99,12 @@ public class Navigation extends SubsystemBase {
    */
   public double getAngleDegrees() {
     return getAngle().getDegrees();
+  }
+
+  public double getDxToHubCenter() {
+    Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
+    Pose2d botPose = getPose();
+    return hubPose.getTranslation().getDistance(botPose.getTranslation());
   }
 
   @Override
