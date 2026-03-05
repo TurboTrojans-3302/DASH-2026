@@ -4,7 +4,9 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -21,6 +23,8 @@ import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Hopper;
+import frc.robot.subsystems.Harvester;
+import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 
 /*
@@ -31,8 +35,10 @@ import frc.robot.subsystems.Shooter;
  */
 public class RobotContainer {
 
-  private static boolean HOPPER_ENABLE = false;
-  private static boolean SHOOTER_ENABLE = true;
+  private static boolean HARVESTER_ENABLE = true;
+  private static boolean CLIMBERS_ENABLE = false;
+  private static boolean HOPPER_ENABLE = true;
+  private static boolean SHOOTER_ENABLE = false;
 
   public static boolean ignorePeriods = false;
 
@@ -40,9 +46,11 @@ public class RobotContainer {
 
   // The robot's subsystems
   public DriveTrain m_robotDrive;
+  public Harvester m_harvester;
   public Climbers m_climbers;
   public Shooter m_shooter;
   public Hopper m_hopper;
+  public Navigation m_navigation;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -52,7 +60,7 @@ public class RobotContainer {
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-//  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
+  XboxController m_copilotController = new XboxController(OIConstants.kCopilotControllerPort);
   GenericHID m_buttonBoard = new GenericHID(OIConstants.kButtonBoardPort);
 
 
@@ -70,10 +78,12 @@ public class RobotContainer {
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
-    
+    m_navigation = new Navigation(m_robotDrive);
+    SmartDashboard.putData("NavigationSubsystem", m_navigation);
+
     if(HOPPER_ENABLE){
-    m_hopper = new Hopper();
-    SmartDashboard.putData("Hopper", m_hopper);
+      m_hopper = new Hopper();
+      SmartDashboard.putData("Hopper", m_hopper);
     }
 
     SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
@@ -85,6 +95,9 @@ public class RobotContainer {
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
     }
 
+    if(HARVESTER_ENABLE){
+      m_harvester = new Harvester(m_robotDrive, m_hopper);
+    }
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
 
@@ -93,14 +106,6 @@ public class RobotContainer {
     Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController);
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
-
-    m_shooter.setDefaultCommand(new InstantCommand(() -> {
-      m_shooter.stopFeeder();
-    }, m_shooter));
-    // Keep hopper motors idle when no commands are active
-    if (HOPPER_ENABLE) {
-      m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
-    }
   }
   
   public static RobotContainer getInstance() {
@@ -113,10 +118,44 @@ public class RobotContainer {
      * Driver's Controller
      */
 
-  
+    if (HARVESTER_ENABLE) {
+      Trigger harvestForward = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.1);
+      Trigger harvestReverse = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.1);
+      harvestForward.whileTrue(m_harvester.PullInCommand());
+      harvestReverse.whileTrue(m_harvester.PushOutCommand());
+    }
 
+    if (HOPPER_ENABLE){
+      Trigger extendHopper = new Trigger(() -> m_driverController.getRightBumper());
+      Trigger retractHopper = new Trigger(() -> m_driverController.getLeftBumper());
+      extendHopper.onTrue(m_hopper.expandCommand());
+      retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
+    }
     /**
      * Copilot's Controller
+     *
+     */
+
+     if (HARVESTER_ENABLE) {
+      Trigger copilotHarvest = new Trigger(() -> m_copilotController.getLeftTriggerAxis() > 0.1);
+      Trigger copilotHarvestReverse = new Trigger(() -> m_copilotController.getRightTriggerAxis() > 0.1);
+      copilotHarvest.whileTrue(m_harvester.PullInCommand());
+      copilotHarvestReverse.whileTrue(m_harvester.PushOutCommand());
+    }
+
+    if (HOPPER_ENABLE){
+      Trigger extendHopperCopilot = new Trigger(() -> m_copilotController.getRightBumper());
+      Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
+      extendHopperCopilot.onTrue(m_hopper.expandCommand());
+      retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
+      final double hopperManualJoystickDeadband = 0.1;
+      Trigger hopperManualControl = new Trigger(() -> Math.abs(m_copilotController.getLeftY()) > hopperManualJoystickDeadband);
+      hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY(), hopperManualJoystickDeadband)));
+    }
+    
+
+    /**
+     * Button Board
      *
      */
 
@@ -133,7 +172,7 @@ public class RobotContainer {
       enableShooterPID.onTrue(new InstantCommand(() -> m_shooter.enablePID(true), m_shooter));
       disableShooterPID.onTrue(new InstantCommand(() -> m_shooter.enablePID(false), m_shooter ));
 
-
+      
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
       JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
@@ -153,11 +192,6 @@ public class RobotContainer {
 
     if(HOPPER_ENABLE){
       // Hopper controls: 
-      POVButton hopperManualExpand = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
-      POVButton hopperManualRetract = new POVButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
-      hopperManualExpand.whileTrue(m_hopper.manualExpandCommand());
-      hopperManualRetract.whileTrue(m_hopper.manualRetractCommand());
-    
       JoystickButton hopperExpand = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left2);
       JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
       hopperExpand.onTrue(m_hopper.expandCommand());
@@ -167,6 +201,8 @@ public class RobotContainer {
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
       hopperPIDenable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(true), m_hopper));
       hopperPIDdisable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(false), m_hopper));
+
+      
     }
   }
 
@@ -200,40 +236,30 @@ public class RobotContainer {
    * called once when is set to Red by the DriverStation
    */
   public void initRed() {
-    m_robotDrive.zeroGyroWithAlliance();
-    /*
-     * m_autonomousChooser = AutonMenus.getRed();
-     * SmartDashboard.putData("Auton Command", m_autonomousChooser);
-     * m_autonomousChooser.onChange(this::setAutonCommand);
-     * 
-     * m_startPosChooser = StartPositions.getRed();
-     * SmartDashboard.putData("Start Position", m_startPosChooser);
-     * m_startPosChooser.onChange(this::setStartPosition);
-     */
+    m_navigation.setAlliance(Alliance.Red);
   }
 
   /*
    * called once when is set to Blue by the DriverStation
    */
   public void initBlue() {
-    m_robotDrive.zeroGyroWithAlliance();
-    /*
-     * m_autonomousChooser = AutonMenus.getBlue();
-     * SmartDashboard.putData("Auton Command", m_autonomousChooser);
-     * m_autonomousChooser.onChange((this::setAutonCommand));
-     * 
-     * m_startPosChooser = StartPositions.getBlue();
-     * SmartDashboard.putData("Start Position", m_startPosChooser);
-     * m_startPosChooser.onChange(this::setStartPosition);
-     */
+    m_navigation.setAlliance(Alliance.Blue);
   }
 
-  // private void setStartPosition(Pose2d pose) {
-  // if (DriverStation.isDisabled()) {
-  // System.out.println("setStartPosition()" + pose.toString());
-  // m_robotDrive.setGyroAngleDeg(pose.getRotation().getDegrees());
-  // m_nav.resetOdometry(pose);
-  // }
-  // }
+  public void onDSAttached() {
+    // Read the actual switch state at binding time so PID starts in the correct mode
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
+        m_hopper.setPIDEnabled(true);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Down)){
+        m_hopper.setPIDEnabled(false);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
+        m_shooter.enablePID(true);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
+        m_shooter.enablePID(false);
+      }
+  }
 
 }

@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 /**
@@ -53,7 +54,6 @@ public final class Constants {
     public static final int kDriverControllerPort = 0;
     public static final double kDriveDeadband = 0.05;
     public static final int kCopilotControllerPort = 1;
-    public static final int kReefControllerPort = 3;
     public static final int kButtonBoardPort = 2;
 
     public static final class ButtonBox {
@@ -114,13 +114,9 @@ public final class Constants {
   }
 
   public static final class FieldConstants {
-    public static final Pose2d ZeroZero = new Pose2d(0.0, 0.0, new Rotation2d());
-    // for the station with april tag 13 these values both stay positive
-    public static final double poseOffsetStationRightX = 0.5;
-    public static final double poseOffsetStationRightY = 0.5;
-    // relative in the y-direction
-    public static final double yOffsetReefPoleLeft = 0.3;
-    public static final double yOffsetReefPoleRight = -0.3;
+    public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
+    public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
+    public static final Pose2d HubFrontFaceCenter = new Pose2d(4.0218614, 4.0346376, Rotation2d.kZero);
   }
 
   public static final class LimelightConstants {
@@ -168,8 +164,9 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double defaultIntakeSpeed = 0.5;
-    public static final String intakeSpeedKey = "intakeSpeed";
+    public static final double speedConversionConstantDefault = .001;
+    public static final String speedConversionConstantKeyDefault = "harvesterSpeedConversionConstantKey";
+    public static final double pullInRPMDefault = 1000;
   }
 
   public static final class ClimberConstants {
@@ -177,14 +174,12 @@ public final class Constants {
   }
 
   public static final class HopperConstants {
-    public static final String moveIncrementKey = "hopperMoveIncrement";
-    public static final double moveIncrementDefault = 0.5;
     public static final String maxPositionKey = "hopperMaxPosition";
-    public static final double maxPositionDefault = 1000.0; // encoder units
+    public static final double maxPositionDefault = 500000.0; // encoder units
     public static final String minPositionKey = "hopperMinPosition";
-    public static final double minPositionDefault = 100.0; // encoder units
-    public static final String kVkey = "hopperKv";
-    public static final double kVdefault = 0.001;
+    public static final double minPositionDefault = 3000.0; // encoder units
+    // public static final String kVkey = "hopperKv";
+    // public static final double kVdefault = 0.001;
     public static final String posToleranceKey = "hopperPosTolerance";
     public static final double posToleranceDefault = 100;
     public static final String kPkey = "hopperKp";
@@ -193,10 +188,12 @@ public final class Constants {
     public static final double kIdefault = 0.0;
     public static final String kDkey = "hopperKd";
     public static final double kDdefault = 0.0;
+    public static final String kGkey = "hopperKg";
+    public static final double kGdefault = 0.0;
     public static final String maxVelocityKey = "hopperMaxVelocity";
-    public static final double maxVelocityDefault = 500.0; // encoder units per second
+    public static final double maxVelocityDefault = 500000.0; // encoder units per second
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
-    public static final double maxAccelerationDefault = 1000.0; // encoder units per second squared
+    public static final double maxAccelerationDefault = 1000000.0; // encoder units per second squared
   }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;

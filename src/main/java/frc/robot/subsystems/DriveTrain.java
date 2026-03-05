@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -371,21 +372,6 @@ public class DriveTrain extends SubsystemBase {
     return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
   }
 
-  /**
-   * This will zero (calibrate) the robot to assume the current position is facing
-   * forward
-   * <p>
-   * If red alliance rotate the robot 180 after the drviebase zero command
-   */
-  public void zeroGyroWithAlliance() {
-    if (isRedAlliance()) {
-      zeroGyro();
-      // Set the pose 180 degrees
-      resetOdometry(new Pose2d(getPose().getTranslation(), Rotation2d.fromDegrees(180)));
-    } else {
-      zeroGyro();
-    }
-  }
 
   /**
    * Sets the drive motors to brake/coast mode.
@@ -512,6 +498,16 @@ public class DriveTrain extends SubsystemBase {
    */
   public SwerveDrive getSwerveDrive() {
     return swerveDrive;
+  }
+
+  /** @return current gyro yaw in degrees */
+  public double getGyroAngleDegrees() {
+    return swerveDrive.getYaw().getDegrees();
+  }
+
+  /** @return current swerve module positions (distance + angle per module) */
+  public SwerveModulePosition[] getSwerveModulePositions() {
+    return swerveDrive.getModulePositions();
   }
 
   public void loadPreferences() {

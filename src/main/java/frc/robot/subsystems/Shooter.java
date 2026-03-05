@@ -15,6 +15,8 @@ import com.revrobotics.spark.config.*;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.interfaces.LaserCanInterface;
+import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -207,7 +209,12 @@ public class Shooter extends SubsystemBase {
   }
 
   public double getDXsensor(){
-    return dxFilter.calculate(dxSensor.getMeasurement().distance_mm);
+    Measurement mes = dxSensor.getMeasurement();
+    if(mes.status == LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT){
+      return dxFilter.calculate(dxSensor.getMeasurement().distance_mm);
+    }else{
+      return 999.9;
+    }
   }
 
   private void coast() {
