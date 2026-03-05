@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -22,6 +23,7 @@ import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Harvester;
+import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 
 /*
@@ -47,6 +49,7 @@ public class RobotContainer {
   public Climbers m_climbers;
   public Shooter m_shooter;
   public Hopper m_hopper;
+  public Navigation m_navigation;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -74,7 +77,9 @@ public class RobotContainer {
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
-    
+    m_navigation = new Navigation(m_robotDrive);
+    SmartDashboard.putData("NavigationSubsystem", m_navigation);
+
     if(HOPPER_ENABLE){
       m_hopper = new Hopper();
       SmartDashboard.putData("Hopper", m_hopper);
@@ -101,9 +106,6 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
-    m_shooter.setDefaultCommand(new InstantCommand(() -> {
-      m_shooter.stopFeeder();
-    }, m_shooter));
     // Keep hopper motors idle when no commands are active
     if (HOPPER_ENABLE) {
       m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stop(), m_hopper));
@@ -238,40 +240,14 @@ public class RobotContainer {
    * called once when is set to Red by the DriverStation
    */
   public void initRed() {
-    m_robotDrive.zeroGyroWithAlliance();
-    /*
-     * m_autonomousChooser = AutonMenus.getRed();
-     * SmartDashboard.putData("Auton Command", m_autonomousChooser);
-     * m_autonomousChooser.onChange(this::setAutonCommand);
-     * 
-     * m_startPosChooser = StartPositions.getRed();
-     * SmartDashboard.putData("Start Position", m_startPosChooser);
-     * m_startPosChooser.onChange(this::setStartPosition);
-     */
+    m_navigation.setAlliance(Alliance.Red);
   }
 
   /*
    * called once when is set to Blue by the DriverStation
    */
   public void initBlue() {
-    m_robotDrive.zeroGyroWithAlliance();
-    /*
-     * m_autonomousChooser = AutonMenus.getBlue();
-     * SmartDashboard.putData("Auton Command", m_autonomousChooser);
-     * m_autonomousChooser.onChange((this::setAutonCommand));
-     * 
-     * m_startPosChooser = StartPositions.getBlue();
-     * SmartDashboard.putData("Start Position", m_startPosChooser);
-     * m_startPosChooser.onChange(this::setStartPosition);
-     */
+    m_navigation.setAlliance(Alliance.Blue);
   }
-
-  // private void setStartPosition(Pose2d pose) {
-  // if (DriverStation.isDisabled()) {
-  // System.out.println("setStartPosition()" + pose.toString());
-  // m_robotDrive.setGyroAngleDeg(pose.getRotation().getDegrees());
-  // m_nav.resetOdometry(pose);
-  // }
-  // }
 
 }
