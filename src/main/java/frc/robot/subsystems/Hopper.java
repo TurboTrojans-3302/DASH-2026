@@ -308,8 +308,8 @@ public class Hopper extends SubsystemBase {
         super.initSendable(builder);
         builder.addDoubleProperty("Max Position", () -> softMax, (x) -> { softMax = x; });
         builder.addDoubleProperty("Min Position", () -> softMin, (x) -> { softMin = x; });
-        builder.addDoubleProperty("Left Position", () -> leftEncoder.getPosition(), null);
-        builder.addDoubleProperty("Right Position", () -> rightEncoder.getPosition(), null);
+        builder.addDoubleProperty("Left Position", () -> leftEncoder.getPosition(), (x)->leftEncoder.setPosition(x));
+        builder.addDoubleProperty("Right Position", () -> rightEncoder.getPosition(), (x)->rightEncoder.setPosition(x));
         builder.addDoubleProperty("Position Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addDoubleProperty("L Motor Out", () -> leftMotor.get(), null);
         builder.addDoubleProperty("R Motor Out", () -> rightMotor.get(), null);
