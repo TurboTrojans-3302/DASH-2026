@@ -77,13 +77,14 @@ public class Hopper extends SubsystemBase {
 
     private void configureSparkMaxes() {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
-        leftSparkConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
+        leftSparkConfig.apply(SparkMaxConfig.Presets.REV_NEO_550);
+        leftSparkConfig.idleMode(IdleMode.kBrake);
+        leftSparkConfig.inverted(true);
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
-        rightSparkConfig.inverted(true); // invert right motor 
 
-        leftMotor.configure(leftSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-        rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        leftMotor.configure(leftSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     /**
@@ -296,11 +297,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean leftHardLimit() {
-        return leftContractedLimitSwitch.get();
+        return !leftContractedLimitSwitch.get();
     }
 
     public boolean rightHardLimit() {
-        return rightContractedLimitSwitch.get();
+        return !rightContractedLimitSwitch.get();
     }
 
     @Override
@@ -308,8 +309,8 @@ public class Hopper extends SubsystemBase {
         super.initSendable(builder);
         builder.addDoubleProperty("Max Position", () -> softMax, (x) -> { softMax = x; });
         builder.addDoubleProperty("Min Position", () -> softMin, (x) -> { softMin = x; });
-        builder.addDoubleProperty("Left Position", () -> leftEncoder.getPosition(), null);
-        builder.addDoubleProperty("Right Position", () -> rightEncoder.getPosition(), null);
+        builder.addDoubleProperty("Left Position", () -> leftEncoder.getPosition(), (x)->leftEncoder.setPosition(x));
+        builder.addDoubleProperty("Right Position", () -> rightEncoder.getPosition(), (x)->rightEncoder.setPosition(x));
         builder.addDoubleProperty("Position Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addDoubleProperty("L Motor Out", () -> leftMotor.get(), null);
         builder.addDoubleProperty("R Motor Out", () -> rightMotor.get(), null);

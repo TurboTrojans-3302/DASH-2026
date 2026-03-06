@@ -39,7 +39,7 @@ public class RobotContainer {
   private static boolean HARVESTER_ENABLE = true;
   private static boolean CLIMBERS_ENABLE = false;
   private static boolean HOPPER_ENABLE = true;
-  private static boolean SHOOTER_ENABLE = false;
+  private static boolean SHOOTER_ENABLE = true;
 
   public static boolean ignorePeriods = false;
 
@@ -98,6 +98,8 @@ public class RobotContainer {
 
     if(HARVESTER_ENABLE){
       m_harvester = new Harvester(m_robotDrive, m_hopper);
+      SmartDashboard.putData("HarvesterSubsystem", m_harvester);
+
     }
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
@@ -151,7 +153,7 @@ public class RobotContainer {
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
       final double hopperManualJoystickDeadband = 0.1;
       Trigger hopperManualControl = new Trigger(() -> Math.abs(m_copilotController.getLeftY()) > hopperManualJoystickDeadband);
-      hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY(), hopperManualJoystickDeadband)));
+      hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY() * .5, hopperManualJoystickDeadband)));
     }
     
 
@@ -255,11 +257,14 @@ public class RobotContainer {
       if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Down)){
         m_hopper.setPIDEnabled(false);
       }
-      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
-        m_shooter.enablePID(true);
-      }
-      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
-        m_shooter.enablePID(false);
+
+      if(SHOOTER_ENABLE){
+        if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
+          m_shooter.enablePID(true);
+        }
+        if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
+          m_shooter.enablePID(false);
+        }
       }
   }
 
