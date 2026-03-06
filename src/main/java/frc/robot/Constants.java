@@ -97,14 +97,11 @@ public final class Constants {
   }
 
   public static final class AutoConstants {
-    public static final double kMaxSpeedMetersPerSecond = 50;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 50;
+    public static final double kMaxSpeedMetersPerSecond = 5;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 5;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
-    public static final double kPXController = 1;
-    public static final double kPYController = 1;
-    public static final double kPThetaController = 1;
 
     // Constraint for the motion profiled robot angle controller
     public static final TrapezoidProfile.Constraints kThetaControllerConstraints = new TrapezoidProfile.Constraints(
@@ -164,9 +161,9 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double speedConversionConstantDefault = .001;
+    public static final double speedConversionConstantDefault = .003;
     public static final String speedConversionConstantKeyDefault = "harvesterSpeedConversionConstantKey";
-    public static final double pullInRPMDefault = 1000;
+    public static final double pullInRPMDefault = 200;
   }
 
   public static final class ClimberConstants {
@@ -175,15 +172,15 @@ public final class Constants {
 
   public static final class HopperConstants {
     public static final String maxPositionKey = "hopperMaxPosition";
-    public static final double maxPositionDefault = 500000.0; // encoder units
+    public static final double maxPositionDefault = 215.0; // encoder units
     public static final String minPositionKey = "hopperMinPosition";
-    public static final double minPositionDefault = 3000.0; // encoder units
+    public static final double minPositionDefault = 10.0; // encoder units
     // public static final String kVkey = "hopperKv";
     // public static final double kVdefault = 0.001;
     public static final String posToleranceKey = "hopperPosTolerance";
-    public static final double posToleranceDefault = 100;
+    public static final double posToleranceDefault = 1;
     public static final String kPkey = "hopperKp";
-    public static final double kPdefault = 0.0;
+    public static final double kPdefault = 0.02;
     public static final String kIkey = "hopperKi";
     public static final double kIdefault = 0.0;
     public static final String kDkey = "hopperKd";
@@ -191,9 +188,9 @@ public final class Constants {
     public static final String kGkey = "hopperKg";
     public static final double kGdefault = 0.0;
     public static final String maxVelocityKey = "hopperMaxVelocity";
-    public static final double maxVelocityDefault = 500000.0; // encoder units per second
+    public static final double maxVelocityDefault = 20.0; // encoder units per second
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
-    public static final double maxAccelerationDefault = 1000000.0; // encoder units per second squared
+    public static final double maxAccelerationDefault = 40.0; // encoder units per second squared
   }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;
