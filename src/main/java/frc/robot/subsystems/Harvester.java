@@ -2,13 +2,13 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.EncoderConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -34,12 +33,13 @@ public class Harvester extends SubsystemBase{
         m_driveTrain = drivetrain;
         m_hopper = hopper;
         SparkMaxConfig config = new SparkMaxConfig();
+        config.apply(SparkMaxConfig.Presets.REV_NEO);
         config.inverted(true);
         config.idleMode(IdleMode.kBrake);
         config.apply(new EncoderConfig().velocityConversionFactor(1/16.0));
 
         m_harvestMotor = new SparkMax(Constants.CanIds.kHarvesterMotorCanId, MotorType.kBrushless);
-        m_harvestMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        m_harvestMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     
         m_harvestEncoder = m_harvestMotor.getEncoder();
         

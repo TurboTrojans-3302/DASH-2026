@@ -46,10 +46,13 @@ public class Shooter extends SubsystemBase {
 
   public Shooter(int shooterMotorID, int feederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
-    shooterMotor.configure(new SparkMaxConfig().inverted(false)
-        .idleMode(IdleMode.kCoast),
+    SparkMaxConfig config = new SparkMaxConfig();
+    config.apply(SparkMaxConfig.Presets.REV_NEO_550);
+    config.inverted(false).idleMode(IdleMode.kCoast);
+
+    shooterMotor.configure(config,
         ResetMode.kResetSafeParameters,
-        PersistMode.kNoPersistParameters);
+        PersistMode.kPersistParameters);
     encoder = shooterMotor.getEncoder();
 
     PID = new PIDController(Constants.ShooterConstants.kPdefault,
@@ -63,10 +66,13 @@ public class Shooter extends SubsystemBase {
     loadPreferences();
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
-    feederMotor.configure(new SparkMaxConfig().inverted(true)
-        .idleMode(IdleMode.kBrake),
+    SparkMaxConfig feederConfig = new SparkMaxConfig();
+    feederConfig.inverted(true)
+                .idleMode(IdleMode.kBrake)
+                 .smartCurrentLimit(20);
+    feederMotor.configure(feederConfig,
         ResetMode.kResetSafeParameters,
-        PersistMode.kNoPersistParameters);
+        PersistMode.kPersistParameters);
 
     PID.setSetpoint(0.0);
     shooterMotor.set(0); // sets it to zero because it is the default
