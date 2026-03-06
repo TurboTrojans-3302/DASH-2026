@@ -97,6 +97,8 @@ public class RobotContainer {
 
     if(HARVESTER_ENABLE){
       m_harvester = new Harvester(m_robotDrive, m_hopper);
+      SmartDashboard.putData("HarvesterSubsystem", m_harvester);
+
     }
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
