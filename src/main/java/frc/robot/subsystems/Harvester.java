@@ -2,19 +2,21 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -26,16 +28,18 @@ public class Harvester extends SubsystemBase{
     private Hopper m_hopper;
     private double speedConversionConstant = Constants.HarvesterConstants.speedConversionConstantDefault;
     private double pullInRPM = Constants.HarvesterConstants.pullInRPMDefault;
-    
+     
     public Harvester(DriveTrain drivetrain, Hopper hopper){
         m_driveTrain = drivetrain;
         m_hopper = hopper;
         SparkMaxConfig config = new SparkMaxConfig();
-        config.inverted(false);
+        config.apply(SparkMaxConfig.Presets.REV_NEO);
+        config.inverted(true);
         config.idleMode(IdleMode.kBrake);
+        config.apply(new EncoderConfig().velocityConversionFactor(1/16.0));
 
         m_harvestMotor = new SparkMax(Constants.CanIds.kHarvesterMotorCanId, MotorType.kBrushless);
-        m_harvestMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        m_harvestMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     
         m_harvestEncoder = m_harvestMotor.getEncoder();
         
@@ -65,11 +69,21 @@ public class Harvester extends SubsystemBase{
     }
 
     public Command PullInCommand(){
-        return new InstantCommand(()-> setSpeed(pullInRPM), this);
+        return new FunctionalCommand(
+          ()->{},
+          ()->{setSpeed(pullInRPM);},
+          (x)->{stop();},
+          ()->false,
+          this);
     }
 
     public Command PushOutCommand(){
-        return new InstantCommand(()-> setSpeed(-pullInRPM), this);
+        return new FunctionalCommand(
+          ()->{},
+          ()->{setSpeed(-pullInRPM);},
+          (x)->{stop();},
+          ()->false,
+          this);
     }
 
     public Command StopCommand(){
@@ -99,5 +113,15 @@ public class Harvester extends SubsystemBase{
       stop();  
     }
 
+  }
+
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("Speed Conversion Constant", () -> speedConversionConstant, (x) -> { speedConversionConstant = x; });
+    builder.addDoubleProperty("Pull In RPM", () -> pullInRPM, (x) -> { pullInRPM = x; });
+    builder.addDoubleProperty("Harvester RPM", () -> getRPM(), null);
+    builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
+    builder.addDoubleProperty("motor output", () -> m_harvestMotor.get(), null);
   }
 }
