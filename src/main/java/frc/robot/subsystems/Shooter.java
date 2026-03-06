@@ -38,11 +38,11 @@ public class Shooter extends SubsystemBase {
   private double feederSpeed = Constants.ShooterConstants.feederSpeedDefault;
   private boolean dangerMode = false;
   private Timer timeAtSpeed = new Timer();
-  private double kP;
-  private double kI;
-  private double kD;
-  private double kV;
-  private double kTol;
+  private double kP = Constants.ShooterConstants.kPdefault;
+  private double kI = Constants.ShooterConstants.kIdefault;
+  private double kD = Constants.ShooterConstants.kDdefault;
+  private double kV = Constants.ShooterConstants.kVdefault;
+  private double kTol = Constants.ShooterConstants.PIDToleranceDefault;
   private LaserCan dxSensor;
   private LinearFilter dxFilter = LinearFilter.movingAverage(5); // simple moving average filter with a window size of 5, can be tuned based on noise characteristics of the sensor
   private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
@@ -60,16 +60,11 @@ public class Shooter extends SubsystemBase {
         PersistMode.kPersistParameters);
     encoder = shooterMotor.getEncoder();
 
+    loadPreferences();
+
     // Initialize local gain values from defaults and configure controller
-    kP = Constants.ShooterConstants.kPdefault;
-    kI = Constants.ShooterConstants.kIdefault;
-    kD = Constants.ShooterConstants.kDdefault;
-    kV = Constants.ShooterConstants.kVdefault;
-    kTol = Constants.ShooterConstants.PIDToleranceDefault;
     setPIDVT(kP, kI, kD, kV, kTol);
     closedLoopController = shooterMotor.getClosedLoopController();
-
-    loadPreferences();
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
     SparkMaxConfig feederConfig = new SparkMaxConfig();
@@ -140,13 +135,12 @@ public class Shooter extends SubsystemBase {
         .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot1);
     cfg.apply(cl1);
 
-    shooterMotor.configure(cfg, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+    shooterMotor.configure(cfg, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   public double getRPM() {
     return encoder.getVelocity();
   }
-
 
   public double getMotorPctOutput() {
     return shooterMotor.get();
