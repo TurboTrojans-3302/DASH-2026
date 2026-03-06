@@ -326,5 +326,7 @@ public class Hopper extends SubsystemBase {
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
         builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
+        builder.addDoubleProperty("L current", () -> leftMotor.getOutputCurrent(), null);
+        builder.addDoubleProperty("R current", () -> rightMotor.getOutputCurrent(), null);
     }
 }
