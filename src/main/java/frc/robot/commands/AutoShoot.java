@@ -23,7 +23,7 @@ public class AutoShoot extends SequentialCommandGroup {
     m_navigation = navigation;
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
-    addCommands(new AutoAimRange(m_driveTrain, m_navigation, m_shooter),
+    addCommands(new SetRangeAndAim(m_driveTrain, m_navigation, m_shooter),
                 m_shooter.shootCommand().withTimeout(10)); 
   }
 }

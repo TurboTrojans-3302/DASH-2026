@@ -13,7 +13,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.rangeRPMtable;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class AutoAimRange extends Command {
+public class SetRangeAndAim extends Command {
   private final DriveTrain driveTrain;
   private final Navigation navigation;
   private final Shooter shooter;
@@ -21,7 +21,7 @@ public class AutoAimRange extends Command {
   private static final double kAimToleranceDegrees = 2.0;
 
   /** Creates a new AutoAim. */
-  public AutoAimRange(DriveTrain driveTrain, Navigation navigation, Shooter shooter) {
+  public SetRangeAndAim(DriveTrain driveTrain, Navigation navigation, Shooter shooter) {
     this.driveTrain = driveTrain;
     this.navigation = navigation;
     this.shooter = shooter;
