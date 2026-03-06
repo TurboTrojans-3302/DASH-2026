@@ -66,6 +66,8 @@ public class RobotContainer {
 
 
   public int targetTagId = 0;
+  SendableChooser isBuilderGoingToBeActivated;
+  Boolean builderActivated = false;
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -233,11 +235,25 @@ public class RobotContainer {
     m_BlinkinLED.set(value);
   }
 
+  public void setBuilderActivationStatus(Boolean activated){
+    builderActivated = activated;
+    System.out.println("Builder is now activated");
+  }
+
+  public boolean getBuilderActivationStatus(){
+    return builderActivated;
+  }
+
   /*
    * called once when is set to Red by the DriverStation
    */
   public void initRed() {
     m_navigation.setAlliance(Alliance.Red);
+
+
+    isBuilderGoingToBeActivated = AutonMenu.useBuilder();
+    SmartDashboard.putData("Use builder?", isBuilderGoingToBeActivated);
+    isBuilderGoingToBeActivated.onChange(this::setBuilderActivationStatus);
   }
 
   /*
