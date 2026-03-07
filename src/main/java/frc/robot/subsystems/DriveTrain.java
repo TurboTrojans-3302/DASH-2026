@@ -92,7 +92,6 @@ public class DriveTrain extends SubsystemBase {
       @Override
       public void initSendable(SendableBuilder builder) {
         builder.setSmartDashboardType("SwerveDrive");
-
         SwerveModule[] modules = swerveDrive.getModules();
 
         builder.addDoubleProperty("Front Left Angle", () -> modules[0].getPosition().angle.getRadians(), null);

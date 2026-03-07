@@ -108,6 +108,8 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
 
+
+
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -134,6 +136,10 @@ public class Robot extends TimedRobot {
         }
       }
     }
+
+    if (!m_autonomousCommand.isScheduled()){ //TODO do i also need to check that it isnt after the match or disabled for some other reason or is it inconsequential
+
+    }
   }
 
 
@@ -144,7 +150,11 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     setLED(LEDmode.Auton);
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    if (!RobotContainer.getInstance().getBuilderActivationStatus()){
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand(); //not using builder, this works for premade autos
+  } else {
+    m_autonomousCommand = AutonMenu.builtAuton(); 
+  }
     // System.out.println("autonomousInit() m_pos == " + m_robotContainer.m_nav.getPose());
     System.out.println("Starting command: " + m_autonomousCommand.getName());
 

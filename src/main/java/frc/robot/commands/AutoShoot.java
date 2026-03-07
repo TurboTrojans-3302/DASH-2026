@@ -17,7 +17,7 @@ public class AutoShoot extends SequentialCommandGroup {
   private DriveTrain m_driveTrain;
   private Shooter m_shooter;
   private Navigation m_navigation;
-  public AutoShoot(DriveTrain driveTrain, Shooter shooter, Navigation navigation) {
+  public AutoShoot(DriveTrain driveTrain, Navigation navigation, Shooter shooter) {
     m_driveTrain = driveTrain;
     m_shooter = shooter;
     m_navigation = navigation;

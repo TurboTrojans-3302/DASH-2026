@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.util.function.Consumer;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -66,7 +68,9 @@ public class RobotContainer {
 
 
   public int targetTagId = 0;
-  SendableChooser isBuilderGoingToBeActivated;
+  private SendableChooser<Boolean> isBuilderGoingToBeActivated = new SendableChooser<Boolean>();
+  private SendableChooser<Command> prebuiltAutonCommands = new SendableChooser<Command>();
+  private SendableChooser<Command> builderCommandList = new SendableChooser<Command>();
   Boolean builderActivated = false;
 
   /**
@@ -186,7 +190,7 @@ public class RobotContainer {
                                                                                                      // without feeding
       enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
 
-      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).onTrue(new AutoShoot(m_robotDrive, m_shooter, m_navigation));
+      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).onTrue(new AutoShoot(m_robotDrive, m_navigation, m_shooter));
 
       feederReverse.whileTrue(m_shooter.reverseFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
@@ -235,13 +239,24 @@ public class RobotContainer {
     m_BlinkinLED.set(value);
   }
 
-  public void setBuilderActivationStatus(Boolean activated){
+  public void setBuilderActivationStatus(boolean activated){
     builderActivated = activated;
     System.out.println("Builder is now activated");
   }
 
   public boolean getBuilderActivationStatus(){
     return builderActivated;
+  }
+
+ 
+
+  public SendableChooser<Command> addCommandToBuilderList(Command command){
+    AutonMenu.commands.add(command);
+
+    System.out.println("Command Added: " + command.toString());
+
+    builderCommandList = new SendableChooser<Command>();
+    return builderCommandList;
   }
 
   /*
@@ -254,6 +269,20 @@ public class RobotContainer {
     isBuilderGoingToBeActivated = AutonMenu.useBuilder();
     SmartDashboard.putData("Use builder?", isBuilderGoingToBeActivated);
     isBuilderGoingToBeActivated.onChange(this::setBuilderActivationStatus);
+
+
+
+    if(getBuilderActivationStatus()){
+      builderCommandList = AutonMenu.commandListRed();
+      SmartDashboard.putData("Choosable Builder Commands", builderCommandList);
+
+      builderCommandList.onChange(this::addCommandToBuilderList); 
+
+    } else if (!getBuilderActivationStatus()) {
+      prebuiltAutonCommands = AutonMenu.prebuiltAutos();
+      SmartDashboard.putData("Premade Autos", prebuiltAutonCommands);
+      prebuiltAutonCommands.onChange(this::setAutonCommand);
+    } 
   }
 
   /*
