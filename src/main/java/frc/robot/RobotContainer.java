@@ -25,6 +25,9 @@ import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
+import frc.robot.autoncommands.DoNothing;
+import frc.robot.subsystems.GameData;
+
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -51,10 +54,11 @@ public class RobotContainer {
   public Hopper m_hopper;
   public Navigation m_navigation;
   public DXsensor m_dxSensor;
+  public GameData m_gameData;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
-  private Command m_autonCommand;
+  //private Command m_autonCommand;
 
   private final REVBlinkinLED m_BlinkinLED;
 
@@ -86,10 +90,6 @@ public class RobotContainer {
       SmartDashboard.putData("Hopper", m_hopper);
     }
 
-    SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
-    SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
-    SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
-     
     if(SHOOTER_ENABLE){
       m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId);
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
@@ -104,6 +104,12 @@ public class RobotContainer {
     SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
 
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
+
+    m_autonomousChooser.setDefaultOption("Do Nothing", new DoNothing());
+    SmartDashboard.putData("Autonomous Chooser", m_autonomousChooser);
+
+    m_gameData = new GameData();
+    SmartDashboard.putData("GameData", m_gameData);
   }
 
   public void setDefaultCommands() {
@@ -181,7 +187,7 @@ public class RobotContainer {
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
       JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
-      Trigger scoringAllowed = new Trigger(() -> Robot.getInstance().scoring());
+      Trigger scoringAllowed = new Trigger(() -> m_gameData.scoring());
       JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
       JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
@@ -221,13 +227,13 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     System.out.println("getAutonomousCommand()");
-    return m_autonCommand;
+    return m_autonomousChooser.getSelected();
   }
 
-  public void setAutonCommand(Command cmd) {
-    m_autonCommand = cmd;
-    System.out.println("setAutonCommand" + m_autonCommand);
-  }
+  // public void setAutonCommand(Command cmd) {
+  //   m_autonCommand = cmd;
+  //   System.out.println("setAutonCommand" + m_autonCommand);
+  // }
 
   public Pose2d getStartPosition() {
     return m_startPosChooser.getSelected();
@@ -269,5 +275,4 @@ public class RobotContainer {
         }
       }
   }
-
 }
