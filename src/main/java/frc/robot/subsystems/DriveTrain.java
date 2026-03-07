@@ -487,7 +487,7 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public void stop() {
-    swerveDrive.drive(new ChassisSpeeds(0.0, 0.0, 0.0));;
+    swerveDrive.drive(new ChassisSpeeds(0.0, 0.0, 0.0));
   }
 
   /**
@@ -532,9 +532,7 @@ public class DriveTrain extends SubsystemBase {
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
 
-public void stop() {
-    swerveDrive.drive(new ChassisSpeeds(0, 0, 0));
-}
+
 
 public double getSpeed() {
         ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
