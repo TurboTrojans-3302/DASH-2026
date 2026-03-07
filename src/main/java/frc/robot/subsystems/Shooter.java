@@ -61,7 +61,7 @@ public class Shooter extends SubsystemBase {
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
     SparkMaxConfig feederConfig = new SparkMaxConfig();
-    feederConfig.inverted(true)
+    feederConfig.inverted(false)
                 .idleMode(IdleMode.kBrake)
                  .smartCurrentLimit(20);
     feederMotor.configure(feederConfig,

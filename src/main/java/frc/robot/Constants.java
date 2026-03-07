@@ -151,8 +151,8 @@ public final class Constants {
     public static final String kDkey = "shooter_kD";
     public static final String kVkey = "shooter_kV";
     public static final String PIDToleranceKey = "shooter_PIDTolerance";
-    public static final double maxRPM = 6000.0;
-    public static final double defaultShootRPM = 4900.0;
+    public static final double maxRPM = 3000.0;
+    public static final double defaultShootRPM = 1400.0;
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
