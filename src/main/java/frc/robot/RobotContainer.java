@@ -142,6 +142,10 @@ public class RobotContainer {
       extendHopper.onTrue(m_hopper.expandCommand());
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
+
+    Trigger toggleCameraStream = new Trigger(() -> m_driverController.getYButtonPressed());
+    toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
+    
     /**
      * Copilot's Controller
      *
