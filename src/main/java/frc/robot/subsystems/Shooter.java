@@ -226,6 +226,7 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> PID.getErrorTolerance(),
         (x) -> PID.setTolerance(x));
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
+    builder.addDoubleProperty("Shooter RPM raw", () -> encoder.getVelocity(), null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);
