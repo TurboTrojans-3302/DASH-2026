@@ -172,9 +172,9 @@ public final class Constants {
 
   public static final class HopperConstants {
     public static final String maxPositionKey = "hopperMaxPosition";
-    public static final double maxPositionDefault = 215.0; // encoder units
+    public static final double maxPositionDefault = 220.0; // encoder units
     public static final String minPositionKey = "hopperMinPosition";
-    public static final double minPositionDefault = 10.0; // encoder units
+    public static final double minPositionDefault = 3.0; // encoder units
     // public static final String kVkey = "hopperKv";
     // public static final double kVdefault = 0.001;
     public static final String posToleranceKey = "hopperPosTolerance";
@@ -188,9 +188,9 @@ public final class Constants {
     public static final String kGkey = "hopperKg";
     public static final double kGdefault = 0.0;
     public static final String maxVelocityKey = "hopperMaxVelocity";
-    public static final double maxVelocityDefault = 20.0; // encoder units per second
+    public static final double maxVelocityDefault = 80.0; // encoder units per second
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
-    public static final double maxAccelerationDefault = 40.0; // encoder units per second squared
+    public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
   }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;
