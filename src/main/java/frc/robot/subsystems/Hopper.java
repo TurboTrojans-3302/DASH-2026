@@ -238,10 +238,21 @@ public class Hopper extends SubsystemBase {
         return cmd;
     }
 
-    public Command manualMoveCommand(DoubleSupplier speedSupplier) {
+        public Command manualMoveCommand(DoubleSupplier speedSupplier) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init
             () -> move(speedSupplier.getAsDouble()), // call move() with supplier value
+            (interrupted) -> { stop(); }, // stop on end or interrupt
+            () -> false, // never end on its own
+            this);
+        cmd.setName("manualMoveCommand");
+        return cmd;
+    }
+
+    public Command nudgeCommand(double increment) {
+        Command cmd = new FunctionalCommand(
+            () -> {}, // no init
+            () -> setPosition(getPosition() + increment), // call move() with supplier value
             (interrupted) -> { stop(); }, // stop on end or interrupt
             () -> false, // never end on its own
             this);
