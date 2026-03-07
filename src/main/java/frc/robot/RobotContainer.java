@@ -13,17 +13,16 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
+import frc.robot.subsystems.DXsensor;
 import frc.robot.subsystems.DriveTrain;
-import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Harvester;
+import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 
@@ -51,6 +50,7 @@ public class RobotContainer {
   public Shooter m_shooter;
   public Hopper m_hopper;
   public Navigation m_navigation;
+  public DXsensor m_dxSensor;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -98,8 +98,11 @@ public class RobotContainer {
     if(HARVESTER_ENABLE){
       m_harvester = new Harvester(m_robotDrive, m_hopper);
       SmartDashboard.putData("HarvesterSubsystem", m_harvester);
-
     }
+
+    m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
+    SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
+
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
   }
 

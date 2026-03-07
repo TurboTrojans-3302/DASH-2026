@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import java.util.Objects;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -14,9 +13,6 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.config.*;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import au.grapplerobotics.LaserCan;
-import au.grapplerobotics.interfaces.LaserCanInterface;
-import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -28,6 +24,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.ShooterConstants;
+import frc.robot.Robot;
 
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
@@ -43,8 +41,6 @@ public class Shooter extends SubsystemBase {
   private double kD = Constants.ShooterConstants.kDdefault;
   private double kV = Constants.ShooterConstants.kVdefault;
   private double kTol = Constants.ShooterConstants.PIDToleranceDefault;
-  private LaserCan dxSensor;
-  private LinearFilter dxFilter = LinearFilter.movingAverage(5); // simple moving average filter with a window size of 5, can be tuned based on noise characteristics of the sensor
   private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
                                          // stabilize at the target speed after a change
@@ -68,7 +64,7 @@ public class Shooter extends SubsystemBase {
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
     SparkMaxConfig feederConfig = new SparkMaxConfig();
-    feederConfig.inverted(true)
+    feederConfig.inverted(false)
                 .idleMode(IdleMode.kBrake)
                  .smartCurrentLimit(20);
     feederMotor.configure(feederConfig,
@@ -79,7 +75,6 @@ public class Shooter extends SubsystemBase {
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
 
-    dxSensor = new LaserCan(Constants.CanIds.DX_SENSOR_CAN_ID);
   }
 
 
@@ -208,16 +203,6 @@ public class Shooter extends SubsystemBase {
     stopFeeder();
   }
 
-  //todo do this null check more carefully
-  public double getDXsensor(){
-    Measurement mes = dxSensor.getMeasurement();
-    if(!Objects.isNull(mes) && mes.status == LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT){
-      return dxFilter.calculate(dxSensor.getMeasurement().distance_mm);
-    }else{
-      return 999.9;
-    }
-  }
-
   private void coast() {
     shooterMotor.disable();
   }
@@ -295,6 +280,7 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> kTol,
         (x) -> { if (x != kTol) { kTol = x; setPIDVT(); } } );
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
+    builder.addDoubleProperty("Shooter RPM raw", () -> encoder.getVelocity(), null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);
@@ -307,8 +293,6 @@ public class Shooter extends SubsystemBase {
     });
     builder.addDoubleProperty("shoot motor output", () -> shooterMotor.get(), null);
     builder.addDoubleProperty ("feed motor output",()->feederMotor.get(), null);
-    builder.addDoubleProperty("dx sensor", ()->getDXsensor(), null);
-    builder.addStringProperty("Status", ()->getStatus(), null);
   }
 
   public double getRPMsetpoint() {
