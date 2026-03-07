@@ -145,7 +145,7 @@ public final class Constants {
     public static final double kIdefault = 0;
     public static final double kDdefault = 0.0002;
     public static final double kVdefault = 0.00018;
-    public static double PIDToleranceDefault = 0.0;
+    public static double PIDToleranceDefault = 10.0;
     public static final String kPkey = "shooter_kP";
     public static final String kIkey = "shooter_kI";
     public static final String kDkey = "shooter_kD";
@@ -157,7 +157,7 @@ public final class Constants {
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 10; // rpm
-
+    public static final double velocityFilterTimeConstant = 3 * Robot.kDefaultPeriod;
   }
 
   public static final class HarvesterConstants {
