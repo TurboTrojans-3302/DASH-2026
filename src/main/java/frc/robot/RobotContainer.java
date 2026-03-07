@@ -68,10 +68,7 @@ public class RobotContainer {
 
 
   public int targetTagId = 0;
-  private SendableChooser<Boolean> isBuilderGoingToBeActivated = new SendableChooser<Boolean>();
-  private SendableChooser<Command> prebuiltAutonCommands = new SendableChooser<Command>();
-  private SendableChooser<Command> builderCommandList = new SendableChooser<Command>();
-  Boolean builderActivated = false;
+
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -239,25 +236,11 @@ public class RobotContainer {
     m_BlinkinLED.set(value);
   }
 
-  public void setBuilderActivationStatus(boolean activated){
-    builderActivated = activated;
-    System.out.println("Builder is now activated");
-  }
-
-  public boolean getBuilderActivationStatus(){
-    return builderActivated;
-  }
 
  
 
-  public SendableChooser<Command> addCommandToBuilderList(Command command){
-    AutonMenu.commands.add(command);
+ 
 
-    System.out.println("Command Added: " + command.toString());
-
-    builderCommandList = new SendableChooser<Command>();
-    return builderCommandList;
-  }
 
   /*
    * called once when is set to Red by the DriverStation
@@ -266,23 +249,12 @@ public class RobotContainer {
     m_navigation.setAlliance(Alliance.Red);
 
 
-    isBuilderGoingToBeActivated = AutonMenu.useBuilder();
-    SmartDashboard.putData("Use builder?", isBuilderGoingToBeActivated);
-    isBuilderGoingToBeActivated.onChange(this::setBuilderActivationStatus);
+    
 
 
 
-    if(getBuilderActivationStatus()){
-      builderCommandList = AutonMenu.commandListRed();
-      SmartDashboard.putData("Choosable Builder Commands", builderCommandList);
 
-      builderCommandList.onChange(this::addCommandToBuilderList); 
-
-    } else if (!getBuilderActivationStatus()) {
-      prebuiltAutonCommands = AutonMenu.prebuiltAutos();
-      SmartDashboard.putData("Premade Autos", prebuiltAutonCommands);
-      prebuiltAutonCommands.onChange(this::setAutonCommand);
-    } 
+    
   }
 
   /*

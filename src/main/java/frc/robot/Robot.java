@@ -43,6 +43,12 @@ public class Robot extends TimedRobot {
   private RobotContainer m_robotContainer;
   private boolean dsAttached = false;
 
+   private SendableChooser<Command> prebuiltAutonCommands = new SendableChooser<Command>();
+  private SendableChooser<Command> builderCommandList = new SendableChooser<Command>();
+   private SendableChooser<Boolean> isBuilderGoingToBeActivated = new SendableChooser<Boolean>();
+  Boolean builderActivated = false;
+  Boolean builderInitializedFirstTime = false;
+  
 
   Robot(){
     instance = this;
@@ -84,7 +90,10 @@ public class Robot extends TimedRobot {
                                               Constants.LimelightConstants.Offset.yaw
                                             );
 
-    
+
+    isBuilderGoingToBeActivated = AutonMenu.toggleBuilder();
+    SmartDashboard.putData("Use builder?", isBuilderGoingToBeActivated);
+    isBuilderGoingToBeActivated.onChange(this::setBuilderActivationStatus);
   }
 
   /**
@@ -138,7 +147,19 @@ public class Robot extends TimedRobot {
     }
 
     if (!m_autonomousCommand.isScheduled()){ //TODO do i also need to check that it isnt after the match or disabled for some other reason or is it inconsequential
+      if(getBuilderActivationStatus() && builderInitializedFirstTime){
+      builderCommandList = AutonMenu.commandListRed();
+      SmartDashboard.putData("Choosable Builder Commands", builderCommandList);
 
+      builderCommandList.onChange(this::addCommandToBuilderList);  
+      builderInitializedFirstTime = true;
+
+    } else if (!getBuilderActivationStatus() && builderInitializedFirstTime) {
+      prebuiltAutonCommands = AutonMenu.prebuiltAutos();
+      SmartDashboard.putData("Premade Autos", prebuiltAutonCommands);
+      prebuiltAutonCommands.onChange(RobotContainer.getInstance()::setAutonCommand);
+      builderInitializedFirstTime = true;
+    } 
     }
   }
 
@@ -150,7 +171,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     setLED(LEDmode.Auton);
-    if (!RobotContainer.getInstance().getBuilderActivationStatus()){
+    if (getBuilderActivationStatus()){
     m_autonomousCommand = m_robotContainer.getAutonomousCommand(); //not using builder, this works for premade autos
   } else {
     m_autonomousCommand = AutonMenu.builtAuton(); 
@@ -223,6 +244,28 @@ public class Robot extends TimedRobot {
   public double getTimeLeftInShift() {
     int currentShift = getCurrentShift();
     return DriverStation.getMatchTime() - shiftEndTime[currentShift];
+  }
+
+  
+  public void setBuilderActivationStatus(boolean activated){
+    builderActivated = activated;
+    System.out.println("Builder is now activated");
+  }
+
+  public boolean getBuilderActivationStatus(){
+    return builderActivated;
+  }
+  
+
+  
+  public SendableChooser<Command> addCommandToBuilderList(Command command){
+    AutonMenu.commands.add(command);
+
+    System.out.println("Command Added: " + command.toString());
+
+    builderCommandList = new SendableChooser<Command>();
+    builderCommandList.onChange(this::addCommandToBuilderList); //needs to be reset due to new object created
+    return builderCommandList;
   }
 
   @Override

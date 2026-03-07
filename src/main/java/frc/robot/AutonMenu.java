@@ -14,7 +14,7 @@ import frc.robot.commands.AutoShoot;
 public class AutonMenu {
     static RobotContainer bot = RobotContainer.getInstance();
     static ArrayList<Command> commands;
-        public static SendableChooser<Boolean> useBuilder() {
+        public static SendableChooser<Boolean> toggleBuilder() {
             SendableChooser useBuilder = new SendableChooser<>();
             useBuilder.setDefaultOption("Use builder?", false);
             return useBuilder;
