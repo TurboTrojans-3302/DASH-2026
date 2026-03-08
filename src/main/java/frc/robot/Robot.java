@@ -32,7 +32,6 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  private boolean dsAttached = false;
   private boolean gameDataReceived = false;
 
 
@@ -105,16 +104,17 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    m_robotContainer.saveSomePreferences();
     m_robotContainer.setLED(REVBlinkinLED.Pattern.SOLID_VIOLET);
   }
 
   @Override
-  public void disabledPeriodic() {
-    if(!dsAttached && DriverStation.isDSAttached()){
-      dsAttached = true;
-      m_robotContainer.onDSAttached();
-    }
+  public void driverStationConnected() {
+    m_robotContainer.onDSAttached();
+  }
 
+  @Override
+  public void disabledPeriodic() {
     if(alliance == null) {
       Optional<Alliance> a = DriverStation.getAlliance();
       if (a.isPresent()) {
@@ -163,7 +163,8 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-       
+    
+    m_robotContainer.m_shooter.stop();
   }
 
   /** This function is called periodically during operator control. */

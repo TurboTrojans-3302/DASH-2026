@@ -44,6 +44,9 @@ public class RobotContainer {
 
   public static boolean ignorePeriods = false;
 
+  private static final double kHopperNudgeIncrement = 4.0;
+  private static final double kHopperNudgeOpenLoopSpeed = 0.2;
+
   private static RobotContainer instance;
 
   // The robot's subsystems
@@ -142,6 +145,10 @@ public class RobotContainer {
       extendHopper.onTrue(m_hopper.expandCommand());
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
+
+    Trigger toggleCameraStream = new Trigger(() -> m_driverController.getYButtonPressed());
+    toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
+    
     /**
      * Copilot's Controller
      *
@@ -159,9 +166,6 @@ public class RobotContainer {
       Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
       extendHopperCopilot.onTrue(m_hopper.expandCommand());
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
-      final double hopperManualJoystickDeadband = 0.1;
-      Trigger hopperManualControl = new Trigger(() -> Math.abs(m_copilotController.getLeftY()) > hopperManualJoystickDeadband);
-      hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY() * .5, hopperManualJoystickDeadband)));
     }
     
 
@@ -207,6 +211,22 @@ public class RobotContainer {
       JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
       hopperExpand.onTrue(m_hopper.expandCommand());
       hopperRetract.onTrue(m_hopper.retractCommand());
+
+      JoystickButton nudgeHopperLeftOut  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpLeft);
+      JoystickButton nudgeHopperOut      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
+      JoystickButton nudgeHopperRightOut = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpRight);
+      JoystickButton nudgeHopperLeftIn  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownLeft);
+      JoystickButton nudgeHopperIn      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
+      JoystickButton nudgeHopperRightIn = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownRight);
+      nudgeHopperOut.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
+      nudgeHopperIn.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
+
+      nudgeHopperLeftOut.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
+      nudgeHopperOut.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed));
+      nudgeHopperRightOut.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> 0.0,() -> kHopperNudgeOpenLoopSpeed));
+      nudgeHopperLeftIn.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0));
+      nudgeHopperIn.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed));
+      nudgeHopperRightIn.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed));
 
       JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
@@ -274,5 +294,9 @@ public class RobotContainer {
           m_shooter.enablePID(false);
         }
       }
+  }
+
+  public void saveSomePreferences() {
+    if (HOPPER_ENABLE) m_hopper.savePositions();
   }
 }

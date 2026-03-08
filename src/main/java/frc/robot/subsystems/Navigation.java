@@ -26,6 +26,7 @@ public class Navigation extends SubsystemBase {
   public Field2d m_dashboardField = new Field2d();
   protected SwerveDrivePoseEstimator m_poseEstimator;
   private static AprilTagFieldLayout m_aprilTagLayout;
+  private boolean mainCameraStreamSelected = true;
 
   /** Creates a new Navigation. */
   public Navigation(DriveTrain drive) {
@@ -105,6 +106,15 @@ public class Navigation extends SubsystemBase {
     Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
     Pose2d botPose = getPose();
     return hubPose.getTranslation().getDistance(botPose.getTranslation());
+  }
+
+  public void toggleCameraStream() {
+    if(mainCameraStreamSelected) {
+      LimelightHelpers.setStreamMode_PiPSecondary(cameraName);
+    } else {
+      LimelightHelpers.setStreamMode_PiPMain(cameraName);
+    }
+    mainCameraStreamSelected = !mainCameraStreamSelected;
   }
 
   @Override
