@@ -8,11 +8,9 @@ package frc.robot;
 import java.util.Map;
 import java.util.Optional;
 
-
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -31,16 +29,11 @@ public class Robot extends TimedRobot {
   private static Robot instance;
   public static DriverStation.Alliance alliance;
  
-  public static final String[] teleOpShiftName = {"Transition", "Shift 1", "Shift 2", "Shift 3", "Shift 4", "Endgame"};
-  public static final double[] shiftEndTime = {130.0, 105.0, 80.0, 55.0, 30.0, 0.0}; //Transition, Shift 1 ... 4, Endgame
-  public static final boolean[] firstShiftScoringAllowed = {true, true, false, true, false, true};
-  public static final boolean[] secondShiftScoringAllowed = {true, false, true, false, true, true};
- 
-  private boolean[] scoringAllowed = firstShiftScoringAllowed;
-
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+  private boolean dsAttached = false;
+  private boolean gameDataReceived = false;
 
 
   Robot(){
@@ -70,6 +63,8 @@ public class Robot extends TimedRobot {
     // and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+    m_robotContainer.configureButtonBindings();
+    m_robotContainer.setDefaultCommands();
     //DataLogManager.start();
     //CanBridge.runTCP();
     LimelightHelpers.setCameraPose_RobotSpace(Constants.LimelightConstants.name,
@@ -115,6 +110,11 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    if(!dsAttached && DriverStation.isDSAttached()){
+      dsAttached = true;
+      m_robotContainer.onDSAttached();
+    }
+
     if(alliance == null) {
       Optional<Alliance> a = DriverStation.getAlliance();
       if (a.isPresent()) {
@@ -155,10 +155,6 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     
-    m_robotContainer.configureButtonBindings();
-    m_robotContainer.setDefaultCommands();
-    //m_robotContainer.m_intakeArm.stop();
-    
     setLED(LEDmode.Teleop);
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
@@ -173,43 +169,15 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+
     
-    String firstAllianceDisabled = DriverStation.getGameSpecificMessage();
-    if(firstAllianceDisabled.length() > 0){
-      if(firstAllianceDisabled.charAt(0) == 'R' && alliance == Alliance.Red){
-        scoringAllowed = secondShiftScoringAllowed;
-      }else if(firstAllianceDisabled.charAt(0) == 'B' && alliance == Alliance.Blue){
-        scoringAllowed = secondShiftScoringAllowed;
-      }else{
-        scoringAllowed = firstShiftScoringAllowed;
-      }
-    }
+    String gamedatastring = DriverStation.getGameSpecificMessage();
 
+    if (gamedatastring.length() > 0 && !gameDataReceived) {
+      RobotContainer.getInstance().m_gameData.setGameDataSring(gamedatastring);
+      gameDataReceived = true;
+    }
   } 
-  
-  
-  public int getCurrentShift() {
-    for (int i = 0; i < shiftEndTime.length; i++) {
-      if (DriverStation.getMatchTime() > shiftEndTime[i]) {
-        return i;
-      }
-    }
-    return 0; // Default to the first shift if no other shift is active 
-  }
-
-  public String getCurrentShiftName() {
-    return teleOpShiftName[getCurrentShift()];
-  }
-
-  public boolean scoring() {
-    int currentShift = getCurrentShift();
-    return scoringAllowed[currentShift];
-  }
-
-  public double getTimeLeftInShift() {
-    int currentShift = getCurrentShift();
-    return DriverStation.getMatchTime() - shiftEndTime[currentShift];
-  }
 
   @Override
   public void testInit() {

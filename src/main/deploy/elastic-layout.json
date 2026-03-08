@@ -421,7 +421,7 @@
               "topic": "/SmartDashboard/ShooterSubsystem/kTolerance",
               "period": 0.06,
               "data_type": "double",
-              "show_submit_button": false
+              "show_submit_button": true
             }
           },
           {
@@ -435,24 +435,6 @@
               "topic": "/SmartDashboard/ShooterSubsystem/Save Prefs",
               "period": 0.06,
               "data_type": "boolean"
-            }
-          },
-          {
-            "title": "Shooter RPM",
-            "x": 640.0,
-            "y": 0.0,
-            "width": 640.0,
-            "height": 256.0,
-            "type": "Graph",
-            "properties": {
-              "topic": "/SmartDashboard/ShooterSubsystem/Shooter RPM",
-              "period": 0.033,
-              "data_type": "double",
-              "time_displayed": 20.0,
-              "min_value": 0.0,
-              "max_value": 4000.0,
-              "color": 4278238420,
-              "line_width": 2.0
             }
           },
           {
@@ -513,24 +495,6 @@
             }
           },
           {
-            "title": "dx sensor",
-            "x": 896.0,
-            "y": 256.0,
-            "width": 384.0,
-            "height": 128.0,
-            "type": "Number Bar",
-            "properties": {
-              "topic": "/SmartDashboard/ShooterSubsystem/dx sensor",
-              "period": 0.06,
-              "data_type": "double",
-              "min_value": 0.0,
-              "max_value": 4000.0,
-              "divisions": 5,
-              "inverted": true,
-              "orientation": "horizontal"
-            }
-          },
-          {
             "title": "Shooter RPM",
             "x": 384.0,
             "y": 0.0,
@@ -542,6 +506,358 @@
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": false
+            }
+          },
+          {
+            "title": "Score",
+            "x": 384.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Score",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Hopper",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "Left Limit",
+            "x": 320.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Left Limit",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Max Acceleration",
+            "x": 768.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Max Acceleration",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Max Position",
+            "x": 640.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Max Position",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Min Position",
+            "x": 640.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Min Position",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "PID Setpoint",
+            "x": 128.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/PID Setpoint",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Right Limit",
+            "x": 448.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Right Limit",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Save Prefs",
+            "x": 640.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Toggle Button",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Save Prefs",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
+          },
+          {
+            "title": "kD",
+            "x": 0.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/kD",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "kI",
+            "x": 0.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/kI",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "kP",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/kP",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "R Motor Out",
+            "x": 448.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 64.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/R Motor Out",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "L Motor Out",
+            "x": 320.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 64.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/L Motor Out",
+              "period": 0.033,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "kG",
+            "x": 128.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/kG",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Left Position",
+            "x": 320.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Left Position",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Right Position",
+            "x": 448.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Right Position",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "PID Enabled",
+            "x": 128.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/PID Enabled",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Max Velocity",
+            "x": 768.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Max Velocity",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Harvester RPM",
+            "x": 1152.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/Harvester RPM",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Pull In RPM",
+            "x": 1024.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/Pull In RPM",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Save Prefs",
+            "x": 1152.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Toggle Button",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/Save Prefs",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
+          },
+          {
+            "title": "Speed Conversion Constant",
+            "x": 1024.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/Speed Conversion Constant",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "motor output",
+            "x": 1152.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/motor output",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "HarvesterSubsystem",
+            "x": 896.0,
+            "y": 256.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Subsystem",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem",
+              "period": 0.06
             }
           }
         ]
