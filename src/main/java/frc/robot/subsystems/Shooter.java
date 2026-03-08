@@ -38,6 +38,9 @@ public class Shooter extends SubsystemBase {
   private double kD = Constants.ShooterConstants.kDdefault;
   private double kV = Constants.ShooterConstants.kVdefault;
   private double kTol = Constants.ShooterConstants.PIDToleranceDefault;
+  // Locally-cached sensor/state values to avoid repeated CAN reads every loop
+  private double currentRPM = 0.0;
+  private ClosedLoopSlot currentSlot; // initialized from hardware in constructor
   private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
                                          // stabilize at the target speed after a change
@@ -72,18 +75,22 @@ public class Shooter extends SubsystemBase {
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
 
+    // Read the actual slot from the controller once at startup so our cached
+    // value reflects whatever the SparkMax persisted from a previous session.
+    currentSlot = closedLoopController.getSelectedSlot();
   }
 
 
   public void setRPMsetpoint(double rpm) {
     rpmSetpoint = MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM);
-    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kVelocity);
+    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kVelocity, currentSlot);
     if(isOpenLoop()) {timeAtSpeed.restart();}
   }
 
   public void setRPMsetpoint(double rpm, ClosedLoopSlot slot) {
     rpmSetpoint = MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM);
-  closedLoopController.setSetpoint(rpmSetpoint, ControlType.kVelocity, slot);
+    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kVelocity, slot);
+    currentSlot = slot;
     if(isOpenLoop()) {timeAtSpeed.restart();}
   }
 
@@ -130,8 +137,15 @@ public class Shooter extends SubsystemBase {
     shooterMotor.configure(cfg, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
+  @Override
+  public void periodic() {
+    // Read velocity exactly once per loop; all other methods use this cached value
+    // instead of going back to the CAN bus independently.
+    currentRPM = encoder.getVelocity();
+  }
+
   public double getRPM() {
-    return encoder.getVelocity();
+    return currentRPM;
   }
 
   public double getMotorPctOutput() {
@@ -143,7 +157,7 @@ public class Shooter extends SubsystemBase {
       return true;
     }
     if (isPIDEnabled()) {
-      return closedLoopController.isAtSetpoint();
+      return Math.abs(currentRPM - rpmSetpoint) <= kTol;
     }
     if (isOpenLoop()) {
       return timeAtSpeed.hasElapsed(spinUpTime);
@@ -152,19 +166,19 @@ public class Shooter extends SubsystemBase {
   }
 
   public void enablePID(boolean enable) {
-    ClosedLoopSlot slot = enable ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
+    currentSlot = enable ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
     closedLoopController.setIAccum(0.0);
-    closedLoopController.setSetpoint(getRPM(), ControlType.kVelocity, slot); // set the current speed as the setpoint so we don't get a sudden change
+    closedLoopController.setSetpoint(currentRPM, ControlType.kVelocity, currentSlot); // set the current speed as the setpoint so we don't get a sudden change
   }
 
   public boolean isPIDEnabled() {
-  return closedLoopController.getControlType() == ControlType.kVelocity &&
-        closedLoopController.getSelectedSlot() == ClosedLoopSlot.kSlot0;
+    return closedLoopController.getControlType() == ControlType.kVelocity &&
+        currentSlot == ClosedLoopSlot.kSlot0;
   }
 
   public boolean isOpenLoop() {
-  return closedLoopController.getControlType() == ControlType.kVelocity &&
-        closedLoopController.getSelectedSlot() == ClosedLoopSlot.kSlot1;
+    return closedLoopController.getControlType() == ControlType.kVelocity &&
+        currentSlot == ClosedLoopSlot.kSlot1;
   }
 
   public boolean isDangerMode() {
@@ -249,10 +263,9 @@ public class Shooter extends SubsystemBase {
 
   public String getStatus(){
     ControlType controlType = closedLoopController.getControlType();
-    ClosedLoopSlot slot = closedLoopController.getSelectedSlot();
     if(controlType == ControlType.kVelocity){
-      if(slot == ClosedLoopSlot.kSlot0){
-        return"PID";
+      if(currentSlot == ClosedLoopSlot.kSlot0){
+        return "PID";
       }else{
         return "OPEN LOOP";
       }
@@ -277,7 +290,7 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> kTol,
         (x) -> { if (x != kTol) { kTol = x; setPIDVT(); } } );
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
-    builder.addDoubleProperty("Shooter RPM raw", () -> encoder.getVelocity(), null);
+    builder.addDoubleProperty("Shooter RPM raw", () -> currentRPM, null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);
