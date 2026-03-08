@@ -175,6 +175,10 @@ public final class Constants {
     public static final double maxPositionDefault = 220.0; // encoder units
     public static final String minPositionKey = "hopperMinPosition";
     public static final double minPositionDefault = 3.0; // encoder units
+    public static final String leftPositionKey = "hopperLeftPosition";
+    public static final double leftPositionDefault = 0.0; // encoder units
+    public static final String rightPositionKey = "hopperRightPosition";
+    public static final double rightPositionDefault = 0.0; // encoder units
     // public static final String kVkey = "hopperKv";
     // public static final double kVdefault = 0.001;
     public static final String posToleranceKey = "hopperPosTolerance";
