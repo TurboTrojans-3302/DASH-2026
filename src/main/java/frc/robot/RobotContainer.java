@@ -212,6 +212,11 @@ public class RobotContainer {
       hopperExpand.onTrue(m_hopper.expandCommand());
       hopperRetract.onTrue(m_hopper.retractCommand());
 
+      JoystickButton nudgeHopperOut = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.RightKnobCW);
+      JoystickButton nudgeHopperIn = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.RightKnobCCW);
+      nudgeHopperOut.whileTrue(m_hopper.nudgeCommand(4));
+      nudgeHopperIn.whileTrue(m_hopper.nudgeCommand(-4));
+
       JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
       hopperPIDenable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(true), m_hopper));
