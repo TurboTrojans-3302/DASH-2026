@@ -23,6 +23,7 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.commands.GoToCommand;
+import frc.utils.SwerveUtils;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -159,6 +160,10 @@ public class Navigation extends SubsystemBase {
     return delta.getAngle();
   }
 
+  public double getDeltaAngleToTargetDegrees() {
+    return SwerveUtils.angleDeltaDeg(getAngleDegrees(), getHeadingToTarget().getDegrees());
+  } 
+
   /**
    * Get the optimal shooting position: a Pose2d on the line between the bot and the hub center,
    * at rangeRPMtable.OPTIMAL meters from the hub center, facing the hub.
@@ -187,5 +192,7 @@ public class Navigation extends SubsystemBase {
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
       builder.addDoubleProperty("Auton Speed Scale", ()->GoToCommand.getGlobalSpeedScale(), (x) -> GoToCommand.setGlobalSpeedScale(x));
       builder.addDoubleProperty("Auton Tolerance Scale", ()->GoToCommand.getGlobalToleranceScale(), (x) -> GoToCommand.setGlobalToleranceScale(x));
+      builder.addDoubleProperty("Target DX", ()->getDXtoTarget(), null);
+      builder.addDoubleProperty("Target Angle", ()->getDeltaAngleToTargetDegrees(), null);
     }
 }

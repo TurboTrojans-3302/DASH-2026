@@ -5,14 +5,62 @@
     {
       "name": "Competition",
       "grid_layout": {
-        "layouts": [],
+        "layouts": [
+          {
+            "title": "PID Enable",
+            "x": 1152,
+            "y": 384,
+            "width": 256,
+            "height": 256,
+            "type": "List Layout",
+            "properties": {
+              "label_position": "LEFT"
+            },
+            "children": [
+              {
+                "title": "Hopper",
+                "x": 576,
+                "y": 512,
+                "width": 128,
+                "height": 128,
+                "type": "Boolean Box",
+                "properties": {
+                  "topic": "/SmartDashboard/Hopper/PID Enabled",
+                  "period": 0.06,
+                  "data_type": "boolean",
+                  "true_color": 4283215696,
+                  "false_color": 4294198070,
+                  "true_icon": "None",
+                  "false_icon": "None"
+                }
+              },
+              {
+                "title": "Shooter",
+                "x": 576,
+                "y": 576,
+                "width": 128,
+                "height": 128,
+                "type": "Boolean Box",
+                "properties": {
+                  "topic": "/SmartDashboard/ShooterSubsystem/PID Enabled",
+                  "period": 0.06,
+                  "data_type": "boolean",
+                  "true_color": 4283215696,
+                  "false_color": 4294198070,
+                  "true_icon": "None",
+                  "false_icon": "None"
+                }
+              }
+            ]
+          }
+        ],
         "containers": [
           {
             "title": "Limelight",
             "x": 0,
             "y": 0,
-            "width": 384,
-            "height": 384,
+            "width": 512,
+            "height": 512,
             "type": "Camera Stream",
             "properties": {
               "topic": "/CameraPublisher/limelight",
@@ -21,9 +69,9 @@
             }
           },
           {
-            "title": "Time Left In Period:",
+            "title": "Time Left In Shift:",
             "x": 1152,
-            "y": 0,
+            "y": 256,
             "width": 256,
             "height": 128,
             "type": "Match Time",
@@ -32,15 +80,15 @@
               "period": 0.06,
               "data_type": "double",
               "time_display_mode": "Minutes and Seconds",
-              "red_start_time": 20,
-              "yellow_start_time": 30
+              "red_start_time": 5,
+              "yellow_start_time": 10
             }
           },
           {
             "title": "Score",
-            "x": 1024,
-            "y": 0,
-            "width": 128,
+            "x": 1152,
+            "y": 128,
+            "width": 256,
             "height": 128,
             "type": "Boolean Box",
             "properties": {
@@ -54,14 +102,84 @@
             }
           },
           {
-            "title": "DxSensor",
-            "x": 384,
+            "title": "Current Shift",
+            "x": 1152,
             "y": 0,
+            "width": 256,
+            "height": 128,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/GameData/Current Shift",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Target Angle",
+            "x": 896,
+            "y": 256,
+            "width": 256,
+            "height": 256,
+            "type": "Radial Gauge",
+            "properties": {
+              "topic": "/SmartDashboard/Navigation/Target Angle",
+              "period": 0.06,
+              "data_type": "double",
+              "start_angle": -60,
+              "end_angle": 60,
+              "min_value": -10,
+              "max_value": 10,
+              "number_of_labels": 4,
+              "wrap_value": false,
+              "show_pointer": true,
+              "show_ticks": true
+            }
+          },
+          {
+            "title": "Hopper Expansion",
+            "x": 512,
+            "y": 0,
+            "width": 128,
+            "height": 256,
+            "type": "Number Bar",
+            "properties": {
+              "topic": "/SmartDashboard/Hopper/Left Position",
+              "period": 0.06,
+              "data_type": "double",
+              "min_value": 0,
+              "max_value": 200,
+              "divisions": 5,
+              "inverted": false,
+              "orientation": "vertical"
+            }
+          },
+          {
+            "title": "Shooter Ready",
+            "x": 896,
+            "y": 0,
+            "width": 256,
+            "height": 128,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Ready?",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Target DX",
+            "x": 896,
+            "y": 128,
             "width": 256,
             "height": 128,
             "type": "Number Bar",
             "properties": {
-              "topic": "/SmartDashboard/Navigation/DxSensor",
+              "topic": "/SmartDashboard/Navigation/Target DX",
               "period": 0.06,
               "data_type": "double",
               "min_value": 0,
@@ -93,21 +211,8 @@
             }
           },
           {
-            "title": "Start Position",
-            "x": 768,
-            "y": 128,
-            "width": 384,
-            "height": 128,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Start Position",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
             "title": "IsRedAlliance",
-            "x": 768,
+            "x": 1152,
             "y": 256,
             "width": 128,
             "height": 128,
@@ -161,12 +266,12 @@
             "x": 0,
             "y": 0,
             "width": 768,
-            "height": 384,
+            "height": 448,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Field",
               "period": 0.06,
-              "field_game": "Reefscape",
+              "field_game": "Rebuilt (No Fuel)",
               "robot_width": 0.85,
               "robot_length": 0.85,
               "show_other_objects": true,
@@ -355,7 +460,7 @@
         "containers": [
           {
             "title": "Feeder Speed",
-            "x": 512,
+            "x": 640,
             "y": 0,
             "width": 128,
             "height": 128,
@@ -500,7 +605,7 @@
           },
           {
             "title": "Danger Mode",
-            "x": 512,
+            "x": 640,
             "y": 128,
             "width": 128,
             "height": 128,
@@ -517,7 +622,7 @@
           },
           {
             "title": "feed motor output",
-            "x": 512,
+            "x": 640,
             "y": 256,
             "width": 128,
             "height": 128,
@@ -545,7 +650,7 @@
           },
           {
             "title": "ShooterSubsystem",
-            "x": 640,
+            "x": 768,
             "y": 256,
             "width": 256,
             "height": 128,
