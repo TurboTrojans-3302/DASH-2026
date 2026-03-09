@@ -22,6 +22,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.commands.GoToCommand;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -184,5 +185,7 @@ public class Navigation extends SubsystemBase {
       builder.addStringProperty("DetectorFound", () -> {return LimelightHelpers.getDetectorClass(cameraName);}, null);
       builder.addStringProperty("ClassiferFound", () -> {return LimelightHelpers.getClassifierClass(cameraName);}, null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
+      builder.addDoubleProperty("Auton Speed Scale", ()->GoToCommand.getGlobalSpeedScale(), (x) -> GoToCommand.setGlobalSpeedScale(x));
+      builder.addDoubleProperty("Auton Tolerance Scale", ()->GoToCommand.getGlobalToleranceScale(), (x) -> GoToCommand.setGlobalToleranceScale(x));
     }
 }

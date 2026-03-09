@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -11,9 +12,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Navigation;
@@ -21,6 +22,8 @@ import frc.utils.SwerveUtils;
 
 public class GoToCommand extends Command {
 
+  private static double globalSpeedScale = 1.0;
+  private static double globalToleranceScale = 1.0;
   protected final double dT = Robot.kDefaultPeriod;
 
   protected Pose2d m_dest;
@@ -31,10 +34,38 @@ public class GoToCommand extends Command {
   protected Navigation m_nav;
   protected double m_totalDistance;  // total distance to goal at initialize()
 
-  static double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
-  static double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
-  static double kDistanceTolerance = Constants.AutoConstants.kDistanceTolerance;
-  static double kHeadingTolerance = Constants.AutoConstants.kHeadingTolerance;
+  double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
+  double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
+  double kDistanceTolerance = AutoConstants.kDistanceTolerance;
+  double kHeadingTolerance =  AutoConstants.kHeadingTolerance;
+
+
+  public static void setGlobalSpeedScale(double scale) {
+    globalSpeedScale = MathUtil.clamp(scale, 0.0, 1.0);
+  }
+
+  public static void setGlobalToleranceScale(double scale) {
+    globalToleranceScale = MathUtil.clamp(scale, 0.0, 10.0);
+  }
+
+  public static double getGlobalToleranceScale() {
+    return globalToleranceScale;
+  }
+
+  public GoToCommand setLimits(double speedLimit, double accelLimit) {
+    this.speedLimit = speedLimit;
+    this.accelLimit = accelLimit;
+    return this;
+  } 
+
+  public GoToCommand setTolerance(double distanceTolerance, double headingTolerance) {
+    this.kDistanceTolerance = distanceTolerance;
+    this.kHeadingTolerance = headingTolerance;
+    this.setName(getName());
+    return this;
+  }
+
+
 
   protected GoToCommand(DriveTrain drive, Navigation nav) {
     m_drive = drive;
@@ -71,7 +102,7 @@ public class GoToCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_trapezoid = new TrapezoidProfile(new Constraints(speedLimit, accelLimit));
+    m_trapezoid = new TrapezoidProfile(new Constraints(globalSpeedScale * speedLimit, globalSpeedScale * accelLimit));
 
     if (m_relativeFlag) {
       Pose2d currPose2d = m_nav.getPose();
@@ -150,5 +181,15 @@ public class GoToCommand extends Command {
     return distance() < kDistanceTolerance &&
         Math.abs(deltaHeading()) < kHeadingTolerance;
   }
+
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("Speed Scale", () -> globalSpeedScale, (x)->{setGlobalSpeedScale(x);});
+  }
+
+public static double getGlobalSpeedScale() {
+    return globalSpeedScale;
+}
 
 }
