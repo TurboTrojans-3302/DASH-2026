@@ -6,6 +6,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.cscore.HttpCamera.HttpCameraKind;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -36,6 +38,13 @@ public class Navigation extends SubsystemBase {
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
+
+    // Publish the Limelight MJPEG stream so Elastic can display it as a camera widget
+    HttpCamera limelightStream = new HttpCamera(
+        cameraName,
+        "http://limelight.local:5800/stream.mjpg",
+        HttpCameraKind.kMJPGStreamer);
+    edu.wpi.first.cameraserver.CameraServer.addCamera(limelightStream);
 
     SmartDashboard.putData(m_dashboardField);
   }
