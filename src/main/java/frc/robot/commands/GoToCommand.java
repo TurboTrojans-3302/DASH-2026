@@ -21,15 +21,15 @@ import frc.utils.SwerveUtils;
 
 public class GoToCommand extends Command {
 
-  private final double dT = Robot.kDefaultPeriod;
+  protected final double dT = Robot.kDefaultPeriod;
 
   protected Pose2d m_dest;
   protected Transform2d m_delta;
   protected DriveTrain m_drive;
-  private TrapezoidProfile m_trapezoid;
+  protected TrapezoidProfile m_trapezoid;
   protected boolean m_relativeFlag;
   protected Navigation m_nav;
-  private double m_totalDistance;  // total distance to goal at initialize()
+  protected double m_totalDistance;  // total distance to goal at initialize()
 
   static double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
   static double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
@@ -82,7 +82,7 @@ public class GoToCommand extends Command {
     m_nav.m_dashboardField.getObject("dest").setPose(m_dest);
   }
 
-  private Translation2d translation2dest() {
+  protected Translation2d translation2dest() {
     return m_dest.getTranslation().minus(m_nav.getPose().getTranslation());
   }
 
@@ -98,11 +98,11 @@ public class GoToCommand extends Command {
     return m_dest.getRotation().getRadians();
   }
 
-  private double deltaHeading() {
+  protected double deltaHeading() {
     return SwerveUtils.angleDeltaDeg(m_nav.getAngleDegrees(), destHeadingDegrees());
   }
 
-  private double speedTowardTarget() {
+  protected double speedTowardTarget() {
     Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getAngle());
     Translation2d targetDirection = translation2dest();
 
