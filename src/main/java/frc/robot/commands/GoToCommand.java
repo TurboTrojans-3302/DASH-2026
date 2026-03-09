@@ -143,7 +143,7 @@ public class GoToCommand extends Command {
       return -m_drive.getSpeed();
     }
 
-    Double difference = targetDirection.getAngle().getRadians() - botDirection.getAngle().getRadians();
+    double difference = targetDirection.getAngle().getRadians() - botDirection.getAngle().getRadians();
     return m_drive.getSpeed() * Math.cos(difference);
   }
 
@@ -153,10 +153,6 @@ public class GoToCommand extends Command {
     Translation2d toDest = translation2dest();
     double distanceToDest = toDest.getNorm();
 
-    if(distanceToDest < kDistanceTolerance){
-      return; // do nothing
-    }
-
     double traveledDistance = Math.max(0.0, m_totalDistance - distanceToDest);
     State currentState = new State(traveledDistance, speedTowardTarget());
     State goalState = new State(m_totalDistance, 0.0);
@@ -164,6 +160,10 @@ public class GoToCommand extends Command {
     double speed = m_trapezoid.calculate(dT, currentState, goalState).velocity;
 
     Translation2d unitTranslation = toDest.div(distanceToDest);
+
+    if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance * globalToleranceScale)){
+      speed = 0.0;
+    }
 
     m_drive.driveHeading(unitTranslation.times(speed), destHeadingRadians());
   }
@@ -178,8 +178,9 @@ public class GoToCommand extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return distance() < kDistanceTolerance &&
-        Math.abs(deltaHeading()) < kHeadingTolerance;
+    return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
+        MathUtil.isNear(destHeadingDegrees(), m_nav.getAngleDegrees(),
+                        kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
   }
 
   @Override
