@@ -199,7 +199,7 @@ public class RobotContainer {
                                                                                                      // without feeding
       enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
 
-      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).onTrue(new AutoShoot(m_robotDrive, m_shooter, m_navigation));
+      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).onTrue(m_shooter.shootCommand());
 
       feederReverse.whileTrue(m_shooter.reverseFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
@@ -213,12 +213,12 @@ public class RobotContainer {
       hopperExpand.onTrue(m_hopper.expandCommand());
       hopperRetract.onTrue(m_hopper.retractCommand());
 
-      JoystickButton nudgeHopperLeftOut  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpLeft);
-      JoystickButton nudgeHopperOut      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
-      JoystickButton nudgeHopperRightOut = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpRight);
-      JoystickButton nudgeHopperLeftIn  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownLeft);
-      JoystickButton nudgeHopperIn      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
-      JoystickButton nudgeHopperRightIn = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownRight);
+      Trigger nudgeHopperLeftOut = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpLeft);
+      Trigger nudgeHopperOut = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUp);
+      Trigger nudgeHopperRightOut = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpRight);
+      Trigger nudgeHopperLeftIn   = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownLeft);
+      Trigger nudgeHopperIn       = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDown);
+      Trigger nudgeHopperRightIn  = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownRight);
       nudgeHopperOut.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
       nudgeHopperIn.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
@@ -280,13 +280,14 @@ public class RobotContainer {
 
   public void onDSAttached() {
     // Read the actual switch state at binding time so PID starts in the correct mode
-      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
+    if (HOPPER_ENABLE){
+    if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
         m_hopper.setPIDEnabled(true);
       }
       if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Down)){
         m_hopper.setPIDEnabled(false);
       }
-
+    }
       if(SHOOTER_ENABLE){
         if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
           m_shooter.enablePID(true);
