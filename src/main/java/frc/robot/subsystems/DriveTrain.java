@@ -270,6 +270,21 @@ public class DriveTrain extends SubsystemBase {
         false); // Open loop is disabled since it shouldn't be used most of the time.
   }
 
+  public void driveHeading(Translation2d translation, Rotation2d heading) {
+    double rotation = swerveDrive.swerveController.headingCalculate(getHeading().getRadians(), heading.getRadians());
+    swerveDrive.drive(translation, rotation, true, false);
+  }
+
+  /**
+   * Drive the robot given a translation in field-relative m/s. 
+   * Heading is a desired angle that the robot should turn to while driving.
+   */
+  public void driveHeading(Translation2d translation, double headingRadians){
+
+    double rotation = swerveDrive.getSwerveController().headingCalculate(getHeading().getRadians(), headingRadians);
+    swerveDrive.drive(translation, rotation, true, false); // Field relative should be used since we are controlling the robot with a heading.
+  }
+  
   /**
    * Drive the robot given a chassis field oriented velocity.
    *
@@ -361,17 +376,6 @@ public class DriveTrain extends SubsystemBase {
     swerveDrive.zeroGyro();
   }
 
-  /**
-   * Checks if the alliance is red, defaults to false if alliance isn't available.
-   *
-   * @return true if the red alliance, false if blue. Defaults to false if none is
-   *         available.
-   */
-  private boolean isRedAlliance() {
-    var alliance = DriverStation.getAlliance();
-    return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
-  }
-
 
   /**
    * Sets the drive motors to brake/coast mode.
@@ -394,6 +398,7 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
+  //todo this is duplicated, i think
   public Double getMaxSpeed() {
     return kMaxSpeed;
   }
@@ -524,4 +529,20 @@ public class DriveTrain extends SubsystemBase {
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
 
+public void stop() {
+    swerveDrive.drive(new ChassisSpeeds(0, 0, 0));
+}
+
+public double getSpeed() {
+        ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+        return Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+      }
+    
+    /*
+     * Returns the velocity vector of the robot, in the Robot Frame, in meters per second.
+     */
+    public Translation2d getVelocityVector() {
+        ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity ();
+        return new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+    }
 }
