@@ -58,8 +58,6 @@ public class Hopper extends SubsystemBase {
 
 
     public Hopper(int leftMotorID, int rightMotorID) {
-        loadPreferences();
-
         leftMotor = new SparkMax(leftMotorID, MotorType.kBrushless);
         rightMotor = new SparkMax(rightMotorID, MotorType.kBrushless);
 
@@ -67,12 +65,11 @@ public class Hopper extends SubsystemBase {
 
         leftMotor.set(0);
         leftEncoder = leftMotor.getEncoder();
-        leftEncoder.setPosition(0); // reset encoder position on startup
 
         rightMotor.set(0);
         rightEncoder = rightMotor.getEncoder();
-        rightEncoder.setPosition(0); // reset encoder position on startup
 
+        loadPreferences();
     }
 
     private void configureSparkMaxes() {
@@ -101,12 +98,13 @@ public class Hopper extends SubsystemBase {
         return false; // Assume not empty for now
     }
 
-    public void move(double speed) {
+    public void move(double speedLeft, double speedRight) {
         if (isPIDEnabled()) {
             // Do nothing
         } else {
-            double motorSpeed = MathUtil.clamp(speed, -1.0, 1.0);
-            setMotorPctOutput(motorSpeed, motorSpeed);
+            double motorSpeedLeft = MathUtil.clamp(speedLeft, -1.0, 1.0);
+            double motorSpeedRight = MathUtil.clamp(speedRight, -1.0, 1.0);
+            setMotorPctOutput(motorSpeedLeft, motorSpeedRight);
         }
     }
 
@@ -238,14 +236,25 @@ public class Hopper extends SubsystemBase {
         return cmd;
     }
 
-    public Command manualMoveCommand(DoubleSupplier speedSupplier) {
+        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init
-            () -> move(speedSupplier.getAsDouble()), // call move() with supplier value
+            () -> move(speedSupplierLeft.getAsDouble(), speedSupplierRight.getAsDouble()), // call move() with supplier value
             (interrupted) -> { stop(); }, // stop on end or interrupt
             () -> false, // never end on its own
             this);
         cmd.setName("manualMoveCommand");
+        return cmd;
+    }
+
+    public Command nudgeCommand(double incrementPerLoop) {
+        Command cmd = new FunctionalCommand(
+            () -> {}, // no init needed
+            () -> setPosition(positionSetpoint + incrementPerLoop), // advance setpoint each loop
+            (interrupted) -> hold(), // hold position on release
+            () -> false, // whileTrue in RobotContainer handles termination
+            this);
+        cmd.setName("nudgeCommand");
         return cmd;
     }
 
@@ -282,7 +291,7 @@ public class Hopper extends SubsystemBase {
         }
     }
 
-    private void savePreferences() {
+    public void savePreferences() {
         System.out.println("Saving hopper values to preferences");
         Preferences.setDouble(HopperConstants.maxPositionKey, softMax);
         Preferences.setDouble(HopperConstants.minPositionKey, softMin);
@@ -326,5 +335,10 @@ public class Hopper extends SubsystemBase {
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
         builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
+    }
+
+    public void savePositions() {
+        Preferences.setDouble(HopperConstants.leftPositionKey,  leftEncoder.getPosition());
+        Preferences.setDouble(HopperConstants.rightPositionKey, rightEncoder.getPosition());
     }
 }

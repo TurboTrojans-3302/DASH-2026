@@ -6,6 +6,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.cscore.HttpCamera;
+import edu.wpi.first.cscore.HttpCamera.HttpCameraKind;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -28,6 +30,7 @@ public class Navigation extends SubsystemBase {
   public Field2d m_dashboardField = new Field2d();
   protected SwerveDrivePoseEstimator m_poseEstimator;
   private static AprilTagFieldLayout m_aprilTagLayout;
+  private boolean mainCameraStreamSelected = true;
 
   /** Creates a new Navigation. */
   public Navigation(DriveTrain drive) {
@@ -37,6 +40,13 @@ public class Navigation extends SubsystemBase {
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
+
+    // Publish the Limelight MJPEG stream so Elastic can display it as a camera widget
+    HttpCamera limelightStream = new HttpCamera(
+        cameraName,
+        "http://limelight.local:5800/stream.mjpg",
+        HttpCameraKind.kMJPGStreamer);
+    edu.wpi.first.cameraserver.CameraServer.addCamera(limelightStream);
 
     SmartDashboard.putData(m_dashboardField);
   }
@@ -107,6 +117,15 @@ public class Navigation extends SubsystemBase {
     Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
     Pose2d botPose = getPose();
     return hubPose.getTranslation().getDistance(botPose.getTranslation());
+  }
+
+  public void toggleCameraStream() {
+    if(mainCameraStreamSelected) {
+      LimelightHelpers.setStreamMode_PiPSecondary(cameraName);
+    } else {
+      LimelightHelpers.setStreamMode_PiPMain(cameraName);
+    }
+    mainCameraStreamSelected = !mainCameraStreamSelected;
   }
 
   public Rotation2d getHeadingToTarget() {

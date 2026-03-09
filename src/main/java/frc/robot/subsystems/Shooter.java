@@ -13,6 +13,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.Timer;
@@ -21,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.ShooterConstants;
+import frc.robot.Robot;
 
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
@@ -33,7 +36,8 @@ public class Shooter extends SubsystemBase {
   private boolean dangerMode = false;
   private Timer timeAtSpeed = new Timer();
   private boolean coasting = false;
- 
+  private double velocity = 0.0;
+  private LinearFilter velocityFilter;
   private final double spinUpTime = 2.0; // seconds that the shooter must be at the target speed before we consider it
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
                                          // stabilize at the target speed after a change
@@ -61,7 +65,7 @@ public class Shooter extends SubsystemBase {
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
     SparkMaxConfig feederConfig = new SparkMaxConfig();
-    feederConfig.inverted(true)
+    feederConfig.inverted(false)
                 .idleMode(IdleMode.kBrake)
                  .smartCurrentLimit(20);
     feederMotor.configure(feederConfig,
@@ -71,11 +75,14 @@ public class Shooter extends SubsystemBase {
     PID.setSetpoint(0.0);
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
+
+    velocityFilter = LinearFilter.singlePoleIIR(ShooterConstants.velocityFilterTimeConstant,
+                                                Robot.kDefaultPeriod);
   }
 
   public void setRPMsetpoint(double rpm) {
     coasting = false;
-    PID.setSetpoint(MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM));
+    PID.setSetpoint(MathUtil.clamp(rpm, 0.0, ShooterConstants.maxRPM));
 
     if(!PIDEnabled){
       setMotorPctOutput(feedforward.calculate(PID.getSetpoint()));
@@ -83,7 +90,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public double getRPM() {
-    return encoder.getVelocity();
+    return velocity;
   }
 
   private void setMotorPctOutput(double speed) {
@@ -158,11 +165,11 @@ public class Shooter extends SubsystemBase {
 
   @Override
   public void periodic() {
+    velocity = velocityFilter.calculate(encoder.getVelocity());
 
     if (isPIDEnabled() && !coasting) {
-      double currentVelocity = encoder.getVelocity(); // rpm
       double output = feedforward.calculate(PID.getSetpoint());
-      output += PID.calculate(currentVelocity);
+      output += PID.calculate(velocity);
       setMotorPctOutput(output);
     }
   }
@@ -219,6 +226,7 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> PID.getErrorTolerance(),
         (x) -> PID.setTolerance(x));
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
+    builder.addDoubleProperty("Shooter RPM raw", () -> encoder.getVelocity(), null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);

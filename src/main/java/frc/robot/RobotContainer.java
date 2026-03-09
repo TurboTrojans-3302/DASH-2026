@@ -26,6 +26,9 @@ import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
+import frc.robot.autoncommands.DoNothing;
+import frc.robot.subsystems.GameData;
+
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -42,6 +45,9 @@ public class RobotContainer {
 
   public static boolean ignorePeriods = false;
 
+  private static final double kHopperNudgeIncrement = 4.0;
+  private static final double kHopperNudgeOpenLoopSpeed = 0.2;
+
   private static RobotContainer instance;
 
   // The robot's subsystems
@@ -52,10 +58,11 @@ public class RobotContainer {
   public Hopper m_hopper;
   public Navigation m_navigation;
   public DXsensor m_dxSensor;
+  public GameData m_gameData;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
-  private Command m_autonCommand;
+  //private Command m_autonCommand;
 
   private final REVBlinkinLED m_BlinkinLED;
 
@@ -87,10 +94,6 @@ public class RobotContainer {
       SmartDashboard.putData("Hopper", m_hopper);
     }
 
-    SmartDashboard.putString("TeleOp Shift", Robot.getInstance().getCurrentShiftName());
-    SmartDashboard.putNumber("Time Left In Shift:", Robot.getInstance().getTimeLeftInShift());
-    SmartDashboard.putBoolean("Score", Robot.getInstance().scoring()); // tower activated, robot can score
-     
     if(SHOOTER_ENABLE){
       m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId);
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
@@ -105,6 +108,12 @@ public class RobotContainer {
     SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
 
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
+
+    m_autonomousChooser.setDefaultOption("Do Nothing", new DoNothing());
+    SmartDashboard.putData("Autonomous Chooser", m_autonomousChooser);
+
+    m_gameData = new GameData();
+    SmartDashboard.putData("GameData", m_gameData);
   }
 
   public void setDefaultCommands() {
@@ -137,6 +146,10 @@ public class RobotContainer {
       extendHopper.onTrue(m_hopper.expandCommand());
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
+
+    Trigger toggleCameraStream = new Trigger(() -> m_driverController.getYButtonPressed());
+    toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
+    
     /**
      * Copilot's Controller
      *
@@ -154,9 +167,6 @@ public class RobotContainer {
       Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
       extendHopperCopilot.onTrue(m_hopper.expandCommand());
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
-      final double hopperManualJoystickDeadband = 0.1;
-      Trigger hopperManualControl = new Trigger(() -> Math.abs(m_copilotController.getLeftY()) > hopperManualJoystickDeadband);
-      hopperManualControl.whileTrue(m_hopper.manualMoveCommand(() -> MathUtil.applyDeadband(-m_copilotController.getLeftY() * .5, hopperManualJoystickDeadband)));
     }
     
 
@@ -182,7 +192,7 @@ public class RobotContainer {
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
       JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
-      Trigger scoringAllowed = new Trigger(() -> Robot.getInstance().scoring());
+      Trigger scoringAllowed = new Trigger(() -> m_gameData.scoring());
       JoystickButton shootButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
       JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
@@ -203,6 +213,22 @@ public class RobotContainer {
       hopperExpand.onTrue(m_hopper.expandCommand());
       hopperRetract.onTrue(m_hopper.retractCommand());
 
+      JoystickButton nudgeHopperLeftOut  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpLeft);
+      JoystickButton nudgeHopperOut      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
+      JoystickButton nudgeHopperRightOut = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpRight);
+      JoystickButton nudgeHopperLeftIn  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownLeft);
+      JoystickButton nudgeHopperIn      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
+      JoystickButton nudgeHopperRightIn = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownRight);
+      nudgeHopperOut.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
+      nudgeHopperIn.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
+
+      nudgeHopperLeftOut.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
+      nudgeHopperOut.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed));
+      nudgeHopperRightOut.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> 0.0,() -> kHopperNudgeOpenLoopSpeed));
+      nudgeHopperLeftIn.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0));
+      nudgeHopperIn.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed));
+      nudgeHopperRightIn.and(()->!m_hopper.isPIDEnabled()).whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed));
+
       JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
       hopperPIDenable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(true), m_hopper));
@@ -222,13 +248,13 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     System.out.println("getAutonomousCommand()");
-    return m_autonCommand;
+    return m_autonomousChooser.getSelected();
   }
 
-  public void setAutonCommand(Command cmd) {
-    m_autonCommand = cmd;
-    System.out.println("setAutonCommand" + m_autonCommand);
-  }
+  // public void setAutonCommand(Command cmd) {
+  //   m_autonCommand = cmd;
+  //   System.out.println("setAutonCommand" + m_autonCommand);
+  // }
 
   public Pose2d getStartPosition() {
     return m_startPosChooser.getSelected();
@@ -271,4 +297,7 @@ public class RobotContainer {
       }
   }
 
+  public void saveSomePreferences() {
+    if (HOPPER_ENABLE) m_hopper.savePositions();
+  }
 }
