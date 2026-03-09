@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
-import frc.robot.commands.AutoShoot;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
@@ -26,6 +25,7 @@ import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
+import frc.robot.autoncommands.AutoShoot;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.subsystems.GameData;
 
@@ -86,7 +86,10 @@ public class RobotContainer {
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
-    m_navigation = new Navigation(m_robotDrive);
+    m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
+    SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
+
+    m_navigation = new Navigation(m_robotDrive, m_dxSensor);
     SmartDashboard.putData("NavigationSubsystem", m_navigation);
 
     if(HOPPER_ENABLE){
@@ -103,9 +106,6 @@ public class RobotContainer {
       m_harvester = new Harvester(m_robotDrive, m_hopper);
       SmartDashboard.putData("HarvesterSubsystem", m_harvester);
     }
-
-    m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
-    SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
 
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
 

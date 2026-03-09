@@ -8,6 +8,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.HttpCamera.HttpCameraKind;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -27,14 +28,16 @@ import edu.wpi.first.wpilibj.Timer;
 public class Navigation extends SubsystemBase {
   private final String cameraName = "limelight";
   private DriveTrain m_drive;
+  private DXsensor m_dxSensor;
   public Field2d m_dashboardField = new Field2d();
   protected SwerveDrivePoseEstimator m_poseEstimator;
   private static AprilTagFieldLayout m_aprilTagLayout;
   private boolean mainCameraStreamSelected = true;
 
   /** Creates a new Navigation. */
-  public Navigation(DriveTrain drive) {
+  public Navigation(DriveTrain drive, DXsensor dxSensor) {
     this.m_drive = drive;
+    this.m_dxSensor = dxSensor;
 
     m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
@@ -58,6 +61,7 @@ public class Navigation extends SubsystemBase {
       m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
     }
   }
+  
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
@@ -116,7 +120,28 @@ public class Navigation extends SubsystemBase {
   public double getDxToHubCenter() {
     Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
     Pose2d botPose = getPose();
-    return hubPose.getTranslation().getDistance(botPose.getTranslation());
+    double odometryDistance = hubPose.getTranslation().getDistance(botPose.getTranslation());
+
+    return odometryDistance;
+  }
+
+  /**
+   * Get the distance to the target, fusing odometry with the laser sensor when available.
+   * When the laser sensor is valid and close enough, and its reading agrees with odometry,
+   * the laser reading is preferred.
+   * @return distance to target in meters
+   */
+  public double getDXtoTarget() {
+    double distance = getDxToHubCenter();
+
+    if (m_dxSensor.isValid() && distance < 3.0) {
+      double laserDx = m_dxSensor.getDistanceMeters() + 0.818; // odometryDX is center to center
+                                                                // laser is front to front
+      if (MathUtil.isNear(laserDx, distance, 0.5)) {
+        distance = laserDx;
+      }
+    }
+    return distance;
   }
 
   public void toggleCameraStream() {
@@ -131,6 +156,23 @@ public class Navigation extends SubsystemBase {
   public Rotation2d getHeadingToTarget() {
     Translation2d delta = FieldConstants.HubCenterPoint.getTranslation().minus(getPose().getTranslation());
     return delta.getAngle();
+  }
+
+  /**
+   * Get the optimal shooting position: a Pose2d on the line between the bot and the hub center,
+   * at rangeRPMtable.OPTIMAL meters from the hub center, facing the hub.
+   */
+  public Pose2d getOptimalShootPos() {
+    Translation2d hub = FieldConstants.HubCenterPoint.getTranslation();
+    Translation2d bot = getPose().getTranslation();
+    Translation2d hubToBot = bot.minus(hub);
+    // Unit vector from hub toward bot
+    Translation2d direction = hubToBot.div(hubToBot.getNorm());
+    // Point OPTIMAL meters from hub along that line
+    Translation2d optimalPoint = hub.plus(direction.times(rangeRPMtable.OPTIMAL));
+    // Face the hub from that point
+    Rotation2d heading = hub.minus(optimalPoint).getAngle();
+    return new Pose2d(optimalPoint, heading);
   }
   
   @Override

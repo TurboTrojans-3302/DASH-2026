@@ -57,8 +57,7 @@ public class SetRangeAndAim extends Command {
   }
 
   private void setShooterSpeedForDistance() {
-    double distance = navigation.getDxToHubCenter();
-    double rpm = rangeRPMtable.get(distance);
+    double rpm = rangeRPMtable.get(navigation.getDXtoTarget());
     shooter.setRPMsetpoint(rpm);
   }
 }
