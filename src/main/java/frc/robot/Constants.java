@@ -124,9 +124,9 @@ public final class Constants {
       // measured to the center of the lens
 
       // inches
-      public static final double forward = 4;
-      public static final double side = -7.5; // right is negative
-      public static final double up = 37.25;
+      public static final double forward = 18.75;
+      public static final double side = -6.5; // right is negative
+      public static final double up = 24.0;
 
       public static final double roll = 0.0;
       public static final double pitch = 0.0;
