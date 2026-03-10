@@ -49,6 +49,7 @@ public class Shooter extends SubsystemBase {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
     SparkMaxConfig config = new SparkMaxConfig();
     config.apply(SparkMaxConfig.Presets.REV_NEO_550);
+    config.smartCurrentLimit(25.0);
     config.inverted(false).idleMode(IdleMode.kCoast);
 
     shooterMotor.configure(config,
@@ -301,7 +302,8 @@ public class Shooter extends SubsystemBase {
       if (x)
         savePreferences();
     });
-    builder.addDoubleProperty("shoot motor output", () -> shooterMotor.get(), null);
+
+    builder.addDoubleProperty("shoot motor output", () -> shooterMotor.getAppliedOutput(), null);
     builder.addDoubleProperty ("feed motor output",()->feederMotor.get(), null);
   }
 

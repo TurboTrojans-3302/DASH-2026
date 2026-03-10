@@ -8,6 +8,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -59,6 +61,8 @@ public class RobotContainer {
   public Navigation m_navigation;
   public DXsensor m_dxSensor;
   public GameData m_gameData;
+
+  public PowerDistribution pdh;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -114,6 +118,9 @@ public class RobotContainer {
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);
+
+    pdh = new PowerDistribution(53, ModuleType.kRev);
+    SmartDashboard.putData(pdh);
   }
 
   public void setDefaultCommands() {
