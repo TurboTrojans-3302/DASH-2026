@@ -206,7 +206,7 @@ public class RobotContainer {
                                                                                                      // without feeding
       enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
 
-      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).onTrue(new AutoShoot(m_robotDrive, m_shooter, m_navigation));
+      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
       feederReverse.whileTrue(m_shooter.reverseFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
@@ -287,13 +287,14 @@ public class RobotContainer {
 
   public void onDSAttached() {
     // Read the actual switch state at binding time so PID starts in the correct mode
-      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
+    if (HOPPER_ENABLE){
+    if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
         m_hopper.setPIDEnabled(true);
       }
       if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Down)){
         m_hopper.setPIDEnabled(false);
       }
-
+    }
       if(SHOOTER_ENABLE){
         if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
           m_shooter.enablePID(true);
