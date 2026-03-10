@@ -485,7 +485,7 @@
           {
             "title": "ShooterSubsystem",
             "x": 640.0,
-            "y": 256.0,
+            "y": 0.0,
             "width": 256.0,
             "height": 128.0,
             "type": "Subsystem",
@@ -523,6 +523,18 @@
               "false_color": 4294198070,
               "true_icon": "None",
               "false_icon": "None"
+            }
+          },
+          {
+            "title": "PowerDistribution[52]",
+            "x": 896.0,
+            "y": 0.0,
+            "width": 384.0,
+            "height": 448.0,
+            "type": "PowerDistribution",
+            "properties": {
+              "topic": "/SmartDashboard/PowerDistribution[52]",
+              "period": 0.06
             }
           }
         ]
