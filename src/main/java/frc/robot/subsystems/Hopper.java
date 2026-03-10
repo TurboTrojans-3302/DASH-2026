@@ -152,10 +152,23 @@ public class Hopper extends SubsystemBase {
 
     public void hold() {
         if (isPIDEnabled()) {
-            setPosition(getPosition()); // re-apply current setpoint to hold position
+            rampToZero();
         } else {
             stop();
         }
+    }
+
+    public void rampToZero() {
+        double lTargetPos = leftEncoder.getPosition() + decelDistance(leftEncoder.getVelocity());
+        double rTargetPos = rightEncoder.getPosition() + decelDistance(rightEncoder.getVelocity());
+        leftPID.setGoal(new TrapezoidProfile.State(lTargetPos, 0)); 
+        rightPID.setGoal(new TrapezoidProfile.State(rTargetPos, 0)); 
+    }
+
+    private double decelDistance(double velocity){
+        double t = Math.abs(velocity / maxAcceleration);
+        double decel = -Math.signum(velocity) * maxAcceleration;
+        return (velocity * t) + (0.5 * decel * t * t);
     }
 
     private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
@@ -204,13 +217,7 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atMinPosition() {
-        return atSoftMinL() && atSoftMinR();
-    }
-
-    public Command stopCommand() {
-        Command cmd = new InstantCommand(this::stop, this);
-        cmd.setName("stopCommand");
-        return cmd;
+        return atSoftMinL() || atSoftMinR();
     }
 
     public Command setPositionCommand(DoubleSupplier targetPosition) {
