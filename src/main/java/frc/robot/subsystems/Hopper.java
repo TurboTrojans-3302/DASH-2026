@@ -45,16 +45,14 @@ public class Hopper extends SubsystemBase {
     private final PrefValue<Double> kG              = new PrefValue<>("hopperKg",               0.0,   this);
     private final PrefValue<Double> maxVelocity     = new PrefValue<>("hopperMaxVelocity",      80.0,  this);
     private final PrefValue<Double> maxAcceleration = new PrefValue<>("hopperMaxAcceleration",  50.0,  this);
-    private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
+    private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, 0.0, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
 
-    private final ProfiledPIDController leftPID  = new ProfiledPIDController(
-            HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault,
-            new TrapezoidProfile.Constraints(HopperConstants.maxVelocityDefault, HopperConstants.maxAccelerationDefault));
-    private final ProfiledPIDController rightPID = new ProfiledPIDController(
-            HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault,
-            new TrapezoidProfile.Constraints(HopperConstants.maxVelocityDefault, HopperConstants.maxAccelerationDefault));
+    private final ProfiledPIDController leftPID  = new ProfiledPIDController(0.0, 0.0, 0.0,
+                                                                             new TrapezoidProfile.Constraints(0.0, 0.0));
+    private final ProfiledPIDController rightPID = new ProfiledPIDController(0.0, 0.0, 0.0,
+                                                                             new TrapezoidProfile.Constraints(0.0, 0.0));
 
 
     public Hopper(int leftMotorID, int rightMotorID) {
@@ -93,10 +91,6 @@ public class Hopper extends SubsystemBase {
         rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
-    /**
-     * Convenience constructor that uses CAN IDs from
-     * {@link frc.robot.Constants.HopperConstants}.
-     */
     public Hopper() {
         this(Constants.CanIds.kHopperLeftMotorCanId, Constants.CanIds.kHopperRightMotorCanId);
     }

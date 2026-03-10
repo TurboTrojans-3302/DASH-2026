@@ -26,8 +26,8 @@ public class Harvester extends SubsystemBase{
     private RelativeEncoder m_harvestEncoder;
     private DriveTrain m_driveTrain;
     private Hopper m_hopper;
-    private final PrefValue<Double> speedConversionConstant = new PrefValue<>(Constants.HarvesterConstants.speedConversionConstantKeyDefault, Constants.HarvesterConstants.speedConversionConstantDefault, this);
-    private final PrefValue<Double> pullInRPM = new PrefValue<>("harvesterPullInRPM", Constants.HarvesterConstants.pullInRPMDefault, this);
+    private final PrefValue<Double> speedConversionConstant = new PrefValue<>("harvesterSpeedConversionConstantKey", .003, this);
+    private final PrefValue<Double> pullInRPM = new PrefValue<>("harvesterPullInRPM", 200.0, this);
      
     public Harvester(DriveTrain drivetrain, Hopper hopper){
         m_driveTrain = drivetrain;
