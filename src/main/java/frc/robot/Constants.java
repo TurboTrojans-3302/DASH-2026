@@ -147,6 +147,10 @@ public final class Constants {
     public static final String kDkey = "shooter_kD";
     public static final String kVkey = "shooter_kV";
     public static final String PIDToleranceKey = "shooter_PIDTolerance";
+    public static final String kDfilterKey = "shooter_kDfilter";
+    public static final double kDfilterDefault = 0.0;
+    public static final String kRampRateKey = "shooter_kRampRate";
+    public static final double kRampRateDefault = 0.0;
     public static final double maxRPM = 3000.0;
     public static final double defaultShootRPM = 1400.0;
 

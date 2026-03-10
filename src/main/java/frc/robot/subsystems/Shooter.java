@@ -38,6 +38,8 @@ public class Shooter extends SubsystemBase {
   private double kD = Constants.ShooterConstants.kDdefault;
   private double kV = Constants.ShooterConstants.kVdefault;
   private double kTol = Constants.ShooterConstants.PIDToleranceDefault;
+  private double kDfilter = Constants.ShooterConstants.kDfilterDefault;
+  private double kRampRate = Constants.ShooterConstants.kRampRateDefault;
   // Locally-cached sensor/state values to avoid repeated CAN reads every loop
   private double currentRPM = 0.0;
   private ClosedLoopSlot currentSlot; // initialized from hardware in constructor
@@ -123,6 +125,7 @@ public class Shooter extends SubsystemBase {
     // slot zero has PID and feedforward
     ClosedLoopConfig cl0 = new ClosedLoopConfig()
         .pid(kP, kI, kD, ClosedLoopSlot.kSlot0)
+        .dFilter(kDfilter, ClosedLoopSlot.kSlot0)
         .apply(new FeedForwardConfig().kV(kV, ClosedLoopSlot.kSlot0))
         .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot0);
     cfg.apply(cl0);
@@ -133,6 +136,8 @@ public class Shooter extends SubsystemBase {
         .apply(new FeedForwardConfig().kV(kV, ClosedLoopSlot.kSlot1))
         .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot1);
     cfg.apply(cl1);
+
+    cfg.closedLoopRampRate(kRampRate);
 
     shooterMotor.configure(cfg, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
@@ -226,6 +231,8 @@ public class Shooter extends SubsystemBase {
       kI = Preferences.getDouble(Constants.ShooterConstants.kIkey, Constants.ShooterConstants.kIdefault);
       kD = Preferences.getDouble(Constants.ShooterConstants.kDkey, Constants.ShooterConstants.kDdefault);
       kV = Preferences.getDouble(Constants.ShooterConstants.kVkey, Constants.ShooterConstants.kVdefault);
+      kDfilter = Preferences.getDouble(Constants.ShooterConstants.kDfilterKey, Constants.ShooterConstants.kDfilterDefault);
+      kRampRate = Preferences.getDouble(Constants.ShooterConstants.kRampRateKey, Constants.ShooterConstants.kRampRateDefault);
       // Apply loaded gains and tolerance to the motor controller
       double tol = Preferences.getDouble(Constants.ShooterConstants.PIDToleranceKey,
           Constants.ShooterConstants.PIDToleranceDefault);
@@ -244,6 +251,8 @@ public class Shooter extends SubsystemBase {
     Preferences.setDouble(Constants.ShooterConstants.kIkey, kI);
     Preferences.setDouble(Constants.ShooterConstants.kDkey, kD);
     Preferences.setDouble(Constants.ShooterConstants.kVkey, kV);
+    Preferences.setDouble(Constants.ShooterConstants.kDfilterKey, kDfilter);
+    Preferences.setDouble(Constants.ShooterConstants.kRampRateKey, kRampRate);
     // No direct API to read closed-loop allowed error from the controller here;
     // save the default
     Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, kTol);
@@ -285,6 +294,10 @@ public class Shooter extends SubsystemBase {
         (x) -> { if (x != kI) { kI = x; setPIDVT(); } } );
     builder.addDoubleProperty("kD", () -> kD,
         (x) -> { if (x != kD) { kD = x; setPIDVT(); } } );
+    builder.addDoubleProperty("kDfilter", () -> kDfilter,
+        (x) -> { kDfilter = MathUtil.clamp(x, 0, 1.0); } );
+    builder.addDoubleProperty("kRampRate", () -> kRampRate,
+        (x) -> { if (x != kRampRate) { kRampRate = x; setPIDVT(); } });
     builder.addDoubleProperty("kV", () -> kV,
         (x) -> { if (x != kV) { kV = x; setPIDVT(); } } );
     builder.addDoubleProperty("kTolerance", () -> kTol,
