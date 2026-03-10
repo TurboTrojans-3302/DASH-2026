@@ -8,6 +8,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -59,6 +61,8 @@ public class RobotContainer {
   public Navigation m_navigation;
   public DXsensor m_dxSensor;
   public GameData m_gameData;
+
+  public PowerDistribution pdh;
 
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
@@ -114,6 +118,9 @@ public class RobotContainer {
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);
+
+    pdh = new PowerDistribution(53, ModuleType.kRev);
+    SmartDashboard.putData(pdh);
   }
 
   public void setDefaultCommands() {
@@ -141,8 +148,8 @@ public class RobotContainer {
     }
 
     if (HOPPER_ENABLE){
-      Trigger extendHopper = new Trigger(() -> m_driverController.getRightBumper());
-      Trigger retractHopper = new Trigger(() -> m_driverController.getLeftBumper());
+      JoystickButton extendHopper = new JoystickButton(m_driverController, XboxController.Button.kRightBumper.value);
+      JoystickButton retractHopper = new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value);
       extendHopper.onTrue(m_hopper.expandCommand());
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
@@ -163,8 +170,8 @@ public class RobotContainer {
     }
 
     if (HOPPER_ENABLE){
-      Trigger extendHopperCopilot = new Trigger(() -> m_copilotController.getRightBumper());
-      Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
+      JoystickButton extendHopperCopilot = new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value);
+      JoystickButton retractHopperCopilot = new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value);
       extendHopperCopilot.onTrue(m_hopper.expandCommand());
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
     }
@@ -213,12 +220,12 @@ public class RobotContainer {
       hopperExpand.onTrue(m_hopper.expandCommand());
       hopperRetract.onTrue(m_hopper.retractCommand());
 
-      Trigger nudgeHopperLeftOut = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpLeft);
-      Trigger nudgeHopperOut = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUp);
-      Trigger nudgeHopperRightOut = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpRight);
-      Trigger nudgeHopperLeftIn   = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownLeft);
-      Trigger nudgeHopperIn       = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDown);
-      Trigger nudgeHopperRightIn  = new Trigger(()->m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownRight);
+      JoystickButton nudgeHopperLeftOut  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpLeft);
+      JoystickButton nudgeHopperOut      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
+      JoystickButton nudgeHopperRightOut = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpRight);
+      JoystickButton nudgeHopperLeftIn  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownLeft);
+      JoystickButton nudgeHopperIn      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
+      JoystickButton nudgeHopperRightIn = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownRight);
       nudgeHopperOut.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
       nudgeHopperIn.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
