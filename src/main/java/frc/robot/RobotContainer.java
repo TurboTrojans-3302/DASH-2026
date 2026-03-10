@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
@@ -239,9 +240,19 @@ public class RobotContainer {
       JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
       JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
       hopperPIDenable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(true), m_hopper));
-      hopperPIDdisable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(false), m_hopper));
+      hopperPIDdisable.onTrue(new InstantCommand(() -> m_hopper.setPIDEnabled(false), m_hopper));      
+    }
+  
+    if(HARVESTER_ENABLE){
+      new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.RightKnobCW).
+            whileTrue(new RunCommand(() -> m_harvester.adjustPullInRPM(1), m_harvester));     
+      new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.RightKnobCCW).
+            whileTrue(new RunCommand(() -> m_harvester.adjustPullInRPM(-1), m_harvester));
 
-      
+      new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch2Up)
+            .onTrue(new InstantCommand(() -> m_harvester.enablePID(true), m_harvester));
+      new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch2Down)
+            .onTrue(new InstantCommand(() -> m_harvester.enablePID(false), m_harvester));      
     }
   }
 
@@ -288,21 +299,30 @@ public class RobotContainer {
   public void onDSAttached() {
     // Read the actual switch state at binding time so PID starts in the correct mode
     if (HOPPER_ENABLE){
-    if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){
         m_hopper.setPIDEnabled(true);
       }
       if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Down)){
         m_hopper.setPIDEnabled(false);
       }
     }
-      if(SHOOTER_ENABLE){
-        if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
-          m_shooter.enablePID(true);
-        }
-        if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
-          m_shooter.enablePID(false);
-        }
+    if(SHOOTER_ENABLE){
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Up)){
+        m_shooter.enablePID(true);
       }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch4Down)){
+        m_shooter.enablePID(false);
+      }
+    }
+
+    if(HARVESTER_ENABLE){
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch2Up)){
+        m_harvester.enablePID(true);
+      }
+      if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch2Down)){
+        m_harvester.enablePID(false);
+      }
+    }
   }
 
   public void saveSomePreferences() {

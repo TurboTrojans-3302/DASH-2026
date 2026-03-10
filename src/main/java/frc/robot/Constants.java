@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -161,10 +160,11 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double kVdefault = .003;
-    public static final String kVkey = "harvesterSpeedConversionConstantKey";
+    public static final double kVdefault = .0015;
+    public static final String kVkey = "harvesterKv";
     public static final double pullInRPMDefault = 200;
-    public static final double kPdefault = 0.001;
+    public static final String pullInRPMkey = "harvesterPullInRPM";
+    public static final double kPdefault = 0.0;
     public static final String kPkey = "harvesterKp";
     public static final double kTolDefault = 10.0;
     public static final String kTolKey = "harvesterKTol";

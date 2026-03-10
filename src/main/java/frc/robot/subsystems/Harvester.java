@@ -20,15 +20,18 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.HarvesterConstants;
 
 public class Harvester extends SubsystemBase {
 
   private SparkMax m_harvestMotor;
   private RelativeEncoder m_harvestEncoder;
-  private double pullInRPM = Constants.HarvesterConstants.pullInRPMDefault;
+  private double pullInRPM = HarvesterConstants.pullInRPMDefault;
 
-  private PIDController PID;
-  private SimpleMotorFeedforward feedforward;
+  private PIDController PID = new PIDController(
+      HarvesterConstants.kPdefault, 0, 0);
+  private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(
+      0, HarvesterConstants.kVdefault);
   private boolean PIDEnabled = false;
 
   private double setpoint = 0.0;
@@ -44,13 +47,21 @@ public class Harvester extends SubsystemBase {
     m_harvestMotor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     m_harvestEncoder = m_harvestMotor.getEncoder();
+
+    PID.setTolerance(HarvesterConstants.kTolDefault);
+    loadPreferences();
   }
 
   @Override
   public void periodic() {
+    if (setpoint == 0.0) {
+      m_harvestMotor.setVoltage(0.0);
+      return;
+    }
+
     double feedforwardOutput = feedforward.calculate(setpoint);
 
-    if (isPIDenabled()) {
+    if (isPIDEnabled()) {
       double PIDoutput = PID.calculate(getRPM(), setpoint);
       m_harvestMotor.setVoltage(feedforwardOutput + PIDoutput);
     } else {
@@ -58,10 +69,6 @@ public class Harvester extends SubsystemBase {
     }
   }
     
-  private boolean isPIDenabled() {
-    return PIDEnabled;
-  }
-  
   public void enablePID(boolean enable) {
     if (enable && !PIDEnabled) { // turn PID on
       PID.reset();
@@ -119,19 +126,28 @@ public class Harvester extends SubsystemBase {
         this);
   }
 
+  public void adjustPullInRPM(double delta) {
+    if(setpoint == pullInRPM || setpoint == -pullInRPM){
+      setSpeed(Math.signum(setpoint) * (pullInRPM + delta));
+    }
+    pullInRPM += delta;
+  }
+
   public Command StopCommand() {
     return new InstantCommand(() -> setSpeed(0.0), this);
   }
 
   public void loadPreferences() {
-    if (Preferences.containsKey(Constants.HarvesterConstants.kVkey)) {
+    if (Preferences.containsKey(HarvesterConstants.kVkey)) {
       System.out.println("Loading harvester values from preferences");
-      feedforward.setKv(Preferences.getDouble(Constants.HarvesterConstants.kVkey,
-          Constants.HarvesterConstants.kVdefault));
-      PID.setP(Preferences.getDouble(Constants.HarvesterConstants.kPkey,
-          Constants.HarvesterConstants.kPdefault));
-      PID.setTolerance(Preferences.getDouble(Constants.HarvesterConstants.kTolKey,
-          Constants.HarvesterConstants.kTolDefault));
+      feedforward.setKv(Preferences.getDouble(HarvesterConstants.kVkey,
+          HarvesterConstants.kVdefault));
+      PID.setP(Preferences.getDouble(HarvesterConstants.kPkey,
+          HarvesterConstants.kPdefault));
+      PID.setTolerance(Preferences.getDouble(HarvesterConstants.kTolKey,
+          HarvesterConstants.kTolDefault));
+      pullInRPM = Preferences.getDouble(HarvesterConstants.pullInRPMkey,
+          HarvesterConstants.pullInRPMDefault);
     } else {
       System.out.println("No harvester prefs found. Using default values");
     }
@@ -139,9 +155,10 @@ public class Harvester extends SubsystemBase {
 
   public void savePreferences() {
     System.out.println("Saving Harvester values to preferences");
-    Preferences.setDouble(Constants.HarvesterConstants.kVkey, feedforward.getKv());
-    Preferences.setDouble(Constants.HarvesterConstants.kPkey, PID.getP());
-    Preferences.setDouble(Constants.HarvesterConstants.kTolKey, PID.getErrorTolerance());
+    Preferences.setDouble(HarvesterConstants.kVkey, feedforward.getKv());
+    Preferences.setDouble(HarvesterConstants.kPkey, PID.getP());
+    Preferences.setDouble(HarvesterConstants.kTolKey, PID.getErrorTolerance());
+    Preferences.setDouble(HarvesterConstants.pullInRPMkey, pullInRPM);
   }
 
   @Override
