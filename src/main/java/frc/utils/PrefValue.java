@@ -1,7 +1,9 @@
 package frc.utils;
 
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Preferences;
 
@@ -22,10 +24,30 @@ public class PrefValue<T> {
         }
     }
 
-    public static void addAllBuilderProperties(Object parentObject, SendableBuilder builder) {
+    public static void addAllBuilderProperties(Sendable parentObject, SendableBuilder builder) {
         for (PrefValue<?> p : registry) {
             if (p.parentObject == parentObject) {
                 p.addBuilderProperty(builder);
+            }
+        }
+    }
+
+    public static void saveObjectPrefs(Sendable parentObject) {
+        System.out.println("Saving preferences for " + parentObject.getClass().getSimpleName());
+    
+        for (PrefValue<?> p : registry) {
+            if (p.parentObject == parentObject) {
+                p.save();
+            }
+        }
+    }
+
+    public static void reLoadObjectPrefs(Sendable parentObject) {
+        System.out.println("Loading preferences for " + parentObject.getClass().getSimpleName());
+    
+        for (PrefValue<?> p : registry) {
+            if (p.parentObject == parentObject) {
+                p.load();
             }
         }
     }
@@ -34,6 +56,7 @@ public class PrefValue<T> {
     protected final T defaultValue;
     protected T value;
     protected Object parentObject;
+    protected Consumer<T> onChange;
 
     public PrefValue(String key, T defaultValue, Object parentObject) {
         this.key = key;
@@ -45,6 +68,15 @@ public class PrefValue<T> {
 
     public PrefValue(String key, T defaultValue) {
         this(key, defaultValue, null);
+    }
+
+    /**
+     * Sets a callback that fires whenever set() is called with a new value.
+     * Returns this for chaining.
+     */
+    public PrefValue<T> onChange(Consumer<T> callback) {
+        this.onChange = callback;
+        return this;
     }
 
     public String getKey() {
@@ -60,7 +92,11 @@ public class PrefValue<T> {
     }
 
     public void set(T v) {
+        boolean changed = (this.value == null) ? (v != null) : !this.value.equals(v);
         this.value = v;
+        if (changed && onChange != null) {
+            onChange.accept(v);
+        }
     }
 
     /**

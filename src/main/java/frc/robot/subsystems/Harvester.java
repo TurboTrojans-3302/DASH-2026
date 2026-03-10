@@ -13,13 +13,12 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.RobotContainer;
+import frc.utils.PrefValue;
 
 public class Harvester extends SubsystemBase{
 
@@ -27,8 +26,8 @@ public class Harvester extends SubsystemBase{
     private RelativeEncoder m_harvestEncoder;
     private DriveTrain m_driveTrain;
     private Hopper m_hopper;
-    private double speedConversionConstant = Constants.HarvesterConstants.speedConversionConstantDefault;
-    private double pullInRPM = Constants.HarvesterConstants.pullInRPMDefault;
+    private final PrefValue<Double> speedConversionConstant = new PrefValue<>(Constants.HarvesterConstants.speedConversionConstantKeyDefault, Constants.HarvesterConstants.speedConversionConstantDefault, this);
+    private final PrefValue<Double> pullInRPM = new PrefValue<>("harvesterPullInRPM", Constants.HarvesterConstants.pullInRPMDefault, this);
      
     public Harvester(DriveTrain drivetrain, Hopper hopper){
         m_driveTrain = drivetrain;
@@ -53,7 +52,7 @@ public class Harvester extends SubsystemBase{
     }
 
     public void setSpeed(double RPM){
-        double speed = RPM * speedConversionConstant;
+        double speed = RPM * speedConversionConstant.get();
         m_harvestMotor.set(speed);
     }
 
@@ -66,13 +65,13 @@ public class Harvester extends SubsystemBase{
     }
 
     public Command SetSpeedCommand(DoubleSupplier RPM){
-        return new InstantCommand(()-> pullInRPM = RPM.getAsDouble(), this);
+        return new InstantCommand(()-> pullInRPM.set(RPM.getAsDouble()), this);
     }
 
     public Command PullInCommand(){
         return new FunctionalCommand(
           ()->{},
-          ()->{setSpeed(pullInRPM);},
+          ()->{setSpeed(pullInRPM.get());},
           (x)->{stop();},
           ()->false,
           this);
@@ -81,7 +80,7 @@ public class Harvester extends SubsystemBase{
     public Command PushOutCommand(){
         return new FunctionalCommand(
           ()->{},
-          ()->{setSpeed(-pullInRPM);},
+          ()->{setSpeed(-pullInRPM.get());},
           (x)->{stop();},
           ()->false,
           this);
@@ -92,21 +91,6 @@ public class Harvester extends SubsystemBase{
     }
 
 
-
-    public void loadPreferences() {
-    if (Preferences.containsKey(Constants.HarvesterConstants.speedConversionConstantKeyDefault)) {
-      System.out.println("Loading harvester values from preferences");
-      speedConversionConstant = Preferences.getDouble(Constants.HarvesterConstants.speedConversionConstantKeyDefault,
-          Constants.HarvesterConstants.speedConversionConstantDefault);
-    } else {
-      System.out.println("No harvester prefs found. Using default values");
-    }
-  }
-
-  public void savePreferences() {
-    System.out.println("Saving Harvester values to preferences");
-    Preferences.setDouble(Constants.HarvesterConstants.speedConversionConstantKeyDefault, speedConversionConstant);
-  }
 
   @Override
    public void periodic(){
@@ -120,10 +104,9 @@ public class Harvester extends SubsystemBase{
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    builder.addDoubleProperty("Speed Conversion Constant", () -> speedConversionConstant, (x) -> { speedConversionConstant = x; });
-    builder.addDoubleProperty("Pull In RPM", () -> pullInRPM, (x) -> { pullInRPM = x; });
+    PrefValue.addAllBuilderProperties(this, builder);
     builder.addDoubleProperty("Harvester RPM", () -> getRPM(), null);
-    builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
     builder.addDoubleProperty("motor output", () -> m_harvestMotor.get(), null);
+    builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) PrefValue.saveObjectPrefs(this); });
   }
 }

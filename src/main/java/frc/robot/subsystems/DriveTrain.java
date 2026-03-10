@@ -16,14 +16,13 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import frc.utils.PrefValue;
 import java.io.File;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
@@ -43,7 +42,7 @@ public class DriveTrain extends SubsystemBase {
    * Swerve drive object.
    */
   private SwerveDrive swerveDrive;
-  private Double kMaxSpeed = Constants.DriveConstants.kMaxSpeedDefault;
+  private final PrefValue<Double> kMaxSpeed = new PrefValue<>(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault, this);
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -400,7 +399,7 @@ public class DriveTrain extends SubsystemBase {
 
   //todo this is duplicated, i think
   public Double getMaxSpeed() {
-    return kMaxSpeed;
+    return kMaxSpeed.get();
   }
 
   /**
@@ -421,7 +420,7 @@ public class DriveTrain extends SubsystemBase {
         headingX,
         headingY,
         getHeading().getRadians(),
-        kMaxSpeed);
+        kMaxSpeed.get());
   }
 
   /**
@@ -441,7 +440,7 @@ public class DriveTrain extends SubsystemBase {
         scaledInputs.getY(),
         angle.getRadians(),
         getHeading().getRadians(),
-        kMaxSpeed);
+        kMaxSpeed.get());
   }
 
   /**
@@ -513,20 +512,6 @@ public class DriveTrain extends SubsystemBase {
   /** @return current swerve module positions (distance + angle per module) */
   public SwerveModulePosition[] getSwerveModulePositions() {
     return swerveDrive.getModulePositions();
-  }
-
-  public void loadPreferences() {
-    if (Preferences.containsKey(Constants.DriveConstants.maxSpeedKey)) {
-      System.out.println("Loading DriveTrain values from preferences");
-      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault);
-    } else {
-      System.out.println("No DriveTrain prefs found. Using default values");
-    }
-  }
-
-  public void savePreferences() {
-    System.out.println("Saving DriveTrain values to preferences");
-    Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
 
 public void stop() {

@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import frc.robot.Constants;
 import frc.robot.Constants.HopperConstants;
+import frc.utils.PrefValue;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -35,16 +36,15 @@ public class Hopper extends SubsystemBase {
     private final RelativeEncoder leftEncoder, rightEncoder;
     private final DigitalInput leftContractedLimitSwitch = new DigitalInput(Constants.DigitalIO.kHopperLeftContractedLimitSwitchDio);
     private final DigitalInput rightContractedLimitSwitch = new DigitalInput(Constants.DigitalIO.kHopperRightContractedLimitSwitchDio);
-    private double softMax = HopperConstants.maxPositionDefault;
-    private double softMin = HopperConstants.minPositionDefault;
-    //private double kV = HopperConstants.kVdefault;
-    private double kP = HopperConstants.kPdefault;
-    private double kI = HopperConstants.kIdefault;
-    private double kD = HopperConstants.kDdefault;
-    private double posTolerance = HopperConstants.posToleranceDefault;
-    private double kG = HopperConstants.kGdefault;
-    private double maxVelocity     = HopperConstants.maxVelocityDefault;
-    private double maxAcceleration = HopperConstants.maxAccelerationDefault;
+    private final PrefValue<Double> softMax         = new PrefValue<>("hopperMaxPosition",      220.0, this);
+    private final PrefValue<Double> softMin         = new PrefValue<>("hopperMinPosition",      3.0,   this);
+    private final PrefValue<Double> kP              = new PrefValue<>("hopperKp",               0.02,  this);
+    private final PrefValue<Double> kI              = new PrefValue<>("hopperKi",               0.0,   this);
+    private final PrefValue<Double> kD              = new PrefValue<>("hopperKd",               0.0,   this);
+    private final PrefValue<Double> posTolerance    = new PrefValue<>("hopperPosTolerance",     1.0,   this);
+    private final PrefValue<Double> kG              = new PrefValue<>("hopperKg",               0.0,   this);
+    private final PrefValue<Double> maxVelocity     = new PrefValue<>("hopperMaxVelocity",      80.0,  this);
+    private final PrefValue<Double> maxAcceleration = new PrefValue<>("hopperMaxAcceleration",  50.0,  this);
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
@@ -69,7 +69,16 @@ public class Hopper extends SubsystemBase {
         rightMotor.set(0);
         rightEncoder = rightMotor.getEncoder();
 
-        loadPreferences();
+        // Wire onChange callbacks so dashboard edits take effect immediately
+        kP.onChange(x -> applyPIDGains());
+        kI.onChange(x -> applyPIDGains());
+        kD.onChange(x -> applyPIDGains());
+        kG.onChange(x -> applyPIDGains());
+        posTolerance.onChange(x -> applyPIDGains());
+        maxVelocity.onChange(x -> applyPIDGains());
+        maxAcceleration.onChange(x -> applyPIDGains());
+
+        applyPIDGains();
     }
 
     private void configureSparkMaxes() {
@@ -110,7 +119,7 @@ public class Hopper extends SubsystemBase {
 
     public void setPosition(double pos) {
         if(isPIDEnabled()) {
-            positionSetpoint = MathUtil.clamp(pos, softMin, softMax);
+            positionSetpoint = MathUtil.clamp(pos, softMin.get(), softMax.get());
             leftPID.setGoal(positionSetpoint);
             rightPID.setGoal(positionSetpoint);
         }else{
@@ -184,11 +193,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMaxL() {
-        return leftEncoder.getPosition() >= softMax;
+        return leftEncoder.getPosition() >= softMax.get();
     }
 
     public boolean atSoftMaxR() {
-        return rightEncoder.getPosition() >= softMax;
+        return rightEncoder.getPosition() >= softMax.get();
     }
 
     public boolean atMaxPosition() {
@@ -196,11 +205,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMinL() {
-        return leftEncoder.getPosition() <= softMin;
+        return leftEncoder.getPosition() <= softMin.get();
     }
 
     public boolean atSoftMinR() {
-        return rightEncoder.getPosition() <= softMin;
+        return rightEncoder.getPosition() <= softMin.get();
     }
 
     public boolean atMinPosition() {
@@ -225,13 +234,13 @@ public class Hopper extends SubsystemBase {
     }
 
     public Command expandCommand() {
-        Command cmd = setPositionCommand(() -> softMax);
+        Command cmd = setPositionCommand(() -> softMax.get());
         cmd.setName("expandCommand");
         return cmd;
     }
 
     public Command retractCommand() {
-        Command cmd = setPositionCommand(() -> softMin);
+        Command cmd = setPositionCommand(() -> softMin.get());
         cmd.setName("retractCommand");
         return cmd;
     }
@@ -260,49 +269,14 @@ public class Hopper extends SubsystemBase {
 
     /** Apply current kP/kI/kD/kG/tolerance/constraints to both PID controllers and feedforward. */
     private void applyPIDGains() {
-        leftPID.setPID(kP, kI, kD);
-        rightPID.setPID(kP, kI, kD);
-        leftPID.setTolerance(posTolerance);
-        rightPID.setTolerance(posTolerance);
-        TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration);
+        leftPID.setPID(kP.get(), kI.get(), kD.get());
+        rightPID.setPID(kP.get(), kI.get(), kD.get());
+        leftPID.setTolerance(posTolerance.get());
+        rightPID.setTolerance(posTolerance.get());
+        TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(maxVelocity.get(), maxAcceleration.get());
         leftPID.setConstraints(constraints);
         rightPID.setConstraints(constraints);
-        feedforward = new ElevatorFeedforward(0, kG, 0);
-    }
-
-    private void loadPreferences() {
-        if (Preferences.containsKey(HopperConstants.maxPositionKey)) {
-            System.out.println("Loading Hopper  values from preferences");
-            softMax = Preferences.getDouble(HopperConstants.maxPositionKey,
-                    HopperConstants.maxPositionDefault);
-            softMin = Preferences.getDouble(HopperConstants.minPositionKey,
-                    HopperConstants.minPositionDefault);
-            //kV = Preferences.getDouble(HopperConstants.kVkey, HopperConstants.kVdefault);
-            kP = Preferences.getDouble(HopperConstants.kPkey, HopperConstants.kPdefault);
-            kI = Preferences.getDouble(HopperConstants.kIkey, HopperConstants.kIdefault);
-            kD = Preferences.getDouble(HopperConstants.kDkey, HopperConstants.kDdefault);
-            kG = Preferences.getDouble(HopperConstants.kGkey, HopperConstants.kGdefault);
-            posTolerance = Preferences.getDouble(HopperConstants.posToleranceKey, HopperConstants.posToleranceDefault);
-            maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
-            maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
-            applyPIDGains();
-        } else {
-            System.out.println("No hopper prefs found. Using default values");
-        }
-    }
-
-    public void savePreferences() {
-        System.out.println("Saving hopper values to preferences");
-        Preferences.setDouble(HopperConstants.maxPositionKey, softMax);
-        Preferences.setDouble(HopperConstants.minPositionKey, softMin);
-        //Preferences.setDouble(HopperConstants.kVkey, kV);
-        Preferences.setDouble(HopperConstants.kPkey, kP);
-        Preferences.setDouble(HopperConstants.kIkey, kI);
-        Preferences.setDouble(HopperConstants.kDkey, kD);
-        Preferences.setDouble(HopperConstants.kGkey, kG);
-        Preferences.setDouble(HopperConstants.posToleranceKey, posTolerance);
-        Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
-        Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
+        feedforward = new ElevatorFeedforward(0, kG.get(), 0);
     }
 
     public boolean leftHardLimit() {
@@ -316,25 +290,17 @@ public class Hopper extends SubsystemBase {
     @Override
     public void initSendable(SendableBuilder builder) {
         super.initSendable(builder);
-        builder.addDoubleProperty("Max Position", () -> softMax, (x) -> { softMax = x; });
-        builder.addDoubleProperty("Min Position", () -> softMin, (x) -> { softMin = x; });
+        PrefValue.addAllBuilderProperties(this, builder);
         builder.addDoubleProperty("Left Position", () -> leftEncoder.getPosition(), (x)->leftEncoder.setPosition(x));
         builder.addDoubleProperty("Right Position", () -> rightEncoder.getPosition(), (x)->rightEncoder.setPosition(x));
         builder.addDoubleProperty("Position Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addDoubleProperty("L Motor Out", () -> leftMotor.get(), null);
         builder.addDoubleProperty("R Motor Out", () -> rightMotor.get(), null);
-        //builder.addDoubleProperty("kV", () -> kV, (x) -> { kV = x; });
-        builder.addDoubleProperty("kP", () -> kP, (x) -> { kP = x; applyPIDGains(); });
-        builder.addDoubleProperty("kI", () -> kI, (x) -> { kI = x; applyPIDGains(); });
-        builder.addDoubleProperty("kD", () -> kD, (x) -> { kD = x; applyPIDGains(); });
-        builder.addDoubleProperty("kG", () -> kG, (x) -> { kG = x; applyPIDGains(); });
-        builder.addDoubleProperty("Max Velocity",     () -> maxVelocity,     (x) -> { maxVelocity     = x; applyPIDGains(); });
-        builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
         builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
-        builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) savePreferences(); });
+        builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if (x) PrefValue.saveObjectPrefs(this); });
     }
 
     public void savePositions() {
