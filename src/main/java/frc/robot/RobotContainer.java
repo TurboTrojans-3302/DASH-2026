@@ -8,6 +8,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +27,7 @@ import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
+import frc.robot.autoncommands.AutoShoot;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.subsystems.GameData;
 
@@ -59,6 +62,8 @@ public class RobotContainer {
   public DXsensor m_dxSensor;
   public GameData m_gameData;
 
+  public PowerDistribution pdh;
+
   private SendableChooser<Command> m_autonomousChooser = new SendableChooser<Command>();
   private SendableChooser<Pose2d> m_startPosChooser = new SendableChooser<Pose2d>();
   //private Command m_autonCommand;
@@ -85,7 +90,10 @@ public class RobotContainer {
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
-    m_navigation = new Navigation(m_robotDrive);
+    m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
+    SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
+
+    m_navigation = new Navigation(m_robotDrive, m_dxSensor);
     SmartDashboard.putData("NavigationSubsystem", m_navigation);
 
     if(HOPPER_ENABLE){
@@ -103,9 +111,6 @@ public class RobotContainer {
       SmartDashboard.putData("HarvesterSubsystem", m_harvester);
     }
 
-    m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
-    SmartDashboard.putData("DXsensorSubsystem", m_dxSensor);
-
     m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
 
     m_autonomousChooser.setDefaultOption("Do Nothing", new DoNothing());
@@ -113,11 +118,14 @@ public class RobotContainer {
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);
+
+    pdh = new PowerDistribution(53, ModuleType.kRev);
+    SmartDashboard.putData(pdh);
   }
 
   public void setDefaultCommands() {
     // Configure default commands
-    Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController);
+    Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController, m_navigation);
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
   }
@@ -192,13 +200,13 @@ public class RobotContainer {
       // always active)
       JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
       Trigger scoringAllowed = new Trigger(() -> m_gameData.scoring());
-      JoystickButton feedShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
+      JoystickButton shootButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
       JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                      // without feeding
       enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
 
-      feedShooter.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
+      shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).onTrue(new AutoShoot(m_robotDrive, m_shooter, m_navigation));
 
       feederReverse.whileTrue(m_shooter.reverseFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));

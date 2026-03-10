@@ -270,6 +270,11 @@ public class DriveTrain extends SubsystemBase {
         false); // Open loop is disabled since it shouldn't be used most of the time.
   }
 
+  public void driveHeading(Translation2d translation, Rotation2d heading) {
+    double rotation = swerveDrive.swerveController.headingCalculate(getHeading().getRadians(), heading.getRadians());
+    swerveDrive.drive(translation, rotation, true, false);
+  }
+
   /**
    * Drive the robot given a translation in field-relative m/s. 
    * Heading is a desired angle that the robot should turn to while driving.
