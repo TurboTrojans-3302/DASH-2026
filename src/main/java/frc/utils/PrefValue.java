@@ -2,6 +2,7 @@ package frc.utils;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Preferences;
 
 public class PrefValue<T> {
@@ -21,15 +22,29 @@ public class PrefValue<T> {
         }
     }
 
+    public static void addAllBuilderProperties(Object parentObject, SendableBuilder builder) {
+        for (PrefValue<?> p : registry) {
+            if (p.parentObject == parentObject) {
+                p.addBuilderProperty(builder);
+            }
+        }
+    }
+
     protected final String key;
     protected final T defaultValue;
     protected T value;
+    protected Object parentObject;
 
-    public PrefValue(String key, T defaultValue) {
+    public PrefValue(String key, T defaultValue, Object parentObject) {
         this.key = key;
         this.defaultValue = defaultValue;
+        this.parentObject = parentObject;
         registry.add(this);
         load();
+    }
+
+    public PrefValue(String key, T defaultValue) {
+        this(key, defaultValue, null);
     }
 
     public String getKey() {
@@ -85,6 +100,24 @@ public class PrefValue<T> {
             throw new IllegalArgumentException(
                 "PrefValue: unsupported type for key \"" + key + "\": "
                 + value.getClass().getSimpleName()
+                + ". Supported types: Integer, Double, Boolean, String.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void addBuilderProperty(SendableBuilder builder) {
+        if (defaultValue instanceof Integer) {
+            builder.addIntegerProperty(key, () -> (Integer) get(), v -> set((T) Integer.valueOf((int) v)));
+        } else if (defaultValue instanceof Double) {
+            builder.addDoubleProperty(key, () -> (Double) get(), v -> set((T) Double.valueOf(v)));
+        } else if (defaultValue instanceof Boolean) {
+            builder.addBooleanProperty(key, () -> (Boolean) get(), v -> set((T) Boolean.valueOf(v)));
+        } else if (defaultValue instanceof String) {
+            builder.addStringProperty(key, () -> (String) get(), v -> set((T) v));
+        } else {
+            throw new IllegalArgumentException(
+                "PrefValue: unsupported type for key \"" + key + "\": "
+                + defaultValue.getClass().getSimpleName()
                 + ". Supported types: Integer, Double, Boolean, String.");
         }
     }
