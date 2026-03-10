@@ -49,7 +49,6 @@ public class Shooter extends SubsystemBase {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
     SparkMaxConfig config = new SparkMaxConfig();
     config.apply(SparkMaxConfig.Presets.REV_NEO_550);
-    config.smartCurrentLimit(25.0);
     config.inverted(false).idleMode(IdleMode.kCoast);
 
     shooterMotor.configure(config,

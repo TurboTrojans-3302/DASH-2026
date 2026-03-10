@@ -148,8 +148,8 @@ public class RobotContainer {
     }
 
     if (HOPPER_ENABLE){
-      Trigger extendHopper = new Trigger(() -> m_driverController.getRightBumper());
-      Trigger retractHopper = new Trigger(() -> m_driverController.getLeftBumper());
+      JoystickButton extendHopper = new JoystickButton(m_driverController, XboxController.Button.kRightBumper.value);
+      JoystickButton retractHopper = new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value);
       extendHopper.onTrue(m_hopper.expandCommand());
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
@@ -170,8 +170,8 @@ public class RobotContainer {
     }
 
     if (HOPPER_ENABLE){
-      Trigger extendHopperCopilot = new Trigger(() -> m_copilotController.getRightBumper());
-      Trigger retractHopperCopilot = new Trigger(() -> m_copilotController.getLeftBumper());
+      JoystickButton extendHopperCopilot = new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value);
+      JoystickButton retractHopperCopilot = new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value);
       extendHopperCopilot.onTrue(m_hopper.expandCommand());
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
     }
