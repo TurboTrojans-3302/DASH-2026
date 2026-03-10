@@ -151,7 +151,10 @@ public final class Constants {
     public static final double kDfilterDefault = 0.0;
     public static final String kRampRateKey = "shooter_kRampRate";
     public static final double kRampRateDefault = 0.0;
-    public static final double maxRPM = 3000.0;
+    public static final String kMaxAccelKey = "shooter_kMaxAccel";
+    public static final double kMaxAccelDefault = 1500.0;
+    public static final String kMaxVelocityKey = "shooter_kMaxVelocity";
+    public static final double kMaxVelocityDefault = 2500;
     public static final double defaultShootRPM = 1400.0;
 
     public static final double feederSpeedDefault = 0.3;

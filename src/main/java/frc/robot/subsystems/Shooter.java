@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
+import frc.robot.Constants.ShooterConstants;
 
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
@@ -30,16 +30,18 @@ public class Shooter extends SubsystemBase {
   private RelativeEncoder encoder;
   private SparkClosedLoopController closedLoopController;
   private double rpmSetpoint = 0.0;
-  private double feederSpeed = Constants.ShooterConstants.feederSpeedDefault;
+  private double feederSpeed = ShooterConstants.feederSpeedDefault;
   private boolean dangerMode = false;
   private Timer timeAtSpeed = new Timer();
-  private double kP = Constants.ShooterConstants.kPdefault;
-  private double kI = Constants.ShooterConstants.kIdefault;
-  private double kD = Constants.ShooterConstants.kDdefault;
-  private double kV = Constants.ShooterConstants.kVdefault;
-  private double kTol = Constants.ShooterConstants.PIDToleranceDefault;
-  private double kDfilter = Constants.ShooterConstants.kDfilterDefault;
-  private double kRampRate = Constants.ShooterConstants.kRampRateDefault;
+  private double kP = ShooterConstants.kPdefault;
+  private double kI = ShooterConstants.kIdefault;
+  private double kD = ShooterConstants.kDdefault;
+  private double kV = ShooterConstants.kVdefault;
+  private double kTol = ShooterConstants.PIDToleranceDefault;
+  private double kDfilter = ShooterConstants.kDfilterDefault;
+  private double kRampRate = ShooterConstants.kRampRateDefault;
+  private double kMaxAccel = ShooterConstants.kMaxAccelDefault;
+  private double kMaxVelocity = ShooterConstants.kMaxVelocityDefault;
   // Locally-cached sensor/state values to avoid repeated CAN reads every loop
   private double currentRPM = 0.0;
   private ClosedLoopSlot currentSlot; // initialized from hardware in constructor
@@ -61,7 +63,7 @@ public class Shooter extends SubsystemBase {
     loadPreferences();
 
     // Initialize local gain values from defaults and configure controller
-    setPIDVT(kP, kI, kD, kV, kTol);
+    setPIDVT(kP, kI, kD, kV, kTol, kDfilter, kRampRate, kMaxAccel, kMaxVelocity);
     closedLoopController = shooterMotor.getClosedLoopController();
 
     feederMotor = new SparkMax(feederMotorID, MotorType.kBrushed);
@@ -84,14 +86,14 @@ public class Shooter extends SubsystemBase {
 
 
   public void setRPMsetpoint(double rpm) {
-    rpmSetpoint = MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM);
-    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kVelocity, currentSlot);
+    rpmSetpoint = MathUtil.clamp(rpm, 0.0, kMaxVelocity);
+    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kMAXMotionVelocityControl, currentSlot);
     if(isOpenLoop()) {timeAtSpeed.restart();}
   }
 
   public void setRPMsetpoint(double rpm, ClosedLoopSlot slot) {
-    rpmSetpoint = MathUtil.clamp(rpm, 0.0, Constants.ShooterConstants.maxRPM);
-    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kVelocity, slot);
+    rpmSetpoint = MathUtil.clamp(rpm, 0.0, kMaxVelocity);
+    closedLoopController.setSetpoint(rpmSetpoint, ControlType.kMAXMotionVelocityControl, slot);
     currentSlot = slot;
     if(isOpenLoop()) {timeAtSpeed.restart();}
   }
@@ -103,13 +105,18 @@ public class Shooter extends SubsystemBase {
    * loads
    * can reuse the same routine.
    */
-  private void setPIDVT(double p, double i, double d, double v, double tol) {
+  private void setPIDVT(double p, double i, double d, double v, double tol,
+                       double dFilter, double rampRate, double maxAccel, double maxVelocity) {
   // store locally
     kP = p;
     kI = i;
     kD = d;
     kV = v;
     kTol = tol;
+    kDfilter = dFilter;
+    kRampRate = rampRate;
+    kMaxAccel = maxAccel;
+    kMaxVelocity = maxVelocity;
 
     setPIDVT();
   }
@@ -127,7 +134,10 @@ public class Shooter extends SubsystemBase {
         .pid(kP, kI, kD, ClosedLoopSlot.kSlot0)
         .dFilter(kDfilter, ClosedLoopSlot.kSlot0)
         .apply(new FeedForwardConfig().kV(kV, ClosedLoopSlot.kSlot0))
-        .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot0);
+        .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot0)
+        .apply(new MAXMotionConfig()
+            .maxAcceleration(kMaxAccel, ClosedLoopSlot.kSlot0)
+            .cruiseVelocity(kMaxVelocity * 1.5, ClosedLoopSlot.kSlot0));
     cfg.apply(cl0);
 
     // slot one has only feedforward
@@ -225,21 +235,23 @@ public class Shooter extends SubsystemBase {
 
 
   public void loadPreferences() {
-    if (Preferences.containsKey(Constants.ShooterConstants.kPkey)) {
+    if (Preferences.containsKey(ShooterConstants.kPkey)) {
       System.out.println("Loading shooter PID values from preferences");
-      kP = Preferences.getDouble(Constants.ShooterConstants.kPkey, Constants.ShooterConstants.kPdefault);
-      kI = Preferences.getDouble(Constants.ShooterConstants.kIkey, Constants.ShooterConstants.kIdefault);
-      kD = Preferences.getDouble(Constants.ShooterConstants.kDkey, Constants.ShooterConstants.kDdefault);
-      kV = Preferences.getDouble(Constants.ShooterConstants.kVkey, Constants.ShooterConstants.kVdefault);
-      kDfilter = Preferences.getDouble(Constants.ShooterConstants.kDfilterKey, Constants.ShooterConstants.kDfilterDefault);
-      kRampRate = Preferences.getDouble(Constants.ShooterConstants.kRampRateKey, Constants.ShooterConstants.kRampRateDefault);
+      kP = Preferences.getDouble(ShooterConstants.kPkey, ShooterConstants.kPdefault);
+      kI = Preferences.getDouble(ShooterConstants.kIkey, ShooterConstants.kIdefault);
+      kD = Preferences.getDouble(ShooterConstants.kDkey, ShooterConstants.kDdefault);
+      kV = Preferences.getDouble(ShooterConstants.kVkey, ShooterConstants.kVdefault);
+      kDfilter = Preferences.getDouble(ShooterConstants.kDfilterKey, ShooterConstants.kDfilterDefault);
+      kRampRate = Preferences.getDouble(ShooterConstants.kRampRateKey, ShooterConstants.kRampRateDefault);
+      kMaxAccel = Preferences.getDouble(ShooterConstants.kMaxAccelKey, ShooterConstants.kMaxAccelDefault);
+      kMaxVelocity = Preferences.getDouble(ShooterConstants.kMaxVelocityKey, ShooterConstants.kMaxVelocityDefault);
       // Apply loaded gains and tolerance to the motor controller
-      double tol = Preferences.getDouble(Constants.ShooterConstants.PIDToleranceKey,
-          Constants.ShooterConstants.PIDToleranceDefault);
-      setPIDVT(kP, kI, kD, kV, tol);
+      double tol = Preferences.getDouble(ShooterConstants.PIDToleranceKey,
+          ShooterConstants.PIDToleranceDefault);
+      setPIDVT(kP, kI, kD, kV, tol, kDfilter, kRampRate, kMaxAccel, kMaxVelocity);
       
-      feederSpeed = Preferences.getDouble(Constants.ShooterConstants.feederSpeedKey,
-          Constants.ShooterConstants.feederSpeedDefault);
+      feederSpeed = Preferences.getDouble(ShooterConstants.feederSpeedKey,
+          ShooterConstants.feederSpeedDefault);
     } else {
       System.out.println("No shooter prefs found. Using default values");
     }
@@ -247,26 +259,28 @@ public class Shooter extends SubsystemBase {
 
   public void savePreferences() {
     System.out.println("Saving shooter PID values to preferences");
-    Preferences.setDouble(Constants.ShooterConstants.kPkey, kP);
-    Preferences.setDouble(Constants.ShooterConstants.kIkey, kI);
-    Preferences.setDouble(Constants.ShooterConstants.kDkey, kD);
-    Preferences.setDouble(Constants.ShooterConstants.kVkey, kV);
-    Preferences.setDouble(Constants.ShooterConstants.kDfilterKey, kDfilter);
-    Preferences.setDouble(Constants.ShooterConstants.kRampRateKey, kRampRate);
+    Preferences.setDouble(ShooterConstants.kPkey, kP);
+    Preferences.setDouble(ShooterConstants.kIkey, kI);
+    Preferences.setDouble(ShooterConstants.kDkey, kD);
+    Preferences.setDouble(ShooterConstants.kVkey, kV);
+    Preferences.setDouble(ShooterConstants.kDfilterKey, kDfilter);
+    Preferences.setDouble(ShooterConstants.kRampRateKey, kRampRate);
+    Preferences.setDouble(ShooterConstants.kMaxAccelKey, kMaxAccel);
+    Preferences.setDouble(ShooterConstants.kMaxVelocityKey, kMaxVelocity);
     // No direct API to read closed-loop allowed error from the controller here;
     // save the default
-    Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, kTol);
+    Preferences.setDouble(ShooterConstants.PIDToleranceKey, kTol);
   }
 
   public Command incrementSpeedCommand() {
     return new RunCommand(() -> {
-      setRPMsetpoint(getRPMsetpoint() + Constants.ShooterConstants.manualRPMincrement);
+      setRPMsetpoint(getRPMsetpoint() + ShooterConstants.manualRPMincrement);
     }, this);
   }
 
   public Command decrementSpeedCommand() {
     return new RunCommand(() -> {
-      setRPMsetpoint(getRPMsetpoint() - Constants.ShooterConstants.manualRPMincrement);
+      setRPMsetpoint(getRPMsetpoint() - ShooterConstants.manualRPMincrement);
     }, this);
   }
 
@@ -298,6 +312,10 @@ public class Shooter extends SubsystemBase {
         (x) -> { kDfilter = MathUtil.clamp(x, 0, 1.0); } );
     builder.addDoubleProperty("kRampRate", () -> kRampRate,
         (x) -> { if (x != kRampRate) { kRampRate = x; setPIDVT(); } });
+    builder.addDoubleProperty("kMaxAccel", () -> kMaxAccel,
+        (x) -> { if (x != kMaxAccel) { kMaxAccel = x; setPIDVT(); } });
+    builder.addDoubleProperty("kMaxVelocity", () -> kMaxVelocity,
+        (x) -> { if (x != kMaxVelocity) { kMaxVelocity = x; setPIDVT(); } });
     builder.addDoubleProperty("kV", () -> kV,
         (x) -> { if (x != kV) { kV = x; setPIDVT(); } } );
     builder.addDoubleProperty("kTolerance", () -> kTol,
