@@ -107,7 +107,7 @@ public class RobotContainer {
     }
 
     if(HARVESTER_ENABLE){
-      m_harvester = new Harvester(m_robotDrive, m_hopper);
+      m_harvester = new Harvester();
       SmartDashboard.putData("HarvesterSubsystem", m_harvester);
     }
 

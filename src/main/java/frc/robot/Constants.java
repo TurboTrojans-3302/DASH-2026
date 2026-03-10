@@ -161,9 +161,13 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double speedConversionConstantDefault = .003;
-    public static final String speedConversionConstantKeyDefault = "harvesterSpeedConversionConstantKey";
+    public static final double kVdefault = .003;
+    public static final String kVkey = "harvesterSpeedConversionConstantKey";
     public static final double pullInRPMDefault = 200;
+    public static final double kPdefault = 0.001;
+    public static final String kPkey = "harvesterKp";
+    public static final double kTolDefault = 10.0;
+    public static final String kTolKey = "harvesterKTol";
   }
 
   public static final class ClimberConstants {
