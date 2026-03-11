@@ -148,9 +148,9 @@ public class Robot extends TimedRobot {
 
     String commandName = m_autonomousChooser.getSelected();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);
-    System.out.println("Starting command: " + m_autonomousCommand.getName());
+    System.out.println("Starting command: " + commandName + " -> " + m_autonomousCommand.getName());
     CommandScheduler.getInstance().schedule(m_autonomousCommand);
-    
+
   }
 
   /** This function is called periodically during autonomous. */
