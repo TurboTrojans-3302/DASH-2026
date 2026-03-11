@@ -81,6 +81,10 @@ public class Harvester extends SubsystemBase {
     return PIDEnabled;
   }
 
+  public boolean isOn(){
+    return Math.abs(getRPM()) > 0.01;
+  }
+
 
   public double getRPM() {
     return m_harvestEncoder.getVelocity();

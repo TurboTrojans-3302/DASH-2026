@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -19,18 +19,17 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
+import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DXsensor;
 import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.GameData;
 import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
-import frc.robot.autoncommands.AutoShoot;
-import frc.robot.autoncommands.DoNothing;
-import frc.robot.subsystems.GameData;
 
 
 /*
@@ -85,7 +84,7 @@ public class RobotContainer {
   public RobotContainer() {
     instance = this;
 
-    // CameraServer.startAutomaticCapture();
+    CameraServer.startAutomaticCapture();
 
     // The robot's subsystems
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
@@ -148,12 +147,6 @@ public class RobotContainer {
       harvestReverse.whileTrue(m_harvester.PushOutCommand());
     }
 
-    if (HOPPER_ENABLE){
-      JoystickButton extendHopper = new JoystickButton(m_driverController, XboxController.Button.kRightBumper.value);
-      JoystickButton retractHopper = new JoystickButton(m_driverController, XboxController.Button.kLeftBumper.value);
-      extendHopper.onTrue(m_hopper.expandCommand());
-      retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
-    }
 
     Trigger toggleCameraStream = new Trigger(() -> m_driverController.getYButtonPressed());
     toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
@@ -168,20 +161,14 @@ public class RobotContainer {
       Trigger copilotHarvestReverse = new Trigger(() -> m_copilotController.getRightTriggerAxis() > 0.1);
       copilotHarvest.whileTrue(m_harvester.PullInCommand());
       copilotHarvestReverse.whileTrue(m_harvester.PushOutCommand());
-    }
-
-    if (HOPPER_ENABLE){
-      JoystickButton extendHopperCopilot = new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value);
-      JoystickButton retractHopperCopilot = new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value);
-      extendHopperCopilot.onTrue(m_hopper.expandCommand());
-      retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
-    }
-    
+    }    
 
     /**
      * Button Board
      *
      */
+
+    JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
 
     if (SHOOTER_ENABLE) {
       JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);
@@ -199,7 +186,6 @@ public class RobotContainer {
       
       // toggle between using timer to limit feeder and ignoring timer (feeder is
       // always active)
-      JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
       Trigger scoringAllowed = new Trigger(() -> m_gameData.scoring());
       JoystickButton shootButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
       JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge 
@@ -221,7 +207,11 @@ public class RobotContainer {
       JoystickButton hopperExpand = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left2);
       JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
       hopperExpand.onTrue(m_hopper.expandCommand());
-      hopperRetract.onTrue(m_hopper.retractCommand());
+      if(HARVESTER_ENABLE){
+        hopperRetract.and(enableDangerMode.or(()->!m_harvester.isOn())).onTrue(m_hopper.retractCommand());
+      }else{
+        hopperRetract.onTrue(m_hopper.retractCommand());
+      }
 
       Trigger nudgeHopperLeftOut  = new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpLeft);
       Trigger nudgeHopperOut      = new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUp);
