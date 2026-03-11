@@ -51,7 +51,7 @@ public class Navigation extends SubsystemBase {
         cameraName,
         "http://limelight.local:5800/stream.mjpg",
         HttpCameraKind.kMJPGStreamer);
-    edu.wpi.first.cameraserver.CameraServer.addCamera(limelightStream);
+    edu.wpi.first.cameraserver.CameraServer.startAutomaticCapture(limelightStream);
 
     SmartDashboard.putData(m_dashboardField);
   }
