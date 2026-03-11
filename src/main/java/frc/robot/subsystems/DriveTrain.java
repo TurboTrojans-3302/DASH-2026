@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import frc.utils.SparkMaxFaultMonitor;
 import java.io.File;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
@@ -114,6 +115,14 @@ public class DriveTrain extends SubsystemBase {
     // Publish the raw NavX AHRS object so Elastic renders a Gyro widget.
     // AHRS implements NTSendable and advertises SmartDashboardType "Gyro".
     SmartDashboard.putData("Gyro", (com.studica.frc.AHRS) swerveDrive.getGyro().getIMU());
+
+    // Register all swerve drive and angle motors for fault/warning alerts
+    String[] moduleNames = {"Front Left", "Front Right", "Back Left", "Back Right"};
+    SwerveModule[] modules = swerveDrive.getModules();
+    for (int i = 0; i < modules.length; i++) {
+      SparkMaxFaultMonitor.register("Swerve " + moduleNames[i] + " Drive", modules[i].getDriveMotor().getMotor());
+      SparkMaxFaultMonitor.register("Swerve " + moduleNames[i] + " Angle", modules[i].getAngleMotor().getMotor());
+    }
   }
 
   @Override

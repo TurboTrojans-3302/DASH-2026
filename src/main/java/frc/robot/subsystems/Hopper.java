@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import frc.robot.Constants;
 import frc.robot.Constants.HopperConstants;
+import frc.utils.SparkMaxFaultMonitor;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -68,6 +69,9 @@ public class Hopper extends SubsystemBase {
 
         rightMotor.set(0);
         rightEncoder = rightMotor.getEncoder();
+
+        SparkMaxFaultMonitor.register("Hopper Left", leftMotor);
+        SparkMaxFaultMonitor.register("Hopper Right", rightMotor);
 
         loadPreferences();
     }

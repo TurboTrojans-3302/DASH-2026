@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.utils.SparkMaxFaultMonitor;
 
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
@@ -76,6 +77,9 @@ public class Shooter extends SubsystemBase {
     rpmSetpoint = 0.0;
     shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
+
+    SparkMaxFaultMonitor.register("Shooter Flywheel", shooterMotor);
+    SparkMaxFaultMonitor.register("Shooter Feeder", feederMotor);
 
     // Read the actual slot from the controller once at startup so our cached
     // value reflects whatever the SparkMax persisted from a previous session.

@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.HarvesterConstants;
+import frc.utils.SparkMaxFaultMonitor;
 
 public class Harvester extends SubsystemBase {
 
@@ -50,6 +51,8 @@ public class Harvester extends SubsystemBase {
 
     PID.setTolerance(HarvesterConstants.kTolDefault);
     loadPreferences();
+
+    SparkMaxFaultMonitor.register("Harvester", m_harvestMotor);
   }
 
   @Override
