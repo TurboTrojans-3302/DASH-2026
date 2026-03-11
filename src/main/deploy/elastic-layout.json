@@ -3,60 +3,15 @@
   "grid_size": 64,
   "tabs": [
     {
-      "name": "Teleoperated",
+      "name": "Competition",
       "grid_layout": {
         "layouts": [],
         "containers": [
           {
-            "title": "DxSensor",
-            "x": 0.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Number Bar",
-            "properties": {
-              "topic": "/SmartDashboard/Navigation/DxSensor",
-              "period": 0.06,
-              "data_type": "double",
-              "min_value": 0.0,
-              "max_value": 4.0,
-              "divisions": 5,
-              "inverted": false,
-              "orientation": "horizontal"
-            }
-          },
-          {
-            "title": "Limelight Tgt",
-            "x": 256.0,
-            "y": 256.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/limelight/tid",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "USB Camera 0",
-            "x": 512.0,
-            "y": 0.0,
-            "width": 384.0,
-            "height": 384.0,
-            "type": "Camera Stream",
-            "properties": {
-              "topic": "/CameraPublisher/USB Camera 0",
-              "period": 0.06,
-              "rotation_turns": 0
-            }
-          },
-          {
             "title": "Score",
-            "x": 896.0,
-            "y": 0.0,
-            "width": 128.0,
+            "x": 1088.0,
+            "y": 128.0,
+            "width": 192.0,
             "height": 128.0,
             "type": "Boolean Box",
             "properties": {
@@ -71,7 +26,7 @@
           },
           {
             "title": "Time Left In Period:",
-            "x": 1024.0,
+            "x": 1088.0,
             "y": 0.0,
             "width": 192.0,
             "height": 128.0,
@@ -83,6 +38,45 @@
               "time_display_mode": "Minutes and Seconds",
               "red_start_time": 20,
               "yellow_start_time": 30
+            }
+          },
+          {
+            "title": "Shooter Ready",
+            "x": 896.0,
+            "y": 128.0,
+            "width": 192.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Ready?",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Teleoperated",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "Limelight Tgt",
+            "x": 256.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/limelight/tid",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
             }
           },
           {
@@ -541,7 +535,7 @@
       }
     },
     {
-      "name": "Hopper",
+      "name": "Hopper/Harvester",
       "grid_layout": {
         "layouts": [],
         "containers": [
@@ -761,23 +755,6 @@
             }
           },
           {
-            "title": "PID Enabled",
-            "x": 128.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Hopper/PID Enabled",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
             "title": "Max Velocity",
             "x": 768.0,
             "y": 128.0,
@@ -833,20 +810,6 @@
             }
           },
           {
-            "title": "Speed Conversion Constant",
-            "x": 1024.0,
-            "y": 128.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/HarvesterSubsystem/Speed Conversion Constant",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
             "title": "motor output",
             "x": 1152.0,
             "y": 128.0,
@@ -861,36 +824,48 @@
             }
           },
           {
-            "title": "HarvesterSubsystem",
-            "x": 896.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Subsystem",
-            "properties": {
-              "topic": "/SmartDashboard/HarvesterSubsystem",
-              "period": 0.06
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Competition",
-      "grid_layout": {
-        "layouts": [],
-        "containers": [
-          {
-            "title": "Limelight",
-            "x": 0.0,
+            "title": "PID Enabled",
+            "x": 128.0,
             "y": 0.0,
-            "width": 384.0,
-            "height": 384.0,
-            "type": "Camera Stream",
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
             "properties": {
-              "topic": "/CameraPublisher/limelight",
+              "topic": "/SmartDashboard/Hopper/PID Enabled",
               "period": 0.06,
-              "rotation_turns": 0
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "kV",
+            "x": 1024.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/kV",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "kP",
+            "x": 1024.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/HarvesterSubsystem/kP",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
             }
           }
         ]

@@ -202,7 +202,8 @@ public class RobotContainer {
       JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
       Trigger scoringAllowed = new Trigger(() -> m_gameData.scoring());
       JoystickButton shootButton = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.EngineStart); // into shooter
-      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge                                                                                                                                                                            // blockage
+      JoystickButton feederReverse = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right1); // feed reverse to dislodge 
+      JoystickButton feederForward = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right3);                                                                                                                                                                           // blockage
       JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                      // without feeding
       enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
@@ -210,6 +211,7 @@ public class RobotContainer {
       shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
       feederReverse.whileTrue(m_shooter.reverseFeedCommand());
+      feederForward.whileTrue(m_shooter.forwardFeedCommand());
       spinUpShooter.onTrue(m_shooter.spinUpCommand(() -> Constants.ShooterConstants.defaultShootRPM));
 
     }
@@ -221,12 +223,12 @@ public class RobotContainer {
       hopperExpand.onTrue(m_hopper.expandCommand());
       hopperRetract.onTrue(m_hopper.retractCommand());
 
-      JoystickButton nudgeHopperLeftOut  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpLeft);
-      JoystickButton nudgeHopperOut      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUp);
-      JoystickButton nudgeHopperRightOut = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickUpRight);
-      JoystickButton nudgeHopperLeftIn  = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownLeft);
-      JoystickButton nudgeHopperIn      = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDown);
-      JoystickButton nudgeHopperRightIn = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.StickDownRight);
+      Trigger nudgeHopperLeftOut  = new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpLeft);
+      Trigger nudgeHopperOut      = new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUp);
+      Trigger nudgeHopperRightOut = new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickUpRight);
+      Trigger nudgeHopperLeftIn  =  new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownLeft);
+      Trigger nudgeHopperIn      =  new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDown);
+      Trigger nudgeHopperRightIn =  new Trigger(()-> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownRight);
       nudgeHopperOut.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
       nudgeHopperIn.and(()->m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 

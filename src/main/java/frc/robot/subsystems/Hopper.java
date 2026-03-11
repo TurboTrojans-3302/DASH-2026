@@ -152,7 +152,7 @@ public class Hopper extends SubsystemBase {
 
     public void hold() {
         if (isPIDEnabled()) {
-            rampToZero();
+            setPosition(getPosition());
         } else {
             stop();
         }
@@ -293,6 +293,8 @@ public class Hopper extends SubsystemBase {
             maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
             maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
             applyPIDGains();
+            leftEncoder.setPosition(Preferences.getDouble(HopperConstants.leftPositionKey, 0));
+            rightEncoder.setPosition(Preferences.getDouble(HopperConstants.rightPositionKey, 0));
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
