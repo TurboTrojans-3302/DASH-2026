@@ -351,4 +351,13 @@ public class Shooter extends SubsystemBase {
       this);
   }
 
+  public Command forwardFeedCommand(){
+    return new FunctionalCommand(
+      ()->{},
+      ()->{feedForward();},
+      (interrupted)->{stopFeeder();},
+      ()->false,
+      this);
+  }
+
 }
