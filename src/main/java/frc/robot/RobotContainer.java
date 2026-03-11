@@ -85,8 +85,6 @@ public class RobotContainer {
   public RobotContainer() {
     instance = this;
 
-    // CameraServer.startAutomaticCapture();
-
     // The robot's subsystems
     m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
@@ -155,7 +153,7 @@ public class RobotContainer {
       retractHopper.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));      
     }
 
-    Trigger toggleCameraStream = new Trigger(() -> m_driverController.getYButtonPressed());
+    JoystickButton toggleCameraStream = new JoystickButton(m_driverController, XboxController.Button.kY.value);
     toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
     
     /**
@@ -177,6 +175,8 @@ public class RobotContainer {
       retractHopperCopilot.onTrue(m_harvester.StopCommand().andThen(m_hopper.retractCommand()));
     }
     
+    JoystickButton coPilotToggleCameraStream = new JoystickButton(m_copilotController, XboxController.Button.kY.value);
+    coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
 
     /**
      * Button Board
