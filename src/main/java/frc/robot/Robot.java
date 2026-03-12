@@ -8,9 +8,12 @@ package frc.robot;
 import java.util.Map;
 import java.util.Optional;
 
+import edu.wpi.first.hal.MatchInfoData;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -28,12 +31,13 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
   private static Robot instance;
   public static DriverStation.Alliance alliance;
- 
-  private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
   private boolean gameDataReceived = false;
 
+  private SendableChooser<String> m_autonomousChooser;
+  private Command m_autonomousCommand;
+  public MatchInfoData matchInfoData;
 
   Robot(){
     instance = this;
@@ -76,6 +80,8 @@ public class Robot extends TimedRobot {
                                             );
 
     
+    m_autonomousChooser = m_robotContainer.createAutonomousChooser();
+    SmartDashboard.putData("Autonomous", m_autonomousChooser);
   }
 
   /**
@@ -106,7 +112,12 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     m_robotContainer.saveSomePreferences();
     m_robotContainer.setLED(REVBlinkinLED.Pattern.SOLID_VIOLET);
+    m_autonomousChooser = m_robotContainer.createAutonomousChooser();
+    SmartDashboard.putData("Autonomous", m_autonomousChooser);
   }
+
+  @Override
+  public void disabledExit() {}
 
   @Override
   public void driverStationConnected() {
@@ -136,15 +147,12 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     setLED(LEDmode.Auton);
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    // System.out.println("autonomousInit() m_pos == " + m_robotContainer.m_nav.getPose());
-    System.out.println("Starting command: " + m_autonomousCommand.getName());
 
+    String commandName = m_autonomousChooser.getSelected();
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);
+    System.out.println("Starting command: " + commandName + " -> " + m_autonomousCommand.getName());
+    CommandScheduler.getInstance().schedule(m_autonomousCommand);
 
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      CommandScheduler.getInstance().schedule(m_autonomousCommand);
-    }
   }
 
   /** This function is called periodically during autonomous. */

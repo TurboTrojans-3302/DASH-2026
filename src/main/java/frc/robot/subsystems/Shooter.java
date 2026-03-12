@@ -68,18 +68,17 @@ public class Shooter extends SubsystemBase {
     SparkMaxConfig feederConfig = new SparkMaxConfig();
     feederConfig.inverted(false)
                 .idleMode(IdleMode.kBrake)
-                 .smartCurrentLimit(20);
+                 .smartCurrentLimit(25);
     feederMotor.configure(feederConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
-    rpmSetpoint = 0.0;
-    shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
 
     // Read the actual slot from the controller once at startup so our cached
     // value reflects whatever the SparkMax persisted from a previous session.
     currentSlot = closedLoopController.getSelectedSlot();
+    setRPMsetpoint(0.0);
   }
 
 
@@ -171,19 +170,20 @@ public class Shooter extends SubsystemBase {
   }
 
   public void enablePID(boolean enable) {
+    // System.out.println("enablePID: " + enable);
     currentSlot = enable ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
     closedLoopController.setIAccum(0.0);
-    closedLoopController.setSetpoint(currentRPM, ControlType.kVelocity, currentSlot); // set the current speed as the setpoint so we don't get a sudden change
+    closedLoopController.setSetpoint(currentRPM, ControlType.kVelocity, currentSlot);
+    // System.out.println("currentslot: " + currentSlot);
+    // System.out.println("getControlType(): " + closedLoopController.getControlType()); // set the current speed as the setpoint so we don't get a sudden change
   }
 
   public boolean isPIDEnabled() {
-    return closedLoopController.getControlType() == ControlType.kVelocity &&
-        currentSlot == ClosedLoopSlot.kSlot0;
+    return currentSlot == ClosedLoopSlot.kSlot0;
   }
 
   public boolean isOpenLoop() {
-    return closedLoopController.getControlType() == ControlType.kVelocity &&
-        currentSlot == ClosedLoopSlot.kSlot1;
+    return currentSlot == ClosedLoopSlot.kSlot1;
   }
 
   public boolean isDangerMode() {
@@ -215,13 +215,14 @@ public class Shooter extends SubsystemBase {
   } 
 
   public void stop() {
-    coast();
+    enablePID(false);
+    setRPMsetpoint(0.0);
     stopFeeder();
   }
 
-  private void coast() {
-    shooterMotor.disable();
-  }
+  // private void coast() {
+  //   shooterMotor.disable();
+  // }
 
 
   public void loadPreferences() {
@@ -303,10 +304,11 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> kTol,
         (x) -> { if (x != kTol) { kTol = x; setPIDVT(); } } );
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
-    builder.addDoubleProperty("Shooter RPM raw", () -> currentRPM, null);
+    builder.addStringProperty("Status", this::getStatus, null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);
+    builder.addBooleanProperty("PID Enabled", this::isPIDEnabled, (x) -> enablePID(x));
     builder.addDoubleProperty("Feeder Speed", () -> feederSpeed,
         (x) -> feederSpeed = x);
     builder.addBooleanProperty("Danger Mode", () -> isDangerMode(), (x) -> setDangerMode(x));

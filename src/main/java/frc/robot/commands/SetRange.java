@@ -43,14 +43,19 @@ public class SetRange extends Command {
         return shooter.isReady();
     }
 
-
-    public double getDXtoTarget(){
+    public double getDXtoTarget() {
         return navigation.getDXtoTarget();
     }
 
-    
     private void setShooterSpeedForDistance() {
-        double rpm = rangeRPMtable.get(getDXtoTarget());
+        double rpm;
+        double distance = getDXtoTarget();
+        if (rangeRPMtable.inRange(distance)) {
+            rpm = rangeRPMtable.get(getDXtoTarget());
+        } else {
+            rpm = 1600.0;
+        }
         shooter.setRPMsetpoint(rpm);
+
     }
 }
