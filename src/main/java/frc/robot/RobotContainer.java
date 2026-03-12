@@ -27,8 +27,9 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
+import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.DoNothing;
-import frc.robot.commands.SetRange;
+import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
@@ -125,7 +126,10 @@ public class RobotContainer {
 
     autonCommands = Map.of(
         "Do Nothing", () -> new DoNothing(),
-        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation));
+        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation),
+        "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, -15.0),
+        "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, 15.0)        
+      );
   }
 
   public void setDefaultCommands() {
@@ -206,7 +210,7 @@ public class RobotContainer {
 
     feederReverse.whileTrue(m_shooter.reverseFeedCommand());
     feederForward.whileTrue(m_shooter.forwardFeedCommand());
-    spinUpShooter.onTrue(new SetRange(m_navigation, m_shooter).withTimeout(2.0));
+    spinUpShooter.onTrue(new MeasureAndSetRange(m_navigation, m_shooter).withTimeout(2.0));
 
   }
 
