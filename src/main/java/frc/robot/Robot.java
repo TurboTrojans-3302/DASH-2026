@@ -126,9 +126,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
-    if(alliance == null) {
-      Optional<Alliance> a = DriverStation.getAlliance();
-      if (a.isPresent()) {
+    Optional<Alliance> a = DriverStation.getAlliance();
+    if (a.isPresent()) {
+      if(alliance != a.get()){
         alliance = a.get();
         if(alliance == Alliance.Red) {
           m_robotContainer.initRed();
