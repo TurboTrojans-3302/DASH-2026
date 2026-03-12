@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.Constants.HopperConstants;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -185,8 +186,10 @@ public class Hopper extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (leftHardLimit())  { leftEncoder.setPosition(0); }
-        if (rightHardLimit()) { rightEncoder.setPosition(0); }
+        if(Robot.getInstance().isTeleopEnabled()){ //also should check if we're in a real game
+            if (leftHardLimit())  { leftEncoder.setPosition(0); }
+            if (rightHardLimit()) { rightEncoder.setPosition(0); }
+        }
 
         if (isPIDEnabled()) {
             double ffOutput = feedforward.calculate(0); // static gravity compensation (velocity = 0)

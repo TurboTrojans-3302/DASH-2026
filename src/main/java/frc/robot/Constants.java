@@ -35,8 +35,8 @@ public final class Constants {
   }
 
   public static final class DigitalIO {
-    public static final int kHopperLeftContractedLimitSwitchDio = 0;
-    public static final int kHopperRightContractedLimitSwitchDio = 1;
+    public static final int kHopperLeftContractedLimitSwitchDio = 1;
+    public static final int kHopperRightContractedLimitSwitchDio = 2;
   }
 
   public static final class DriveConstants {

@@ -8,6 +8,7 @@ package frc.robot;
 import java.util.Map;
 import java.util.Optional;
 
+import edu.wpi.first.hal.MatchInfoData;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -36,6 +37,7 @@ public class Robot extends TimedRobot {
 
   private SendableChooser<String> m_autonomousChooser;
   private Command m_autonomousCommand;
+  public MatchInfoData matchInfoData;
 
   Robot(){
     instance = this;
