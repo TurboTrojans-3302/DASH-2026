@@ -46,6 +46,7 @@ public class Hopper extends SubsystemBase {
     private double kG = HopperConstants.kGdefault;
     private double maxVelocity     = HopperConstants.maxVelocityDefault;
     private double maxAcceleration = HopperConstants.maxAccelerationDefault;
+    private boolean hardLimitEnable = true;
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
@@ -186,10 +187,18 @@ public class Hopper extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if(Robot.getInstance().isTeleopEnabled()){ //also should check if we're in a real game
-            if (leftHardLimit())  { leftEncoder.setPosition(0); }
-            if (rightHardLimit()) { rightEncoder.setPosition(0); }
+        if (leftHardLimit()){
+            if(Math.abs(leftEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+                setPIDEnabled(false);
+            }
+            leftEncoder.setPosition(0);
         }
+        if (rightHardLimit()) {
+            if(Math.abs(rightEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+                setPIDEnabled(false);
+            }
+            rightEncoder.setPosition(0);
+        }        
 
         if (isPIDEnabled()) {
             double ffOutput = feedforward.calculate(0); // static gravity compensation (velocity = 0)
@@ -295,6 +304,7 @@ public class Hopper extends SubsystemBase {
             posTolerance = Preferences.getDouble(HopperConstants.posToleranceKey, HopperConstants.posToleranceDefault);
             maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
             maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
+            hardLimitEnable = Preferences.getBoolean(HopperConstants.hardLimitEnableKey, true);
             applyPIDGains();
             leftEncoder.setPosition(Preferences.getDouble(HopperConstants.leftPositionKey, 0));
             rightEncoder.setPosition(Preferences.getDouble(HopperConstants.rightPositionKey, 0));
@@ -315,14 +325,15 @@ public class Hopper extends SubsystemBase {
         Preferences.setDouble(HopperConstants.posToleranceKey, posTolerance);
         Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
         Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
+        Preferences.setBoolean(HopperConstants.hardLimitEnableKey, hardLimitEnable);
     }
 
     public boolean leftHardLimit() {
-        return !leftContractedLimitSwitch.get();
+        return hardLimitEnable && !leftContractedLimitSwitch.get();
     }
 
     public boolean rightHardLimit() {
-        return !rightContractedLimitSwitch.get();
+        return hardLimitEnable && !rightContractedLimitSwitch.get();
     }
 
     @Override
@@ -343,6 +354,7 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("Max Velocity",     () -> maxVelocity,     (x) -> { maxVelocity     = x; applyPIDGains(); });
         builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
         builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
+        builder.addBooleanProperty("Hard Limit Enable", () -> hardLimitEnable, (x) -> hardLimitEnable = x);
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);

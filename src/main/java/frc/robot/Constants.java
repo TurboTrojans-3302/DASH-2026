@@ -199,6 +199,7 @@ public final class Constants {
     public static final double maxVelocityDefault = 80.0; // encoder units per second
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
     public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
+    public static final String hardLimitEnableKey = "hopperHardLimitEnable";
   }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;
