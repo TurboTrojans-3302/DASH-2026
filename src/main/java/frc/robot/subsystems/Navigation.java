@@ -6,8 +6,11 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.HttpCamera.HttpCameraKind;
+import edu.wpi.first.cscore.VideoCamera;
+import edu.wpi.first.cscore.VideoSink;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -35,6 +38,9 @@ public class Navigation extends SubsystemBase {
   protected SwerveDrivePoseEstimator m_poseEstimator;
   private static AprilTagFieldLayout m_aprilTagLayout;
   private boolean mainCameraStreamSelected = true;
+  private VideoCamera limeightCamera;
+  private VideoCamera usbCamera;
+  private VideoSink cameraServer;
 
   /** Creates a new Navigation. */
   public Navigation(DriveTrain drive, DXsensor dxSensor) {
@@ -47,11 +53,13 @@ public class Navigation extends SubsystemBase {
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
 
     // Publish the Limelight MJPEG stream so Elastic can display it as a camera widget
-    HttpCamera limelightStream = new HttpCamera(
+    limeightCamera = new HttpCamera(
         cameraName,
         "http://limelight.local:5800/stream.mjpg",
         HttpCameraKind.kMJPGStreamer);
-    edu.wpi.first.cameraserver.CameraServer.startAutomaticCapture(limelightStream);
+    usbCamera = CameraServer.startAutomaticCapture();
+    CameraServer.addCamera(limeightCamera);
+    cameraServer = CameraServer.getServer();
 
     SmartDashboard.putData(m_dashboardField);
   }
@@ -148,9 +156,9 @@ public class Navigation extends SubsystemBase {
 
   public void toggleCameraStream() {
     if(mainCameraStreamSelected) {
-      LimelightHelpers.setStreamMode_PiPSecondary(cameraName);
+      cameraServer.setSource(usbCamera);
     } else {
-      LimelightHelpers.setStreamMode_PiPMain(cameraName);
+      cameraServer.setSource(limeightCamera);
     }
     mainCameraStreamSelected = !mainCameraStreamSelected;
   }

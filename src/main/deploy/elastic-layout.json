@@ -58,19 +58,6 @@
             }
           },
           {
-            "title": "limelight",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 512.0,
-            "height": 384.0,
-            "type": "Camera Stream",
-            "properties": {
-              "topic": "/CameraPublisher/limelight",
-              "period": 0.06,
-              "rotation_turns": 0
-            }
-          },
-          {
             "title": "Current Shift",
             "x": 1088.0,
             "y": 256.0,
@@ -185,6 +172,19 @@
               "divisions": 4,
               "inverted": false,
               "orientation": "horizontal"
+            }
+          },
+          {
+            "title": "Y to toggle camera",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 512.0,
+            "height": 384.0,
+            "type": "Camera Stream",
+            "properties": {
+              "topic": "/CameraPublisher/USB Camera 0",
+              "period": 0.06,
+              "rotation_turns": 0
             }
           }
         ]
