@@ -58,7 +58,6 @@ public class Navigation extends SubsystemBase {
         "http://limelight.local:5800/stream.mjpg",
         HttpCameraKind.kMJPGStreamer);
     usbCamera = CameraServer.startAutomaticCapture();
-    CameraServer.addCamera(limeightCamera);
     cameraServer = CameraServer.getServer();
 
     SmartDashboard.putData(m_dashboardField);
