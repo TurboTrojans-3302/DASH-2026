@@ -123,9 +123,9 @@ public final class Constants {
 
       private static final DistanceUnit Meters = null;
       // inches
-      public static final double forward = Inches.of(-18.0).in(Meters);
-      public static final double side    = Inches.of(0.0).in(Meters);
-      public static final double up      = Inches.of(24.0).in(Meters);
+      public static final double forward = Inches.of(-11.5).in(Meters);
+      public static final double side    = Inches.of(0-4.5).in(Meters);
+      public static final double up      = Inches.of(26.0).in(Meters);
 
       public static final double roll    = 0.0;
       public static final double pitch   = 0.0;

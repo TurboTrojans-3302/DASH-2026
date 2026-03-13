@@ -51,7 +51,7 @@ public class Navigation extends SubsystemBase {
     m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
-    LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getAngleDegrees(), 0, 0, 0, 0, 0);
+    LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getGyroAngleDegrees(), 0, 0, 0, 0, 0);
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
     LimelightHelpers.setCameraPose_RobotSpace(cameraName,
                                               LimelightConstants.Offset.forward,
