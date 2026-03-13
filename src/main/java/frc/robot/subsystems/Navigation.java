@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.commands.GoToCommand;
@@ -50,7 +51,15 @@ public class Navigation extends SubsystemBase {
     m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
+    LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getAngleDegrees(), 0, 0, 0, 0, 0);
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
+    LimelightHelpers.setCameraPose_RobotSpace(cameraName,
+                                              LimelightConstants.Offset.forward,
+                                              LimelightConstants.Offset.side,
+                                              LimelightConstants.Offset.up,
+                                              LimelightConstants.Offset.pitch,
+                                              LimelightConstants.Offset.yaw,
+                                              LimelightConstants.Offset.roll);
 
     // Publish the Limelight MJPEG stream so Elastic can display it as a camera widget
     limeightCamera = new HttpCamera(
