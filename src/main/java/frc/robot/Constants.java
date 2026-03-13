@@ -4,9 +4,12 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.DistanceUnit;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -42,6 +45,8 @@ public final class Constants {
   public static final class DriveConstants {
     public static final String maxSpeedKey = "driveMaxSpeed";
     public static final double kMaxSpeedDefault = 4.0; // m/s
+    public static final Double kMaxAngularVelocityDefault = 2.0; // radians per second;
+    public static final String maxAngularVelocityKey = "driveMaxAngularVelocity";
   }
 
   public static final class TeleopConstants {
@@ -119,13 +124,13 @@ public final class Constants {
       // measured to the center of the lens
 
       // inches
-      public static final double forward = 4;
-      public static final double side = -7.5; // right is negative
-      public static final double up = 37.25;
+      public static final double forward = -0.3;
+      public static final double side    = .011;
+      public static final double up      = 0.6;
 
-      public static final double roll = 0.0;
-      public static final double pitch = 0.0;
-      public static final double yaw = 0.0;
+      public static final double roll    = 0.0;
+      public static final double pitch   = 0.0;
+      public static final double yaw     = 180.0; // Limelight is mounted facing backwards, so we need to rotate the camera pose by 180 degrees around the vertical axis
     }
 
     public static final class PipelineIdx {

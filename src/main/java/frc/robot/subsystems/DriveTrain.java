@@ -48,6 +48,7 @@ public class DriveTrain extends SubsystemBase {
    */
   private SwerveDrive swerveDrive;
   private Double kMaxSpeed = Constants.DriveConstants.kMaxSpeedDefault;
+  private Double kMaxAngularVelocity = Constants.DriveConstants.kMaxAngularVelocityDefault;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -96,13 +97,17 @@ public class DriveTrain extends SubsystemBase {
     }
   }
 
+  public double getMaxAngularVelocity() {
+    return kMaxAngularVelocity;
+  }
+
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    SwerveIMU gyro =  swerveDrive.getGyro();
-//    SmartDashboard.putData("Gyro", gyro);
-//    builder.addDoubleProperty("gyro yaw", () -> (double) gyro.getYaw(), null);
     builder.addDoubleProperty("Robot Angle deg", () -> swerveDrive.getYaw().getDegrees(), null);
+    builder.addDoubleProperty("Max Speed", () -> kMaxSpeed, (x) -> kMaxSpeed = x);
+    builder.addDoubleProperty("Max Angular Velocity", () -> kMaxAngularVelocity, (x) -> kMaxAngularVelocity = x);
+    builder.addBooleanProperty("save prefs", ()->false, (x) -> savePreferences());
   }
 
   @Override
@@ -509,6 +514,8 @@ public class DriveTrain extends SubsystemBase {
       System.out.println("Loading DriveTrain values from preferences");
       kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey,
           Constants.DriveConstants.kMaxSpeedDefault);
+      kMaxAngularVelocity = Preferences.getDouble(Constants.DriveConstants.maxAngularVelocityKey,
+          Constants.DriveConstants.kMaxAngularVelocityDefault);
     } else {
       System.out.println("No DriveTrain prefs found. Using default values");
     }
@@ -517,6 +524,7 @@ public class DriveTrain extends SubsystemBase {
   public void savePreferences() {
     System.out.println("Saving DriveTrain values to preferences");
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
+    Preferences.setDouble(Constants.DriveConstants.maxAngularVelocityKey, kMaxAngularVelocity);
   }
 
   public void stop() {
