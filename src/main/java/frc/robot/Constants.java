@@ -121,11 +121,10 @@ public final class Constants {
 
       // measured to the center of the lens
 
-      private static final DistanceUnit Meters = null;
       // inches
-      public static final double forward = Inches.of(-11.5).in(Meters);
-      public static final double side    = Inches.of(0-4.5).in(Meters);
-      public static final double up      = Inches.of(26.0).in(Meters);
+      public static final double forward = -0.3;
+      public static final double side    = .011;
+      public static final double up      = 0.6;
 
       public static final double roll    = 0.0;
       public static final double pitch   = 0.0;
