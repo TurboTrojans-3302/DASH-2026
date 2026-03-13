@@ -65,6 +65,7 @@ public class TeleopDrive extends Command {
         m_robotDrive.driveHeading(new Translation2d(forward, leftward), m_nav.getHeadingToTarget());
       } else {
         m_robotDrive.drive(new Translation2d(forward, leftward), rotate, true);
+        //System.out.println("FIELD ORIENTED forward: " + forward + " leftward: " + leftward + " rotate: " + rotate);
       }
     } else {
       m_robotDrive.driveRobotOriented(forward, leftward, rotate);

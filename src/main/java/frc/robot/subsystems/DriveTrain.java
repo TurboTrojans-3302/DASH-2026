@@ -28,10 +28,14 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import com.studica.frc.AHRS;
+
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
 import swervelib.SwerveModule;
+import swervelib.imu.SwerveIMU;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
@@ -79,41 +83,26 @@ public class DriveTrain extends SubsystemBase {
         true,
         0.1); // Correct for skew that gets worse as angular velocity increases. Start with a
               // coefficient of 0.1.
-    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders and motor encoders periodically when they are not moving.
-    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used over the internal encoder and push the offsets onto it. Throws warning if not possible
+    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders
+                                                           // and motor encoders periodically when they are not moving.
+    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used
+    // over the internal encoder and push the offsets onto it. Throws warning if not
+    // possible
 
-    // If we successfully created the swerveDrive, initialize odometry to the starting pose
+    // If we successfully created the swerveDrive, initialize odometry to the
+    // starting pose
     if (swerveDrive != null) {
       swerveDrive.resetOdometry(startingPose);
     }
+  }
 
-    // Publish a simple Sendable to SmartDashboard so we can inspect module angles/velocities and robot yaw
-    SmartDashboard.putData("Swerve Drive", new Sendable() {
-      @Override
-      public void initSendable(SendableBuilder builder) {
-        builder.setSmartDashboardType("SwerveDrive");
-
-        SwerveModule[] modules = swerveDrive.getModules();
-
-        builder.addDoubleProperty("Front Left Angle", () -> modules[0].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Left Velocity", () -> modules[0].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Front Right Angle", () -> modules[1].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Right Velocity", () -> modules[1].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Left Angle", () -> modules[2].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Left Velocity", () -> modules[2].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Right Angle", () -> modules[3].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Right Velocity", () -> modules[3].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Robot Angle", () -> swerveDrive.getYaw().getRadians(), null);
-      }
-    });
-
-    // Publish the raw NavX AHRS object so Elastic renders a Gyro widget.
-    // AHRS implements NTSendable and advertises SmartDashboardType "Gyro".
-    SmartDashboard.putData("Gyro", (com.studica.frc.AHRS) swerveDrive.getGyro().getIMU());
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    SwerveIMU gyro =  swerveDrive.getGyro();
+//    SmartDashboard.putData("Gyro", gyro);
+//    builder.addDoubleProperty("gyro yaw", () -> (double) gyro.getYaw(), null);
+    builder.addDoubleProperty("Robot Angle deg", () -> swerveDrive.getYaw().getDegrees(), null);
   }
 
   @Override
@@ -276,15 +265,16 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
-   * Drive the robot given a translation in field-relative m/s. 
+   * Drive the robot given a translation in field-relative m/s.
    * Heading is a desired angle that the robot should turn to while driving.
    */
-  public void driveHeading(Translation2d translation, double headingRadians){
+  public void driveHeading(Translation2d translation, double headingRadians) {
 
     double rotation = swerveDrive.getSwerveController().headingCalculate(getHeading().getRadians(), headingRadians);
-    swerveDrive.drive(translation, rotation, true, false); // Field relative should be used since we are controlling the robot with a heading.
+    swerveDrive.drive(translation, rotation, true, false); // Field relative should be used since we are controlling the
+                                                           // robot with a heading.
   }
-  
+
   /**
    * Drive the robot given a chassis field oriented velocity.
    *
@@ -376,7 +366,6 @@ public class DriveTrain extends SubsystemBase {
     swerveDrive.zeroGyro();
   }
 
-
   /**
    * Sets the drive motors to brake/coast mode.
    *
@@ -398,7 +387,7 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
-  //todo this is duplicated, i think
+  // todo this is duplicated, i think
   public Double getMaxSpeed() {
     return kMaxSpeed;
   }
@@ -518,7 +507,8 @@ public class DriveTrain extends SubsystemBase {
   public void loadPreferences() {
     if (Preferences.containsKey(Constants.DriveConstants.maxSpeedKey)) {
       System.out.println("Loading DriveTrain values from preferences");
-      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault);
+      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey,
+          Constants.DriveConstants.kMaxSpeedDefault);
     } else {
       System.out.println("No DriveTrain prefs found. Using default values");
     }
@@ -529,20 +519,21 @@ public class DriveTrain extends SubsystemBase {
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
   }
 
-public void stop() {
+  public void stop() {
     swerveDrive.drive(new ChassisSpeeds(0, 0, 0));
-}
+  }
 
-public double getSpeed() {
-        ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
-        return Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
-      }
-    
-    /*
-     * Returns the velocity vector of the robot, in the Robot Frame, in meters per second.
-     */
-    public Translation2d getVelocityVector() {
-        ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity ();
-        return new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
-    }
+  public double getSpeed() {
+    ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+    return Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+  }
+
+  /*
+   * Returns the velocity vector of the robot, in the Robot Frame, in meters per
+   * second.
+   */
+  public Translation2d getVelocityVector() {
+    ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+    return new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+  }
 }
