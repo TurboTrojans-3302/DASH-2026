@@ -27,6 +27,9 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
+import frc.robot.autoncommands.AutoShootFromCenter;
+import frc.robot.autoncommands.AutoShootFromLeft;
+import frc.robot.autoncommands.AutoShootFromRight;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.SetRange;
 import frc.robot.commands.TeleopDrive;
@@ -125,7 +128,11 @@ public class RobotContainer {
 
     autonCommands = Map.of(
         "Do Nothing", () -> new DoNothing(),
-        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation));
+        "Start Center", () -> new AutoShootFromCenter(m_robotDrive, m_shooter, m_navigation),
+        "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation), 
+        "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation),
+        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation)
+        );
   }
 
   public void setDefaultCommands() {
