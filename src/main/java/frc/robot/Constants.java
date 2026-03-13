@@ -45,6 +45,8 @@ public final class Constants {
   public static final class DriveConstants {
     public static final String maxSpeedKey = "driveMaxSpeed";
     public static final double kMaxSpeedDefault = 4.0; // m/s
+    public static final Double kMaxAngularVelocityDefault = 2.0; // radians per second;
+    public static final String maxAngularVelocityKey = "driveMaxAngularVelocity";
   }
 
   public static final class TeleopConstants {
