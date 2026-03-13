@@ -26,7 +26,8 @@ public class AutoShoot extends SequentialCommandGroup {
     m_navigation = navigation;
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
-    addCommands(GoToCommand.relative(driveTrain, navigation, 1.0, 0.0, 0.0),
+    addCommands(GoToCommand.relative(driveTrain, navigation, 1.0, 0.0, 0.0)
+                            .setLimits(4.0, 8.0),
                 new SetRangeAndAim(m_driveTrain, m_navigation, m_shooter),
                 m_shooter.shootCommand().withTimeout(10)); 
   }
