@@ -78,7 +78,7 @@ public class Hopper extends SubsystemBase {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
         leftSparkConfig.apply(SparkMaxConfig.Presets.REV_NEO_550);
         leftSparkConfig.idleMode(IdleMode.kBrake);
-        leftSparkConfig.inverted(true);
+        leftSparkConfig.inverted(false);
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
 
