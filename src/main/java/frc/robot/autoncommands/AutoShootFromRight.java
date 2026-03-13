@@ -20,7 +20,7 @@ public class AutoShootFromRight extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(
-      GoToCommand.relative(drivetrain, nav, 1, 0, 15.),
+      GoToCommand.relative(drivetrain, nav, 1, 1, 45.0),
       new SetRange(nav, shooter),
       shooter.shootCommand()
     );

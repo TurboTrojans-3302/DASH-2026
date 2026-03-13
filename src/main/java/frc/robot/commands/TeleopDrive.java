@@ -17,7 +17,7 @@ public class TeleopDrive extends Command {
   private DriveTrain m_robotDrive;
   private XboxController m_driverController;
   private Navigation m_nav;
-  private boolean m_fieldOrientedEnable = false; // TODO default this to true when it's working
+  private boolean m_fieldOrientedEnable = true;
   private boolean m_slowDriveFlag = false;
   private boolean m_DpadDriveFlag = false;
   private final double kDPADdriveSpeed = 2.0; // m/s, speed when driving strictly north/south/east/west with field-oriented control, can be tuned based on driver preference
