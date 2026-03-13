@@ -150,8 +150,8 @@ public class Navigation extends SubsystemBase {
    * @return distance to target in meters
    */
   public double getDXtoTarget() {
-    //double distance = getDxToHubCenter();
-    double distance = 999.9;
+    double distance = getDxToHubCenter();
+    
     if (m_dxSensor.isValid() && distance < 10.0) {
       double laserDx = m_dxSensor.getDistanceMeters() + 0.818; // odometryDX is center to center
                                                                 // laser is front to front

@@ -113,7 +113,7 @@ public final class Constants {
   public static final class FieldConstants {
     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
     public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
-    public static final Pose2d HubFrontFaceCenter = new Pose2d(4.0218614, 4.0346376, Rotation2d.kZero);
+    public static final Pose2d HubFrontFaceCenter = new Pose2d(4.0218614, 4.0346376, Rotation2d.k180deg);
   }
 
   public static final class LimelightConstants {

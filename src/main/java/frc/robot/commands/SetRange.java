@@ -53,7 +53,7 @@ public class SetRange extends Command {
         if (rangeRPMtable.inRange(distance)) {
             rpm = rangeRPMtable.get(getDXtoTarget());
         } else {
-            rpm = 1600.0;
+            rpm = 1900.0;
         }
         shooter.setRPMsetpoint(rpm);
 

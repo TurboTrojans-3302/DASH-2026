@@ -65,17 +65,6 @@ public class DriveTrain extends SubsystemBase {
     }
 
     SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
-
-    boolean blueAlliance = false;
-    Pose2d startingPose = blueAlliance ? new Pose2d(new Translation2d(Meter.of(1),
-        Meter.of(4)),
-        Rotation2d.fromDegrees(0))
-        : new Pose2d(new Translation2d(Meter.of(16),
-            Meter.of(4)),
-            Rotation2d.fromDegrees(180));
-    // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary
-    // objects being created.
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
     swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via
                                              // angle.
     swerveDrive.setCosineCompensator(false);// !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for
@@ -93,7 +82,7 @@ public class DriveTrain extends SubsystemBase {
     // If we successfully created the swerveDrive, initialize odometry to the
     // starting pose
     if (swerveDrive != null) {
-      swerveDrive.resetOdometry(startingPose);
+      swerveDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
     }
   }
 
