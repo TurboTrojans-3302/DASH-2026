@@ -291,8 +291,12 @@ public class RobotContainer {
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
   }
+ 
+  public void onDSAttached(){
+    readPIDswitches();
+  }
 
-  public void onDSAttached() {
+  public void readPIDswitches() {
     // Read the actual switch state at binding time so PID starts in the correct mode
     if (HOPPER_ENABLE){
       if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){

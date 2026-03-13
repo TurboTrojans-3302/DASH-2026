@@ -203,8 +203,6 @@ public class Navigation extends SubsystemBase {
       builder.addStringProperty("Pipeline", () -> LimelightHelpers.getCurrentPipelineType(cameraName), null);
       builder.addBooleanProperty("ValidTarget", () -> {return LimelightHelpers.getTV(cameraName);}, null);
       builder.addIntegerProperty("ApriltagFound", () -> {return (int) LimelightHelpers.getFiducialID(cameraName);} , null);
-      builder.addStringProperty("DetectorFound", () -> {return LimelightHelpers.getDetectorClass(cameraName);}, null);
-      builder.addStringProperty("ClassiferFound", () -> {return LimelightHelpers.getClassifierClass(cameraName);}, null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
       builder.addDoubleProperty("Auton Speed Scale", ()->GoToCommand.getGlobalSpeedScale(), (x) -> GoToCommand.setGlobalSpeedScale(x));
       builder.addDoubleProperty("Auton Tolerance Scale", ()->GoToCommand.getGlobalToleranceScale(), (x) -> GoToCommand.setGlobalToleranceScale(x));
