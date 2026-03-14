@@ -165,7 +165,7 @@ public final class Constants {
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 10; // rpm
-    public static String secondFeederSpeedKey = "secondFeederSpeed";
+    public static final String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
 
     public static final double SecondaryFeederSpeedDefault = 0.3;

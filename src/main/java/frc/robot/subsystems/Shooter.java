@@ -245,10 +245,10 @@ public class Shooter extends SubsystemBase {
       // Apply loaded gains and tolerance to the motor controller
       setSparkClosedLoopConfig();
       
-      feederSpeed = Preferences.getDouble(Constants.ShooterConstants.feederSpeedKey,
-          Constants.ShooterConstants.feederSpeedDefault);
-      secondFeederSpeed = Preferences.getDouble(Constants.ShooterConstants.secondFeederSpeedKey,
-          Constants.ShooterConstants.SecondaryFeederSpeedDefault);
+      feederSpeed = Preferences.getDouble(ShooterConstants.feederSpeedKey,
+          ShooterConstants.feederSpeedDefault);
+      secondFeederSpeed = Preferences.getDouble(ShooterConstants.secondFeederSpeedKey,
+          ShooterConstants.SecondaryFeederSpeedDefault);
     } else {
       System.out.println("No shooter prefs found. Using default values");
     }
@@ -265,9 +265,9 @@ public class Shooter extends SubsystemBase {
     Preferences.setDouble(ShooterConstants.kMaxVelocityKey, kMaxVelocity);
     // No direct API to read closed-loop allowed error from the controller here;
     // save the default
-    Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, kTol);
-    Preferences.setDouble(Constants.ShooterConstants.feederSpeedKey, feederSpeed);
-    Preferences.setDouble(Constants.ShooterConstants.secondFeederSpeedKey, secondFeederSpeed);
+    Preferences.setDouble(ShooterConstants.PIDToleranceKey, kTol);
+    Preferences.setDouble(ShooterConstants.feederSpeedKey, feederSpeed);
+    Preferences.setDouble(ShooterConstants.secondFeederSpeedKey, secondFeederSpeed);
   }
 
   public Command incrementSpeedCommand() {
