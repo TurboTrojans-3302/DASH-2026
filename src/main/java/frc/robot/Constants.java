@@ -4,9 +4,12 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.DistanceUnit;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -30,18 +33,21 @@ public final class Constants {
     public static final int kHopperLeftMotorCanId = 11;
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId = 13;
-    public static final int kClimbMotor1 = 14;
-    public static final int kClimbMotor2 = 15;
+    public static final int kSecondFeederMotorCanId = 14;
+   // public static final int kClimbMotor1 = 14;
+   // public static final int kClimbMotor2 = 15;
   }
 
   public static final class DigitalIO {
-    public static final int kHopperLeftContractedLimitSwitchDio = 0;
-    public static final int kHopperRightContractedLimitSwitchDio = 1;
+    public static final int kHopperLeftContractedLimitSwitchDio = 1;
+    public static final int kHopperRightContractedLimitSwitchDio = 2;
   }
 
   public static final class DriveConstants {
     public static final String maxSpeedKey = "driveMaxSpeed";
     public static final double kMaxSpeedDefault = 4.0; // m/s
+    public static final Double kMaxAngularVelocityDefault = 2.0; // radians per second;
+    public static final String maxAngularVelocityKey = "driveMaxAngularVelocity";
   }
 
   public static final class TeleopConstants {
@@ -108,7 +114,7 @@ public final class Constants {
   public static final class FieldConstants {
     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
     public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
-    public static final Pose2d HubFrontFaceCenter = new Pose2d(4.0218614, 4.0346376, Rotation2d.kZero);
+    public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
   }
 
   public static final class LimelightConstants {
@@ -119,13 +125,13 @@ public final class Constants {
       // measured to the center of the lens
 
       // inches
-      public static final double forward = 4;
-      public static final double side = -7.5; // right is negative
-      public static final double up = 37.25;
+      public static final double forward = -0.3;
+      public static final double side    = .011;
+      public static final double up      = 0.6;
 
-      public static final double roll = 0.0;
-      public static final double pitch = 0.0;
-      public static final double yaw = 0.0;
+      public static final double roll    = 0.0;
+      public static final double pitch   = 0.0;
+      public static final double yaw     = 180.0; // Limelight is mounted facing backwards, so we need to rotate the camera pose by 180 degrees around the vertical axis
     }
 
     public static final class PipelineIdx {
@@ -154,12 +160,15 @@ public final class Constants {
     public static final double kMaxAccelDefault = 1500.0;
     public static final String kMaxVelocityKey = "shooter_kMaxVelocity";
     public static final double kMaxVelocityDefault = 2500;
-    public static final double defaultShootRPM = 1400.0;
+    public static final double defaultShootRPM = 1600.0;
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 10; // rpm
+    public static String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
+
+    public static final double SecondaryFeederSpeedDefault = 0.3;
   }
 
   public static final class HarvesterConstants {
@@ -202,6 +211,7 @@ public final class Constants {
     public static final double maxVelocityDefault = 80.0; // encoder units per second
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
     public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
+    public static final String hardLimitEnableKey = "hopperHardLimitEnable";
   }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;

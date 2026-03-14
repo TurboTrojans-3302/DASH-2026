@@ -39,7 +39,7 @@ public class Harvester extends SubsystemBase {
   public Harvester() {
     SparkMaxConfig config = new SparkMaxConfig();
     config.apply(SparkMaxConfig.Presets.REV_NEO);
-    config.inverted(true);
+    config.inverted(false);
     config.idleMode(IdleMode.kBrake);
     config.apply(new EncoderConfig().velocityConversionFactor(1 / 16.0)); // 16:1 gear reduction
 
@@ -79,6 +79,10 @@ public class Harvester extends SubsystemBase {
 
   public boolean isPIDEnabled() {
     return PIDEnabled;
+  }
+
+  public boolean isOn(){
+    return Math.abs(getRPM()) > 0.01;
   }
 
 

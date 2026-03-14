@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Robot;
@@ -29,13 +28,16 @@ public class GoToCommand extends Command {
   protected Pose2d m_dest;
   protected Transform2d m_delta;
   protected DriveTrain m_drive;
-  protected TrapezoidProfile m_trapezoid;
+  protected TrapezoidProfile m_speedProfile;
+  protected TrapezoidProfile m_angularSpeedProfile;
   protected boolean m_relativeFlag;
   protected Navigation m_nav;
   protected double m_totalDistance;  // total distance to goal at initialize()
 
   double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
   double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
+  double angularSpeedLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecond;
+  double angularAccelLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared;  
   double kDistanceTolerance = AutoConstants.kDistanceTolerance;
   double kHeadingTolerance =  AutoConstants.kHeadingTolerance;
 
@@ -102,7 +104,8 @@ public class GoToCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_trapezoid = new TrapezoidProfile(new Constraints(globalSpeedScale * speedLimit, globalSpeedScale * accelLimit));
+    m_speedProfile = new TrapezoidProfile(new Constraints(globalSpeedScale * speedLimit, globalSpeedScale * accelLimit));
+    m_angularSpeedProfile = new TrapezoidProfile(new Constraints(globalSpeedScale * angularSpeedLimit, globalSpeedScale * angularAccelLimit));
 
     if (m_relativeFlag) {
       Pose2d currPose2d = m_nav.getPose();
@@ -157,15 +160,19 @@ public class GoToCommand extends Command {
     State currentState = new State(traveledDistance, speedTowardTarget());
     State goalState = new State(m_totalDistance, 0.0);
 
-    double speed = m_trapezoid.calculate(dT, currentState, goalState).velocity;
+    double speed = m_speedProfile.calculate(dT, currentState, goalState).velocity;
 
     Translation2d unitTranslation = toDest.div(distanceToDest);
+
+    State angularCurrentState = new State(m_drive.getHeading().getRadians(), m_drive.getAngularVelocityRadPerSec());
+    State angularGoalState = new State(destHeadingRadians(), 0.0);
+    double rotation = m_angularSpeedProfile.calculate(dT, angularCurrentState, angularGoalState).velocity;
 
     if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance * globalToleranceScale)){
       speed = 0.0;
     }
 
-    m_drive.driveHeading(unitTranslation.times(speed), destHeadingRadians());
+    m_drive.drive(unitTranslation.times(speed), rotation, true);
   }
 
   // Called once the command ends or is interrupted.
@@ -181,12 +188,6 @@ public class GoToCommand extends Command {
     return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
         MathUtil.isNear(destHeadingDegrees(), m_nav.getAngleDegrees(),
                         kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
-  }
-
-  @Override
-  public void initSendable(SendableBuilder builder) {
-    super.initSendable(builder);
-    builder.addDoubleProperty("Speed Scale", () -> globalSpeedScale, (x)->{setGlobalSpeedScale(x);});
   }
 
 public static double getGlobalSpeedScale() {

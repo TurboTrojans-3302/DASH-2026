@@ -6,8 +6,11 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.HttpCamera.HttpCameraKind;
+import edu.wpi.first.cscore.VideoCamera;
+import edu.wpi.first.cscore.VideoSink;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -20,6 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.commands.GoToCommand;
@@ -35,6 +39,9 @@ public class Navigation extends SubsystemBase {
   protected SwerveDrivePoseEstimator m_poseEstimator;
   private static AprilTagFieldLayout m_aprilTagLayout;
   private boolean mainCameraStreamSelected = true;
+  private VideoCamera limeightCamera;
+  private VideoCamera usbCamera;
+  private VideoSink cameraServer;
 
   /** Creates a new Navigation. */
   public Navigation(DriveTrain drive, DXsensor dxSensor) {
@@ -44,14 +51,23 @@ public class Navigation extends SubsystemBase {
     m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
+    LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getGyroAngleDegrees(), 0, 0, 0, 0, 0);
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
+    LimelightHelpers.setCameraPose_RobotSpace(cameraName,
+                                              LimelightConstants.Offset.forward,
+                                              LimelightConstants.Offset.side,
+                                              LimelightConstants.Offset.up,
+                                              LimelightConstants.Offset.pitch,
+                                              LimelightConstants.Offset.yaw,
+                                              LimelightConstants.Offset.roll);
 
     // Publish the Limelight MJPEG stream so Elastic can display it as a camera widget
-    HttpCamera limelightStream = new HttpCamera(
+    limeightCamera = new HttpCamera(
         cameraName,
         "http://limelight.local:5800/stream.mjpg",
         HttpCameraKind.kMJPGStreamer);
-    edu.wpi.first.cameraserver.CameraServer.startAutomaticCapture(limelightStream);
+    usbCamera = CameraServer.startAutomaticCapture();
+    cameraServer = CameraServer.getServer();
 
     SmartDashboard.putData(m_dashboardField);
   }
@@ -135,8 +151,8 @@ public class Navigation extends SubsystemBase {
    */
   public double getDXtoTarget() {
     double distance = getDxToHubCenter();
-
-    if (m_dxSensor.isValid() && distance < 3.0) {
+    
+    if (m_dxSensor.isValid() && distance < 10.0) {
       double laserDx = m_dxSensor.getDistanceMeters() + 0.818; // odometryDX is center to center
                                                                 // laser is front to front
       if (MathUtil.isNear(laserDx, distance, 0.5)) {
@@ -148,9 +164,9 @@ public class Navigation extends SubsystemBase {
 
   public void toggleCameraStream() {
     if(mainCameraStreamSelected) {
-      LimelightHelpers.setStreamMode_PiPSecondary(cameraName);
+      cameraServer.setSource(usbCamera);
     } else {
-      LimelightHelpers.setStreamMode_PiPMain(cameraName);
+      cameraServer.setSource(limeightCamera);
     }
     mainCameraStreamSelected = !mainCameraStreamSelected;
   }
@@ -187,8 +203,6 @@ public class Navigation extends SubsystemBase {
       builder.addStringProperty("Pipeline", () -> LimelightHelpers.getCurrentPipelineType(cameraName), null);
       builder.addBooleanProperty("ValidTarget", () -> {return LimelightHelpers.getTV(cameraName);}, null);
       builder.addIntegerProperty("ApriltagFound", () -> {return (int) LimelightHelpers.getFiducialID(cameraName);} , null);
-      builder.addStringProperty("DetectorFound", () -> {return LimelightHelpers.getDetectorClass(cameraName);}, null);
-      builder.addStringProperty("ClassiferFound", () -> {return LimelightHelpers.getClassifierClass(cameraName);}, null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
       builder.addDoubleProperty("Auton Speed Scale", ()->GoToCommand.getGlobalSpeedScale(), (x) -> GoToCommand.setGlobalSpeedScale(x));
       builder.addDoubleProperty("Auton Tolerance Scale", ()->GoToCommand.getGlobalToleranceScale(), (x) -> GoToCommand.setGlobalToleranceScale(x));

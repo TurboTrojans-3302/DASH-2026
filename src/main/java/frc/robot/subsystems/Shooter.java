@@ -27,10 +27,12 @@ import frc.robot.Constants.ShooterConstants;
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
   private SparkMax feederMotor;
+  private SparkMax secondFeederMotor;
   private RelativeEncoder encoder;
   private SparkClosedLoopController closedLoopController;
   private double rpmSetpoint = 0.0;
   private double feederSpeed = ShooterConstants.feederSpeedDefault;
+  private double secondFeederSpeed = ShooterConstants.SecondaryFeederSpeedDefault;
   private boolean dangerMode = false;
   private Timer timeAtSpeed = new Timer();
   private double kP = ShooterConstants.kPdefault;
@@ -48,7 +50,7 @@ public class Shooter extends SubsystemBase {
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
                                          // stabilize at the target speed after a change
 
-  public Shooter(int shooterMotorID, int feederMotorID) {
+  public Shooter(int shooterMotorID, int feederMotorID, int secondFeederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
     SparkMaxConfig config = new SparkMaxConfig();
     config.apply(SparkMaxConfig.Presets.REV_NEO_550);
@@ -69,18 +71,28 @@ public class Shooter extends SubsystemBase {
     SparkMaxConfig feederConfig = new SparkMaxConfig();
     feederConfig.inverted(false)
                 .idleMode(IdleMode.kBrake)
-                 .smartCurrentLimit(20);
+                 .smartCurrentLimit(25);
     feederMotor.configure(feederConfig,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
 
-    rpmSetpoint = 0.0;
-    shooterMotor.set(0); // sets it to zero because it is the default
     feederMotor.set(0);
+
+    secondFeederMotor = new SparkMax(secondFeederMotorID, MotorType.kBrushed);
+    SparkMaxConfig secondFeederConfig = new SparkMaxConfig();
+    feederConfig.inverted(false)
+                .idleMode(IdleMode.kBrake)
+                .smartCurrentLimit(25);
+    secondFeederMotor.configure(secondFeederConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    secondFeederMotor.set(0);
 
     // Read the actual slot from the controller once at startup so our cached
     // value reflects whatever the SparkMax persisted from a previous session.
     currentSlot = closedLoopController.getSelectedSlot();
+    setRPMsetpoint(0.0);
   }
 
 
@@ -158,19 +170,18 @@ public class Shooter extends SubsystemBase {
   }
 
   public void enablePID(boolean enable) {
+    // System.out.println("enablePID: " + enable);
     currentSlot = enable ? ClosedLoopSlot.kSlot0 : ClosedLoopSlot.kSlot1;
     closedLoopController.setIAccum(0.0);
     closedLoopController.setSetpoint(currentRPM, ControlType.kMAXMotionVelocityControl, currentSlot); // set the current speed as the setpoint so we don't get a sudden change
   }
 
   public boolean isPIDEnabled() {
-    return closedLoopController.getControlType() == ControlType.kMAXMotionVelocityControl &&
-        currentSlot == ClosedLoopSlot.kSlot0;
+    return currentSlot == ClosedLoopSlot.kSlot0;
   }
 
   public boolean isOpenLoop() {
-    return closedLoopController.getControlType() == ControlType.kMAXMotionVelocityControl &&
-        currentSlot == ClosedLoopSlot.kSlot1;
+    return currentSlot == ClosedLoopSlot.kSlot1;
   }
 
   public boolean isDangerMode() {
@@ -183,32 +194,41 @@ public class Shooter extends SubsystemBase {
 
   public void feedForward() {
     feederMotor.set(feederSpeed);
+    secondFeederMotor.set(secondFeederSpeed);
   }
 
   public void feedBackward() {
     feederMotor.set(-feederSpeed);
+    secondFeederMotor.set(-secondFeederSpeed);
   }
 
-  public void setFeederSpeed(double speed) {
-    feederSpeed = speed;
+  public void setFeederSpeed(double speed1, double speed2) {
+    feederSpeed = speed1;
+    secondFeederSpeed = speed2;
   }
 
-  public double getFeederSpeed() {
+  public double getFirstFeederSpeed() {
     return feederSpeed;
   } 
 
-  public void stopFeeder() {
+  public double getSecondFeederSpeed() {
+    return secondFeederSpeed;
+  } 
+
+  public void stopFeeders() {
     feederMotor.set(0.0);
+    secondFeederMotor.set(0.0);
   } 
 
   public void stop() {
-    coast();
-    stopFeeder();
+    enablePID(false);
+    setRPMsetpoint(0.0);
+    stopFeeders();
   }
 
-  private void coast() {
-    shooterMotor.disable();
-  }
+  // private void coast() {
+  //   shooterMotor.disable();
+  // }
 
 
   public void loadPreferences() {
@@ -225,8 +245,10 @@ public class Shooter extends SubsystemBase {
       // Apply loaded gains and tolerance to the motor controller
       setSparkClosedLoopConfig();
       
-      feederSpeed = Preferences.getDouble(ShooterConstants.feederSpeedKey,
-          ShooterConstants.feederSpeedDefault);
+      feederSpeed = Preferences.getDouble(Constants.ShooterConstants.feederSpeedKey,
+          Constants.ShooterConstants.feederSpeedDefault);
+      secondFeederSpeed = Preferences.getDouble(Constants.ShooterConstants.secondFeederSpeedKey,
+          Constants.ShooterConstants.SecondaryFeederSpeedDefault);
     } else {
       System.out.println("No shooter prefs found. Using default values");
     }
@@ -243,8 +265,9 @@ public class Shooter extends SubsystemBase {
     Preferences.setDouble(ShooterConstants.kMaxVelocityKey, kMaxVelocity);
     // No direct API to read closed-loop allowed error from the controller here;
     // save the default
-    Preferences.setDouble(ShooterConstants.PIDToleranceKey, kTol);
-    Preferences.setDouble(ShooterConstants.feederSpeedKey, feederSpeed);
+    Preferences.setDouble(Constants.ShooterConstants.PIDToleranceKey, kTol);
+    Preferences.setDouble(Constants.ShooterConstants.feederSpeedKey, feederSpeed);
+    Preferences.setDouble(Constants.ShooterConstants.secondFeederSpeedKey, secondFeederSpeed);
   }
 
   public Command incrementSpeedCommand() {
@@ -260,15 +283,10 @@ public class Shooter extends SubsystemBase {
   }
 
   public String getStatus(){
-    ControlType controlType = closedLoopController.getControlType();
-    if(controlType == ControlType.kMAXMotionVelocityControl){
-      if(currentSlot == ClosedLoopSlot.kSlot0){
-        return "PID";
-      }else{
-        return "OPEN LOOP";
-      }
+    if(currentSlot == ClosedLoopSlot.kSlot0){
+      return "PID";
     }else{
-      return "COAST";
+      return "OPEN LOOP";
     }
   }
 
@@ -294,12 +312,15 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("kTolerance", () -> kTol,
         (x) -> { if (x != kTol) { kTol = x; setSparkClosedLoopConfig(); } } );
     builder.addDoubleProperty("Shooter RPM", () -> getRPM(), null);
-    builder.addDoubleProperty("Shooter RPM raw", () -> currentRPM, null);
+    builder.addStringProperty("Status", this::getStatus, null);
     builder.addDoubleProperty("Shooter SetpointRPM", () -> getRPMsetpoint(),
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);
+    builder.addBooleanProperty("PID Enabled", this::isPIDEnabled, (x) -> enablePID(x));
     builder.addDoubleProperty("Feeder Speed", () -> feederSpeed,
         (x) -> feederSpeed = x);
+    builder.addDoubleProperty("Second Feeder Speed", () -> secondFeederSpeed,
+        (x) -> secondFeederSpeed = x);
     builder.addBooleanProperty("Danger Mode", () -> isDangerMode(), (x) -> setDangerMode(x));
     builder.addBooleanProperty("Save Prefs", () -> false, (x) -> {
       if (x)
@@ -307,7 +328,8 @@ public class Shooter extends SubsystemBase {
     });
 
     builder.addDoubleProperty("shoot motor output", () -> shooterMotor.getAppliedOutput(), null);
-    builder.addDoubleProperty ("feed motor output",()->feederMotor.get(), null);
+    builder.addDoubleProperty ("1st feed motor output",()->feederMotor.get(), null);
+    builder.addDoubleProperty ("2nd feed motor output",()->secondFeederMotor.get(), null);
   }
 
   public double getRPMsetpoint() {
@@ -326,9 +348,9 @@ public class Shooter extends SubsystemBase {
       ()->{ if(isReady()){
               feedForward();
             }else{
-              stopFeeder();
+              stopFeeders();
             }},
-      (interrupted)->{stopFeeder();},
+      (interrupted)->{stopFeeders();},
       ()->false,
       this);
   }
@@ -337,7 +359,7 @@ public class Shooter extends SubsystemBase {
     return new FunctionalCommand(
       ()->{},
       ()->{feedBackward();},
-      (interrupted)->{stopFeeder();},
+      (interrupted)->{stopFeeders();},
       ()->false,
       this);
   }
@@ -346,7 +368,7 @@ public class Shooter extends SubsystemBase {
     return new FunctionalCommand(
       ()->{},
       ()->{feedForward();},
-      (interrupted)->{stopFeeder();},
+      (interrupted)->{stopFeeders();},
       ()->false,
       this);
   }
