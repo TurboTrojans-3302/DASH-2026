@@ -132,7 +132,7 @@ public class RobotContainer {
         "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation), 
         "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation),
         "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation)
-        );
+    );
   }
 
   public void setDefaultCommands() {
@@ -239,17 +239,17 @@ public class RobotContainer {
     nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
     nudgeHopperOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
     nudgeHopperRightOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
     nudgeHopperLeftIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
     nudgeHopperIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
     nudgeHopperRightIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
 
     JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
     JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);

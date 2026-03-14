@@ -381,6 +381,10 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
+  public double getAngularVelocityRadPerSec() {
+    return swerveDrive.getRobotVelocity().omegaRadiansPerSecond;
+  }
+
   // todo this is duplicated, i think
   public Double getMaxSpeed() {
     return kMaxSpeed;
