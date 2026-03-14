@@ -27,6 +27,7 @@ import frc.robot.Constants;
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
   private SparkMax feederMotor;
+  private SparkMax secondFeederMotor;
   private RelativeEncoder encoder;
   private SparkClosedLoopController closedLoopController;
   private double rpmSetpoint = 0.0;
@@ -47,7 +48,7 @@ public class Shooter extends SubsystemBase {
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
                                          // stabilize at the target speed after a change
 
-  public Shooter(int shooterMotorID, int feederMotorID) {
+  public Shooter(int shooterMotorID, int feederMotorID, int secondFeederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
     SparkMaxConfig config = new SparkMaxConfig();
     config.apply(SparkMaxConfig.Presets.REV_NEO_550);
@@ -74,6 +75,17 @@ public class Shooter extends SubsystemBase {
         PersistMode.kPersistParameters);
 
     feederMotor.set(0);
+
+    secondFeederMotor = new SparkMax(secondFeederMotorID, MotorType.kBrushed);
+    SparkMaxConfig secondFeederConfig = new SparkMaxConfig();
+    feederConfig.inverted(false)
+                .idleMode(IdleMode.kBrake)
+                .smartCurrentLimit(25);
+    secondFeederMotor.configure(secondFeederConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+
+    secondFeederMotor.set(0);
 
     // Read the actual slot from the controller once at startup so our cached
     // value reflects whatever the SparkMax persisted from a previous session.
