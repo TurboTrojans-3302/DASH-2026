@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+//todo remove old wpilib tools from laptops
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -61,6 +62,7 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Starts recording to data log
     DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
 
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our
@@ -68,7 +70,6 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.configureButtonBindings();
     m_robotContainer.setDefaultCommands();
-    //DataLogManager.start();
     //CanBridge.runTCP();
     LimelightHelpers.setCameraPose_RobotSpace(Constants.LimelightConstants.name,
                                               Constants.LimelightConstants.Offset.forward,
