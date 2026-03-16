@@ -124,15 +124,15 @@ public class Navigation extends SubsystemBase {
   /**
    * @return heading angle of the bot, according to the odometry
    */
-  public Rotation2d getAngle() {
+  public Rotation2d getHeading() {
     return m_poseEstimator.getEstimatedPosition().getRotation();
   }
 
   /**
    * @return heading angle of the bot, according to the odometry, in degrees
    */
-  public double getAngleDegrees() {
-    return getAngle().getDegrees();
+  public double getHeadingDegrees() {
+    return getHeading().getDegrees();
   }
 
   public double getDxToHubCenter() {
@@ -177,7 +177,7 @@ public class Navigation extends SubsystemBase {
   }
 
   public double getDeltaAngleToTargetDegrees() {
-    return SwerveUtils.angleDeltaDeg(getAngleDegrees(), getHeadingToTarget().getDegrees());
+    return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getHeadingToTarget().getDegrees());
   } 
 
   /**
