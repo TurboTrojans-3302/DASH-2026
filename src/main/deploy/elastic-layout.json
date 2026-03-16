@@ -8,23 +8,6 @@
         "layouts": [],
         "containers": [
           {
-            "title": "Score",
-            "x": 1088.0,
-            "y": 128.0,
-            "width": 192.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Score",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
             "title": "Time Left In Period:",
             "x": 1088.0,
             "y": 0.0,
@@ -43,7 +26,7 @@
           {
             "title": "Shooter Ready",
             "x": 960.0,
-            "y": 128.0,
+            "y": 256.0,
             "width": 128.0,
             "height": 128.0,
             "type": "Boolean Box",
@@ -105,26 +88,9 @@
             }
           },
           {
-            "title": "Danger Mode",
+            "title": "Shooter setpoint",
             "x": 960.0,
-            "y": 256.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/ShooterSubsystem/Danger Mode",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Shooter RPM",
-            "x": 960.0,
-            "y": 0.0,
+            "y": 128.0,
             "width": 128.0,
             "height": 128.0,
             "type": "Text Display",
@@ -132,7 +98,7 @@
               "topic": "/SmartDashboard/ShooterSubsystem/Shooter SetpointRPM",
               "period": 0.06,
               "data_type": "double",
-              "show_submit_button": false
+              "show_submit_button": true
             }
           },
           {
@@ -157,24 +123,6 @@
             }
           },
           {
-            "title": "Target DX",
-            "x": 704.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Number Bar",
-            "properties": {
-              "topic": "/SmartDashboard/NavigationSubsystem/Target DX",
-              "period": 0.06,
-              "data_type": "double",
-              "min_value": 0.0,
-              "max_value": 3.0,
-              "divisions": 4,
-              "inverted": false,
-              "orientation": "horizontal"
-            }
-          },
-          {
             "title": "Y to toggle camera",
             "x": 0.0,
             "y": 0.0,
@@ -185,6 +133,54 @@
               "topic": "/CameraPublisher/USB Camera 0",
               "period": 0.06,
               "rotation_turns": 0
+            }
+          },
+          {
+            "title": "distance",
+            "x": 704.0,
+            "y": 256.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Number Slider",
+            "properties": {
+              "topic": "/SmartDashboard/DXsensorSubsystem/distance",
+              "period": 0.06,
+              "data_type": "double",
+              "min_value": 0.0,
+              "max_value": 2.0,
+              "divisions": 3,
+              "update_continuously": false
+            }
+          },
+          {
+            "title": "Est Distance",
+            "x": 512.0,
+            "y": 256.0,
+            "width": 192.0,
+            "height": 128.0,
+            "type": "Number Slider",
+            "properties": {
+              "topic": "/SmartDashboard/NavigationSubsystem/Target DX",
+              "period": 0.06,
+              "data_type": "double",
+              "min_value": 0.0,
+              "max_value": 10.0,
+              "divisions": 3,
+              "update_continuously": false
+            }
+          },
+          {
+            "title": "Shooter RPM",
+            "x": 960.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Shooter RPM",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
             }
           }
         ]
@@ -257,6 +253,20 @@
               "show_desired_states": true,
               "angle_offset": 0.0
             }
+          },
+          {
+            "title": "Robot Angle deg",
+            "x": 576.0,
+            "y": 0.0,
+            "width": 192.0,
+            "height": 256.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/DriveSubsystem/Robot Angle deg",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
           }
         ]
       }
@@ -266,32 +276,6 @@
       "grid_layout": {
         "layouts": [],
         "containers": [
-          {
-            "title": "Auton Command",
-            "x": 768.0,
-            "y": 0.0,
-            "width": 384.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Auton Command",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Start Position",
-            "x": 768.0,
-            "y": 128.0,
-            "width": 384.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Start Position",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
           {
             "title": "IsRedAlliance",
             "x": 768.0,
@@ -319,14 +303,56 @@
             "properties": {
               "topic": "/SmartDashboard/Field",
               "period": 0.06,
-              "field_game": "Reefscape",
+              "field_game": "Rebuilt",
               "robot_width": 0.85,
               "robot_length": 0.85,
               "show_other_objects": true,
               "show_trajectories": true,
               "field_rotation": 0.0,
               "robot_color": 4294198070,
-              "trajectory_color": 4294967295
+              "trajectory_color": 4294967295,
+              "show_robot_outside_widget": true
+            }
+          },
+          {
+            "title": "Autonomous",
+            "x": 768.0,
+            "y": 0.0,
+            "width": 448.0,
+            "height": 128.0,
+            "type": "ComboBox Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/Autonomous",
+              "period": 0.06,
+              "sort_options": false
+            }
+          },
+          {
+            "title": "ApriltagFound",
+            "x": 896.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/NavigationSubsystem/ApriltagFound",
+              "period": 0.06,
+              "data_type": "int",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "EstimatedPosition",
+            "x": 768.0,
+            "y": 128.0,
+            "width": 448.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/NavigationSubsystem/EstimatedPosition",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
             }
           }
         ]
@@ -337,62 +363,6 @@
       "grid_layout": {
         "layouts": [],
         "containers": [
-          {
-            "title": "Back Right Angle",
-            "x": 832.0,
-            "y": 128.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Swerve Drive/Back Right Angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "Front Left Angle",
-            "x": 704.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Swerve Drive/Front Left Angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "Front Right Angle",
-            "x": 832.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Swerve Drive/Front Right Angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "Back Left Angle",
-            "x": 704.0,
-            "y": 128.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/Swerve Drive/Back Left Angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
           {
             "title": "swerve",
             "x": 0.0,
@@ -406,6 +376,75 @@
               "show_robot_rotation": true,
               "show_desired_states": true,
               "angle_offset": 0.0
+            }
+          },
+          {
+            "title": "Robot Angle deg",
+            "x": 448.0,
+            "y": 0.0,
+            "width": 192.0,
+            "height": 192.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/DriveSubsystem/Robot Angle deg",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "EstimatedPosition",
+            "x": 576.0,
+            "y": 256.0,
+            "width": 640.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/NavigationSubsystem/EstimatedPosition",
+              "period": 0.06,
+              "data_type": "string",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Max Angular Velocity",
+            "x": 960.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/DriveSubsystem/Max Angular Velocity",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Max Speed",
+            "x": 1088.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/DriveSubsystem/Max Speed",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "save prefs",
+            "x": 1088.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Toggle Button",
+            "properties": {
+              "topic": "/SmartDashboard/DriveSubsystem/save prefs",
+              "period": 0.06,
+              "data_type": "boolean"
             }
           }
         ]

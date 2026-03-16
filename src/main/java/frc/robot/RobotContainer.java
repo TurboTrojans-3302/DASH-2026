@@ -28,6 +28,9 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
 import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
+import frc.robot.autoncommands.AutoShootFromCenter;
+import frc.robot.autoncommands.AutoShootFromLeft;
+import frc.robot.autoncommands.AutoShootFromRight;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
@@ -126,7 +129,11 @@ public class RobotContainer {
 
     autonCommands = Map.of(
         "Do Nothing", () -> new DoNothing(),
-        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation),
+        "Start Center", () -> new AutoShootFromCenter(m_robotDrive, m_shooter, m_navigation),
+        "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation), 
+        "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation),
+        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation)
+        ,
         "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, -15.0),
         "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, 15.0)        
       );
@@ -183,8 +190,8 @@ public class RobotContainer {
 
   if(SHOOTER_ENABLE)
   {
-    JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCCW);
-    JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobCW);
+    JoystickButton increaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Up);
+    JoystickButton decreaseShooterSpeed = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch1Down);
     JoystickButton stopShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.LeftKnobPush);
     JoystickButton enableShooterPID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Up);
     JoystickButton disableShooterPID = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch4Down);
@@ -288,8 +295,12 @@ public class RobotContainer {
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
   }
+ 
+  public void onDSAttached(){
+    readPIDswitches();
+  }
 
-  public void onDSAttached() {
+  public void readPIDswitches() {
     // Read the actual switch state at binding time so PID starts in the correct mode
     if (HOPPER_ENABLE){
       if(m_buttonBoard.getRawButton(OIConstants.ButtonBox.Switch3Up)){

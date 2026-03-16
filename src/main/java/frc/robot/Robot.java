@@ -147,6 +147,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     setLED(LEDmode.Auton);
+    m_robotContainer.readPIDswitches();
 
     String commandName = m_autonomousChooser.getSelected();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);
@@ -162,6 +163,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    m_robotContainer.readPIDswitches();
     
     setLED(LEDmode.Teleop);
     // This makes sure that the autonomous stops running when
@@ -172,13 +174,7 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     
-    m_robotContainer.m_shooter.stop();
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {
-
+    m_robotContainer.m_shooter.setRPMsetpoint(0.0);
     
     String gamedatastring = DriverStation.getGameSpecificMessage();
 

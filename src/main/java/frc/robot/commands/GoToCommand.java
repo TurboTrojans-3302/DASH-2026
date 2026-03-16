@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Robot;
@@ -181,12 +180,6 @@ public class GoToCommand extends Command {
     return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
         MathUtil.isNear(destHeadingDegrees(), m_nav.getAngleDegrees(),
                         kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
-  }
-
-  @Override
-  public void initSendable(SendableBuilder builder) {
-    super.initSendable(builder);
-    builder.addDoubleProperty("Speed Scale", () -> globalSpeedScale, (x)->{setGlobalSpeedScale(x);});
   }
 
 public static double getGlobalSpeedScale() {

@@ -26,10 +26,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import java.io.File;
+import java.util.Arrays;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
+import com.studica.frc.AHRS;
+
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
 import swervelib.SwerveModule;
+import swervelib.imu.SwerveIMU;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
@@ -42,6 +50,7 @@ public class DriveTrain extends SubsystemBase {
    */
   private SwerveDrive swerveDrive;
   private Double kMaxSpeed = Constants.DriveConstants.kMaxSpeedDefault;
+  private Double kMaxAngularVelocity = Constants.DriveConstants.kMaxAngularVelocityDefault;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -59,11 +68,6 @@ public class DriveTrain extends SubsystemBase {
     }
 
     SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
-
-    
-    // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary
-    // objects being created.
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
     swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via
                                              // angle.
     swerveDrive.setCosineCompensator(false);// !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for
@@ -72,41 +76,30 @@ public class DriveTrain extends SubsystemBase {
         true,
         0.1); // Correct for skew that gets worse as angular velocity increases. Start with a
               // coefficient of 0.1.
-    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders and motor encoders periodically when they are not moving.
-    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used over the internal encoder and push the offsets onto it. Throws warning if not possible
+    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders
+                                                           // and motor encoders periodically when they are not moving.
+    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used
+    // over the internal encoder and push the offsets onto it. Throws warning if not
+    // possible
 
-    // If we successfully created the swerveDrive, initialize odometry to the starting pose
+    // If we successfully created the swerveDrive, initialize odometry to the
+    // starting pose
     if (swerveDrive != null) {
-      swerveDrive.resetOdometry(startingPose);
+      swerveDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
     }
+  }
 
-    // Publish a simple Sendable to SmartDashboard so we can inspect module angles/velocities and robot yaw
-    SmartDashboard.putData("Swerve Drive", new Sendable() {
-      @Override
-      public void initSendable(SendableBuilder builder) {
-        builder.setSmartDashboardType("SwerveDrive");
+  public double getMaxAngularVelocity() {
+    return kMaxAngularVelocity;
+  }
 
-        SwerveModule[] modules = swerveDrive.getModules();
-
-        builder.addDoubleProperty("Front Left Angle", () -> modules[0].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Left Velocity", () -> modules[0].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Front Right Angle", () -> modules[1].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Right Velocity", () -> modules[1].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Left Angle", () -> modules[2].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Left Velocity", () -> modules[2].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Right Angle", () -> modules[3].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Right Velocity", () -> modules[3].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Robot Angle", () -> swerveDrive.getYaw().getRadians(), null);
-      }
-    });
-
-    // Publish the raw NavX AHRS object so Elastic renders a Gyro widget.
-    // AHRS implements NTSendable and advertises SmartDashboardType "Gyro".
-    SmartDashboard.putData("NavX IMU", (com.studica.frc.AHRS) swerveDrive.getGyro().getIMU());
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("Robot Angle deg", () -> swerveDrive.getYaw().getDegrees(), null);
+    builder.addDoubleProperty("Max Speed", () -> kMaxSpeed, (x) -> kMaxSpeed = x);
+    builder.addDoubleProperty("Max Angular Velocity", () -> kMaxAngularVelocity, (x) -> kMaxAngularVelocity = x);
+    builder.addBooleanProperty("save prefs", ()->false, (x) -> savePreferences());
   }
 
   @Override
@@ -269,15 +262,16 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
-   * Drive the robot given a translation in field-relative m/s. 
+   * Drive the robot given a translation in field-relative m/s.
    * Heading is a desired angle that the robot should turn to while driving.
    */
-  public void driveHeading(Translation2d translation, double headingRadians){
+  public void driveHeading(Translation2d translation, double headingRadians) {
 
     double rotation = swerveDrive.getSwerveController().headingCalculate(getHeading().getRadians(), headingRadians);
-    swerveDrive.drive(translation, rotation, true, false); // Field relative should be used since we are controlling the robot with a heading.
+    swerveDrive.drive(translation, rotation, true, false); // Field relative should be used since we are controlling the
+                                                           // robot with a heading.
   }
-  
+
   /**
    * Drive the robot given a chassis field oriented velocity.
    *
@@ -369,7 +363,6 @@ public class DriveTrain extends SubsystemBase {
     swerveDrive.zeroGyro();
   }
 
-
   /**
    * Sets the drive motors to brake/coast mode.
    *
@@ -391,7 +384,7 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
-  //todo this is duplicated, i think
+  // todo this is duplicated, i think
   public Double getMaxSpeed() {
     return kMaxSpeed;
   }
@@ -511,7 +504,10 @@ public class DriveTrain extends SubsystemBase {
   public void loadPreferences() {
     if (Preferences.containsKey(Constants.DriveConstants.maxSpeedKey)) {
       System.out.println("Loading DriveTrain values from preferences");
-      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault);
+      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey,
+          Constants.DriveConstants.kMaxSpeedDefault);
+      kMaxAngularVelocity = Preferences.getDouble(Constants.DriveConstants.maxAngularVelocityKey,
+          Constants.DriveConstants.kMaxAngularVelocityDefault);
     } else {
       System.out.println("No DriveTrain prefs found. Using default values");
     }
@@ -520,22 +516,24 @@ public class DriveTrain extends SubsystemBase {
   public void savePreferences() {
     System.out.println("Saving DriveTrain values to preferences");
     Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
+    Preferences.setDouble(Constants.DriveConstants.maxAngularVelocityKey, kMaxAngularVelocity);
   }
 
-public void stop() {
+  public void stop() {
     swerveDrive.drive(new ChassisSpeeds(0, 0, 0));
-}
+  }
 
-public double getSpeed() {
-        ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
-        return Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
-      }
-    
-    /*
-     * Returns the velocity vector of the robot, in the Robot Frame, in meters per second.
-     */
-    public Translation2d getVelocityVector() {
-        ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity ();
-        return new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
-    }
+  public double getSpeed() {
+    ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+    return Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+  }
+
+  /*
+   * Returns the velocity vector of the robot, in the Robot Frame, in meters per
+   * second.
+   */
+  public Translation2d getVelocityVector() {
+    ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+    return new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+  }
 }
