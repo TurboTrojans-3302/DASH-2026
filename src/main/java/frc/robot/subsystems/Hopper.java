@@ -8,6 +8,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -174,12 +175,19 @@ public class Hopper extends SubsystemBase {
     }
 
     private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
+        setMotorPctOutput(leftSpeed, rightSpeed, false);
+    }
+
+    private void setMotorPctOutput(double leftSpeed, double rightSpeed, boolean ignoreLimits) {
         leftSpeed  = MathUtil.clamp(leftSpeed,  -1.0, 1.0);
         rightSpeed = MathUtil.clamp(rightSpeed, -1.0, 1.0);
-        if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
-        if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
-        if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
-        if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
+
+        if(!ignoreLimits){
+            if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
+            if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
+            if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
+            if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
+        }
 
         leftMotor.set(leftSpeed);
         rightMotor.set(rightSpeed);
@@ -255,7 +263,7 @@ public class Hopper extends SubsystemBase {
         return cmd;
     }
 
-        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight) {
+        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight, BooleanSupplier ignoreLimits) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init
             () -> move(speedSupplierLeft.getAsDouble(), speedSupplierRight.getAsDouble()), // call move() with supplier value

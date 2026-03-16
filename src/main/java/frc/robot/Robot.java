@@ -148,6 +148,8 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     setLED(LEDmode.Auton);
     m_robotContainer.readPIDswitches();
+    
+    m_robotContainer.m_robotDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
 
     String commandName = m_autonomousChooser.getSelected();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);

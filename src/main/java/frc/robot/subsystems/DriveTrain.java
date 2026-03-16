@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -324,6 +325,8 @@ public class DriveTrain extends SubsystemBase {
    * @param initialHolonomicPose The pose to set the odometry to
    */
   public void resetOdometry(Pose2d initialHolonomicPose) {
+    Rotation3d rot = new Rotation3d(initialHolonomicPose.getRotation());
+    swerveDrive.setGyro(rot);
     swerveDrive.resetOdometry(initialHolonomicPose);
   }
 
@@ -382,6 +385,10 @@ public class DriveTrain extends SubsystemBase {
    */
   public Rotation2d getHeading() {
     return getPose().getRotation();
+  }
+
+  public double getAngularVelocityRadPerSec() {
+    return swerveDrive.getRobotVelocity().omegaRadiansPerSecond;
   }
 
   // todo this is duplicated, i think

@@ -33,8 +33,9 @@ public final class Constants {
     public static final int kHopperLeftMotorCanId = 11;
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId = 13;
-    public static final int kClimbMotor1 = 14;
-    public static final int kClimbMotor2 = 15;
+    public static final int kSecondFeederMotorCanId = 14;
+   // public static final int kClimbMotor1 = 14;
+   // public static final int kClimbMotor2 = 15;
   }
 
   public final class RobotConstants {
@@ -166,7 +167,10 @@ public final class Constants {
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 10; // rpm
+    public static String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
+
+    public static final double SecondaryFeederSpeedDefault = 0.3;
   }
 
   public static final class HarvesterConstants {
