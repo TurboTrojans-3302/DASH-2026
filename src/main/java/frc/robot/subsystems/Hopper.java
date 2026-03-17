@@ -1,32 +1,29 @@
 package frc.robot.subsystems;
 
-import frc.robot.Constants;
-import frc.robot.Robot;
-import frc.robot.Constants.HopperConstants;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Constants.HopperConstants;
 
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
@@ -196,13 +193,13 @@ public class Hopper extends SubsystemBase {
     @Override
     public void periodic() {
         if (leftHardLimit()){
-            if(Math.abs(leftEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+            if(Math.abs(leftEncoder.getPosition()) < 20.0){ 
                 setPIDEnabled(false);
             }
             leftEncoder.setPosition(0);
         }
         if (rightHardLimit()) {
-            if(Math.abs(rightEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+            if(Math.abs(rightEncoder.getPosition()) < 20.0){ 
                 setPIDEnabled(false);
             }
             rightEncoder.setPosition(0);
