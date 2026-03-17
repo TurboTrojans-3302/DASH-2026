@@ -7,11 +7,6 @@ package frc.robot;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import java.util.Map;
-import java.util.function.Supplier;
-
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -27,11 +22,12 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
-import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.AutoShootFromCenter;
 import frc.robot.autoncommands.AutoShootFromLeft;
 import frc.robot.autoncommands.AutoShootFromRight;
+import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.DoNothing;
+import frc.robot.commands.GoToCommand;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
@@ -43,7 +39,6 @@ import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.GameData;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -123,6 +118,8 @@ public class RobotContainer {
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);
+
+    SmartDashboard.putData("GoToCommand", GoToCommand.getSendable());
 
     pdh = new PowerDistribution(53, ModuleType.kRev);
     SmartDashboard.putData(pdh);

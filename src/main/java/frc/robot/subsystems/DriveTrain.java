@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -347,6 +348,10 @@ public class DriveTrain extends SubsystemBase {
    */
   public void setChassisSpeeds(ChassisSpeeds chassisSpeeds) {
     swerveDrive.setChassisSpeeds(chassisSpeeds);
+  }
+
+  public void setModuleStates(SwerveModuleState[] moduleStates) {
+    swerveDrive.setModuleStates(moduleStates, false);
   }
 
   /**

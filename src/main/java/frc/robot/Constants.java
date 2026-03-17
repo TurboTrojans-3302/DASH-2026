@@ -110,10 +110,13 @@ public final class Constants {
     public static final double kMaxSpeedMetersPerSecond = 4.0;
     public static final double kMaxAccelerationMetersPerSecondSquared = 2.0;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
-    public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI/2;
+    public static final double kMaxAngularAccelRadiansPerSecondSquared = Math.PI/2;
 
     public static final double kDistanceTolerance = 0.050;
     public static final double kHeadingTolerance = 2.0; // degrees
+    public static final double kPX = 0;
+    public static final double kPTheta = 0;
+    public static final double kPY = 0;
   }
 
   public static final class FieldConstants {

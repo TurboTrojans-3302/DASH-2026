@@ -12,8 +12,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
@@ -21,9 +22,6 @@ import frc.robot.subsystems.Navigation;
 
 public class GoToCommand extends Command {
 
-  SwerveControllerCommand swerveControllerCommand;
-  private static double globalSpeedScale = 1.0;
-  private static double globalToleranceScale = 1.0;
   protected final double dT = Robot.kDefaultPeriod;
 
   protected Pose2d m_dest;
@@ -34,25 +32,18 @@ public class GoToCommand extends Command {
   protected boolean m_relativeFlag;
   protected Navigation m_nav;
 
-  double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
-  double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
-  double angularSpeedLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecond;
-  double angularAccelLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared;  
-  double kDistanceTolerance = AutoConstants.kDistanceTolerance;
-  double kHeadingTolerance =  AutoConstants.kHeadingTolerance;
-
-
-  public static void setGlobalSpeedScale(double scale) {
-    globalSpeedScale = MathUtil.clamp(scale, 0.0, 1.0);
-  }
-
-  public static void setGlobalToleranceScale(double scale) {
-    globalToleranceScale = MathUtil.clamp(scale, 0.0, 10.0);
-  }
-
-  public static double getGlobalToleranceScale() {
-    return globalToleranceScale;
-  }
+  private static double defaultAccelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
+  private static double defaultSpeedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
+  private static double defaultAngularSpeedLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecond;
+  private static double defaultAngularAccelLimit = AutoConstants.kMaxAngularAccelRadiansPerSecondSquared;  
+  private static double defaultDistanceTolerance = AutoConstants.kDistanceTolerance;
+  private static double defaultHeadingTolerance =  AutoConstants.kHeadingTolerance;
+  protected double accelLimit; 
+  protected double speedLimit; 
+  protected double angularSpeedLimit; 
+  protected double angularAccelLimit;   
+  protected double kDistanceTolerance; 
+  protected double kHeadingTolerance; 
 
   public GoToCommand setLimits(double speedLimit, double accelLimit) {
     this.speedLimit = speedLimit;
@@ -63,13 +54,17 @@ public class GoToCommand extends Command {
   public GoToCommand setTolerance(double distanceTolerance, double headingTolerance) {
     this.kDistanceTolerance = distanceTolerance;
     this.kHeadingTolerance = headingTolerance;
-    this.setName(getName());
     return this;
   }
 
-
-
   protected GoToCommand(DriveTrain drive, Navigation nav) {
+    accelLimit = defaultAccelLimit;
+    speedLimit = defaultSpeedLimit;
+    angularSpeedLimit = defaultAngularSpeedLimit;
+    angularAccelLimit = defaultAngularAccelLimit;
+    kDistanceTolerance = defaultDistanceTolerance;
+    kHeadingTolerance = defaultHeadingTolerance;
+
     m_drive = drive;
     this.m_nav = nav;
     addRequirements(m_drive);
@@ -104,8 +99,8 @@ public class GoToCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_speedProfile = new TrapezoidProfile(new Constraints(globalSpeedScale * speedLimit, globalSpeedScale * accelLimit));
-    m_angularSpeedProfile = new TrapezoidProfile(new Constraints(globalSpeedScale * angularSpeedLimit, globalSpeedScale * angularAccelLimit));
+    m_speedProfile = new TrapezoidProfile(new Constraints(speedLimit, accelLimit));
+    m_angularSpeedProfile = new TrapezoidProfile(new Constraints(angularSpeedLimit, angularAccelLimit));
     Pose2d currPose2d = m_nav.getPose();
 
     if (m_relativeFlag) {
@@ -189,7 +184,7 @@ public class GoToCommand extends Command {
     State angularGoalState = new State(0.0, 0.0);
     double angularVelocity = m_angularSpeedProfile.calculate(dT, angularCurrentState, angularGoalState).velocity;
     
-    if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance * globalToleranceScale)){
+    if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance)){
       speed = 0.0;
     }
 
@@ -206,13 +201,24 @@ public class GoToCommand extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
+    return MathUtil.isNear(0.0, distance(), kDistanceTolerance) &&
         MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
-                        kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
+                        kHeadingTolerance, 0.0, 360.0);
   }
 
-public static double getGlobalSpeedScale() {
-    return globalSpeedScale;
-}
+  public static Sendable getSendable(){
+    return new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("GoToCommand");
+        builder.addDoubleProperty("speedLimit", () -> defaultSpeedLimit, (value) -> defaultSpeedLimit = value);
+        builder.addDoubleProperty("accelLimit", () -> defaultAccelLimit, (value) -> defaultAccelLimit = value);
+        builder.addDoubleProperty("angularSpeedLimit", () -> defaultAngularSpeedLimit, (value) -> defaultAngularSpeedLimit = value);
+        builder.addDoubleProperty("angularAccelLimit", () -> defaultAngularAccelLimit, (value) -> defaultAngularAccelLimit = value);
+        builder.addDoubleProperty("distanceTolerance", () -> defaultDistanceTolerance, (value) -> defaultDistanceTolerance = value);
+        builder.addDoubleProperty("headingTolerance", () -> defaultHeadingTolerance, (value) -> defaultHeadingTolerance = value);
+      }
+    };
+  }
 
 }
