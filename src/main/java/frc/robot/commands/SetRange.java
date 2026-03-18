@@ -5,37 +5,35 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.rangeRPMtable;
 
+//todo move this into Shooter.java
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class SetRange extends Command {
-    private final Navigation navigation;
-    private final Shooter shooter;
+  private final Shooter shooter;
+  private final double distance;
 
-    /** Creates a new AutoAim. */
-    public SetRange(Navigation navigation, Shooter shooter) {
-        this.navigation = navigation;
-        this.shooter = shooter;
-        addRequirements(navigation, shooter);
-    }
+  /** Creates a new SetRange. */
+  public SetRange(Shooter shooter, double distance) {
+    addRequirements(shooter);
+    this.shooter = shooter;
+    this.distance = distance;
+  }
 
-    // Called when the command is initially scheduled.
-    @Override
-    public void initialize() {
-        setShooterSpeedForDistance();
-    }
+  // Called when the command is initially scheduled.
+  @Override
+  public void initialize() {
+    setShooterSpeedForDistance();
+  }
 
-    // Called every time the scheduler runs while the command is scheduled.
-    @Override
-    public void execute() {
-    }
+  // Called every time the scheduler runs while the command is scheduled.
+  @Override
+  public void execute() {}
 
-    // Called once the command ends or is interrupted.
-    @Override
-    public void end(boolean interrupted) {
-    }
+  // Called once the command ends or is interrupted.
+  @Override
+  public void end(boolean interrupted) {}
 
     // Returns true when the command should end.
     @Override
@@ -43,15 +41,10 @@ public class SetRange extends Command {
         return shooter.isReady();
     }
 
-    public double getDXtoTarget() {
-        return navigation.getDXtoTarget();
-    }
-
     private void setShooterSpeedForDistance() {
         double rpm;
-        double distance = getDXtoTarget();
         if (rangeRPMtable.inRange(distance)) {
-            rpm = rangeRPMtable.get(getDXtoTarget());
+            rpm = rangeRPMtable.get(distance);
         } else {
             rpm = 1900.0;
         }

@@ -126,9 +126,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
-    if(alliance == null) {
-      Optional<Alliance> a = DriverStation.getAlliance();
-      if (a.isPresent()) {
+    Optional<Alliance> a = DriverStation.getAlliance();
+    if (a.isPresent()) {
+      if(alliance != a.get()){
         alliance = a.get();
         if(alliance == Alliance.Red) {
           m_robotContainer.initRed();
@@ -148,6 +148,8 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     setLED(LEDmode.Auton);
     m_robotContainer.readPIDswitches();
+    
+    m_robotContainer.m_robotDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
 
     String commandName = m_autonomousChooser.getSelected();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);

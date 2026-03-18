@@ -27,11 +27,12 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
+import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.AutoShootFromCenter;
 import frc.robot.autoncommands.AutoShootFromLeft;
 import frc.robot.autoncommands.AutoShootFromRight;
 import frc.robot.autoncommands.DoNothing;
-import frc.robot.commands.SetRange;
+import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climbers;
 import frc.robot.subsystems.Configs;
@@ -94,7 +95,7 @@ public class RobotContainer {
     instance = this;
 
     // The robot's subsystems
-    m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
+    m_robotDrive = new DriveTrain(Configs.driveConfigFolder, Constants.FieldConstants.StartCenterTouchingHub);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
     m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
@@ -109,7 +110,7 @@ public class RobotContainer {
     }
 
     if (SHOOTER_ENABLE) {
-      m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId);
+      m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId, Constants.CanIds.kSecondFeederMotorCanId);
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
     }
 
@@ -132,7 +133,10 @@ public class RobotContainer {
         "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation), 
         "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation),
         "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation)
-        );
+      ,
+        "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, -15.0),
+        "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, 15.0)        
+      );
   }
 
   public void setDefaultCommands() {
@@ -213,7 +217,7 @@ public class RobotContainer {
 
     feederReverse.whileTrue(m_shooter.reverseFeedCommand());
     feederForward.whileTrue(m_shooter.forwardFeedCommand());
-    spinUpShooter.onTrue(new SetRange(m_navigation, m_shooter).withTimeout(2.0));
+    spinUpShooter.onTrue(new MeasureAndSetRange(m_navigation, m_shooter).withTimeout(2.0));
 
   }
 
@@ -239,17 +243,17 @@ public class RobotContainer {
     nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
     nudgeHopperOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
     nudgeHopperRightOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
     nudgeHopperLeftIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
     nudgeHopperIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
     nudgeHopperRightIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
 
     JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
     JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);

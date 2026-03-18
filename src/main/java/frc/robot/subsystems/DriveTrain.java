@@ -4,11 +4,15 @@
 
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Meter;
+import java.io.File;
+import java.util.Arrays;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -16,7 +20,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -54,8 +57,9 @@ public class DriveTrain extends SubsystemBase {
    * Initialize {@link SwerveDrive} with the directory provided.
    *
    * @param directory Directory of swerve drive config files.
+   * @param startingPose The starting pose of the robot.
    */
-  public DriveTrain(String directory) {
+  public DriveTrain(String directory, Pose2d startingPose) {
     File configFileObject = new File(Filesystem.getDeployDirectory(), directory);
     try {
       System.out.println("loading SwerveDrive: " + configFileObject);
@@ -321,6 +325,8 @@ public class DriveTrain extends SubsystemBase {
    * @param initialHolonomicPose The pose to set the odometry to
    */
   public void resetOdometry(Pose2d initialHolonomicPose) {
+    Rotation3d rot = new Rotation3d(initialHolonomicPose.getRotation());
+    swerveDrive.setGyro(rot);
     swerveDrive.resetOdometry(initialHolonomicPose);
   }
 
@@ -379,6 +385,10 @@ public class DriveTrain extends SubsystemBase {
    */
   public Rotation2d getHeading() {
     return getPose().getRotation();
+  }
+
+  public double getAngularVelocityRadPerSec() {
+    return swerveDrive.getRobotVelocity().omegaRadiansPerSecond;
   }
 
   // todo this is duplicated, i think

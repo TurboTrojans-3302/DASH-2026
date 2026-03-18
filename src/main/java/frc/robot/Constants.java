@@ -33,8 +33,14 @@ public final class Constants {
     public static final int kHopperLeftMotorCanId = 11;
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId = 13;
-    public static final int kClimbMotor1 = 14;
-    public static final int kClimbMotor2 = 15;
+    public static final int kSecondFeederMotorCanId = 14;
+   // public static final int kClimbMotor1 = 14;
+   // public static final int kClimbMotor2 = 15;
+  }
+
+  public final class RobotConstants {
+    public static final double lengthWithBumpers = 0.762; // meters, 30 inches
+    public static final double widthWithBumpers = 0.762; // meters,
   }
 
   public static final class DigitalIO {
@@ -114,7 +120,7 @@ public final class Constants {
     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
     public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
     public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
-  }
+    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);}
 
   public static final class LimelightConstants {
     public static final String name = "limelight";
@@ -161,7 +167,10 @@ public final class Constants {
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 10; // rpm
+    public static String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
+
+    public static final double SecondaryFeederSpeedDefault = 0.3;
   }
 
   public static final class HarvesterConstants {

@@ -182,6 +182,23 @@
               "data_type": "double",
               "show_submit_button": false
             }
+          },
+          {
+            "title": "PID Enabled",
+            "x": 1088.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/PID Enabled",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
           }
         ]
       }
@@ -872,7 +889,7 @@
             "x": 448.0,
             "y": 256.0,
             "width": 128.0,
-            "height": 64.0,
+            "height": 128.0,
             "type": "Text Display",
             "properties": {
               "topic": "/SmartDashboard/Hopper/R Motor Out",
@@ -886,7 +903,7 @@
             "x": 320.0,
             "y": 256.0,
             "width": 128.0,
-            "height": 64.0,
+            "height": 128.0,
             "type": "Text Display",
             "properties": {
               "topic": "/SmartDashboard/Hopper/L Motor Out",

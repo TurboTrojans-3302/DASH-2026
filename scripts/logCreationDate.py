@@ -25,7 +25,7 @@ from datetime import datetime
 # Matches FRC_YYYYMMDD_HHMMSS[_anything].wpilog or REV_YYYYMMDD_HHMMSS[_anything].revlog
 # e.g. FRC_20260310_143022.wpilog or FRC_20240329_150221_MIDET_Q2.wpilog
 FILENAME_PATTERN = re.compile(
-    r'^(?:FRC|REV)_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(?:_[^.]+)?\.(wpilog|revlog)$',
+    r'^(?:FRC|REV)_(\d{4})_?(\d{2})_?(\d{2}).(\d{2})_?(\d{2})_?(\d{2})(?:_[^.]+)?\.(wpilog|revlog|dslog|dsevents)$',
     re.IGNORECASE
 )
 
