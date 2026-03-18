@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -88,6 +89,14 @@ public class DriveTrain extends SubsystemBase {
     if (swerveDrive != null) {
       swerveDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
     }
+
+    SmartDashboard.putData("IMU Heading", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("Gyro");
+        builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
+      } 
+    });
   }
 
   public double getMaxAngularVelocity() {
@@ -97,7 +106,6 @@ public class DriveTrain extends SubsystemBase {
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    builder.addDoubleProperty("Robot Angle deg", () -> swerveDrive.getYaw().getDegrees(), null);
     builder.addDoubleProperty("Max Speed", () -> kMaxSpeed, (x) -> kMaxSpeed = x);
     builder.addDoubleProperty("Max Angular Velocity", () -> kMaxAngularVelocity, (x) -> kMaxAngularVelocity = x);
     builder.addBooleanProperty("save prefs", ()->false, (x) -> savePreferences());
@@ -500,7 +508,8 @@ public class DriveTrain extends SubsystemBase {
 
   /** @return current gyro yaw in degrees */
   public double getGyroAngleDegrees() {
-    return swerveDrive.getYaw().getDegrees();
+    return MathUtil.inputModulus(swerveDrive.getYaw().getDegrees(),
+                                 -180.0, 180.0);
   }
 
   /** @return current swerve module positions (distance + angle per module) */
