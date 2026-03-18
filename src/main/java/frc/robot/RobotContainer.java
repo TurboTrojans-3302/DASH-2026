@@ -111,7 +111,7 @@ public class RobotContainer {
     }
 
     if (SHOOTER_ENABLE) {
-      m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kFeederMotorCanId, Constants.CanIds.kSecondFeederMotorCanId);
+      m_shooter = new Shooter(Constants.CanIds.kShooterMotorCanId, Constants.CanIds.kSecondShooterMotorCanId, Constants.CanIds.kFeederMotorCanId, Constants.CanIds.kSecondFeederMotorCanId);
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
     }
 

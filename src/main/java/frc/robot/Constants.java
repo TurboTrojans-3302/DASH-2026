@@ -34,6 +34,7 @@ public final class Constants {
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId = 13;
     public static final int kSecondFeederMotorCanId = 14;
+    public static final int kSecondShooterMotorCanId = 15;
    // public static final int kClimbMotor1 = 14;
    // public static final int kClimbMotor2 = 15;
   }

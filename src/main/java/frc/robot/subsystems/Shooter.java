@@ -26,9 +26,11 @@ import frc.robot.Constants;
 
 public class Shooter extends SubsystemBase {
   private SparkMax shooterMotor;
+  private SparkMax secondaryShooterMotor;
   private SparkMax feederMotor;
   private SparkMax secondFeederMotor;
   private RelativeEncoder encoder;
+  private RelativeEncoder secondMotorEncoder;
   private SparkClosedLoopController closedLoopController;
   private double rpmSetpoint = 0.0;
   private double feederSpeed = Constants.ShooterConstants.feederSpeedDefault;
@@ -49,16 +51,28 @@ public class Shooter extends SubsystemBase {
                                          // "ready" to shoot, can be tuned based on how long it takes for the shooter to
                                          // stabilize at the target speed after a change
 
-  public Shooter(int shooterMotorID, int feederMotorID, int secondFeederMotorID) {
+  public Shooter(int shooterMotorID, int secondShooterMotorID, int feederMotorID, int secondFeederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
-    SparkMaxConfig config = new SparkMaxConfig();
-    config.apply(SparkMaxConfig.Presets.REV_NEO_550);
-    config.inverted(false).idleMode(IdleMode.kCoast);
+    SparkMaxConfig config1 = new SparkMaxConfig();
+    config1.apply(SparkMaxConfig.Presets.REV_NEO_550);
+    config1.inverted(false).idleMode(IdleMode.kCoast);
 
-    shooterMotor.configure(config,
+    SparkMaxConfig config2 = new SparkMaxConfig();
+    config2.apply(SparkMaxConfig.Presets.REV_NEO_550);
+    config2.inverted(false).idleMode(IdleMode.kCoast);
+    config2.follow(Constants.CanIds.kShooterMotorCanId);
+
+    shooterMotor.configure(config1,
         ResetMode.kResetSafeParameters,
         PersistMode.kPersistParameters);
     encoder = shooterMotor.getEncoder();
+
+    secondaryShooterMotor.configure(config2,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    secondMotorEncoder = secondaryShooterMotor.getEncoder();
+
+  
 
     loadPreferences();
 
