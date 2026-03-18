@@ -35,7 +35,7 @@ import frc.robot.autoncommands.AutoShootFromRight;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
-import frc.robot.subsystems.Climbers;
+import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DXsensor;
 import frc.robot.subsystems.DriveTrain;
@@ -55,7 +55,6 @@ import frc.robot.subsystems.GameData;
 public class RobotContainer {
 
   private static boolean HARVESTER_ENABLE = true;
-  private static boolean CLIMBERS_ENABLE = false;
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
   private static boolean CLIMBER_ENABLE = true;
@@ -72,7 +71,7 @@ public class RobotContainer {
   // The robot's subsystems
   public DriveTrain m_robotDrive;
   public Harvester m_harvester;
-  public Climbers m_climbers;
+  public Climber m_climbers;
   public Shooter m_shooter;
   public Hopper m_hopper;
   public Navigation m_navigation;
@@ -117,13 +116,8 @@ public class RobotContainer {
     }
 
     if (CLIMBER_ENABLE){
-      m_climbers = new Climbers();
-      SmartDashboard.putData("ClimbersSubsystem", m_climbers);
-    }
-
-    if (CLIMBER_ENABLE){
-      m_climbers = new Climbers();
-      SmartDashboard.putData("ClimbersSubsystem", m_climbers);
+      m_climbers = new Climber();
+      SmartDashboard.putData("ClimberSubsystem", m_climbers);
     }
 
     if (HARVESTER_ENABLE) {
@@ -291,40 +285,21 @@ public class RobotContainer {
   // only automatic sequence for servos, automatic and manual for climber pid?
   if (CLIMBER_ENABLE) {
     // climber up
-    if (m_copilotController.getLeftTriggerAxis() > Constants.OIConstants.kClimbersDeadband) {
-      new RunCommand(() -> m_climbers.climberManualControl(-Constants.ClimberConstants.climberDefaultSpeed),
-          m_climbers);
-    }
-    // climber down
-    else if (m_copilotController.getRightTriggerAxis() > Constants.OIConstants.kClimbersDeadband) {
-      new RunCommand(() -> m_climbers.climberManualControl(Constants.ClimberConstants.climberDefaultSpeed), m_climbers);
-    } else {
-      new RunCommand(() -> m_climbers.stopClimbers(), m_climbers);
-    }
+    new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
+        .onTrue(new InstantCommand(() -> m_climbers.enablePID(false), m_climbers));
+    new Trigger(() -> (Math.abs(m_copilotController.getRightY()) > 0.1) && !m_climbers.PIDEnabled())  
+        .whileTrue(m_climbers.ClimberManualControlCommand(() -> -m_copilotController.getRightY(), () -> false));
+    
+    new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
+        .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
+    new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())  
+        .whileTrue(m_climbers.NudgeClimberPosition(m_copilotController::getLeftY));
 
-    // retract/engage inner hooks based on previous position
-    if (m_copilotController.getLeftBumperButton()) {
-      if (m_climbers.innerHooksCurrentLocation() == "retracted") {
-        m_climbers.DeployInnerHooks();
-      } else if (m_climbers.innerHooksCurrentLocation() == "deployed") {
-        m_climbers.RetractInnerHooks();
-      } else {
-        System.out.print("its broken! :)");
-      }
-    }
-
-    if (m_copilotController.getRightBumperButton()) {
-      if (m_climbers.outerHooksCurrentLocation() == "retracted") {
-        m_climbers.DeployOuterHooks();
-      } else if (m_climbers.outerHooksCurrentLocation() == "deployed") {
-        m_climbers.RetractOuterHooks();
-      } else {
-        System.out.print("its broken :)");
-      }
-    }
-
-    // retract/engage outer hooks
-
+    // retract/engage hooks 
+    new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)
+        .onTrue(m_climbers.RetractHooks());
+    new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value)
+        .onTrue(m_climbers.DeployHooks());
   }
 }
 

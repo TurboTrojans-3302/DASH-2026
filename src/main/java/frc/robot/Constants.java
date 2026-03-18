@@ -43,11 +43,8 @@ public final class Constants {
   }
 
   public static final class PWMChannels {
-    public static final int PWMServoInnerLeft = 0;
-    public static final int PWMServoInnerRight = 1;
-    public static final int PWMServoOuterLeft = 2;
-    public static final int PWMServoOuterRight = 3;
-
+    public static final int PWMServoLeft = 0;
+    public static final int PWMServoRight = 1;
   }
 
 
@@ -195,10 +192,15 @@ public final class Constants {
   }
 
   public static final class ClimberConstants {
-   public static final double hookRetractedAngle = 0.0;
-   public static final double hookDeployedAngle = 75.0;
+    public static final String leftHookRetractedAnglekey = "leftHookRetractedAngle";
+    public static final String leftHookDeployedAnglekey = "leftHookDeployedAngle";
+    public static final String rightHookRetractedAnglekey = "rightHookRetractedAngle";
+    public static final String rightHookDeployedAnglekey = "rightHookDeployedAngle";
+    public static final double leftHookRetractedAngle = 0.0;
+    public static final double leftHookDeployedAngle = 75.0;
+    public static final double rightHookRetractedAngle = 0.0;
+    public static final double rightHookDeployedAngle = 75.0;
 
-   
     public static final double kPdefault = 0;
     public static final double kIdefault = 0;
     public static final double kDdefault = 0;
@@ -209,10 +211,14 @@ public final class Constants {
     public static final String PIDToleranceKey = "climber_PIDTolerance";
     public static final double kToleranceDefault = 0;
 
-    public static final double climberDefaultSpeed = 0.3; //manual
+    public static final double climberDefaultSpeed = 0.3; // manual
     public static final String climberSpeedKey = "climberSpeed";
-
-
+    public static final String climberServoTimeKey = "climberServoTime";
+    public static final double climberServoTime = 1.0;
+    public static final double climberLowerSoftLimit = 0;
+    public static final String climberLowerSoftLimitKey = null;
+    public static final String climberUpperSoftLimitKey = null;
+    public static double climberUpperSoftLimit;
   }
 
   public static final class HopperConstants {
