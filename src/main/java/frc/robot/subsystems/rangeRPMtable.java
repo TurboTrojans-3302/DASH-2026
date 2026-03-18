@@ -9,10 +9,11 @@ public class rangeRPMtable {
     public static final double OPTIMAL = (MIN + MAX) / 2;
 
     static {
-        table.put(1.219, 1550.0);
-        table.put(1.524, 1550.0);
-        table.put(1.828, 1675.0);
-        table.put(2.133, 1700.0);
+        table.put(0.6096, 1775.0);
+        table.put(0.9144, 1800.0);
+        table.put(1.2192, 1880.0);
+        table.put(1.524, 1910.0);
+        table.put(1.8288, 2130.0);
     }
 
     public static double get(double range) {

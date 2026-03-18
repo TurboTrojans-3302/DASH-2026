@@ -1,12 +1,14 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.Constants.HopperConstants;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -45,6 +47,7 @@ public class Hopper extends SubsystemBase {
     private double kG = HopperConstants.kGdefault;
     private double maxVelocity     = HopperConstants.maxVelocityDefault;
     private double maxAcceleration = HopperConstants.maxAccelerationDefault;
+    private boolean hardLimitEnable = true;
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
@@ -76,7 +79,7 @@ public class Hopper extends SubsystemBase {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
         leftSparkConfig.apply(SparkMaxConfig.Presets.REV_NEO_550);
         leftSparkConfig.idleMode(IdleMode.kBrake);
-        leftSparkConfig.inverted(true);
+        leftSparkConfig.inverted(false);
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
 
@@ -152,19 +155,39 @@ public class Hopper extends SubsystemBase {
 
     public void hold() {
         if (isPIDEnabled()) {
-            setPosition(getPosition()); // re-apply current setpoint to hold position
+            setPosition(getPosition());
         } else {
             stop();
         }
     }
 
+    public void rampToZero() {
+        double lTargetPos = leftEncoder.getPosition() + decelDistance(leftEncoder.getVelocity());
+        double rTargetPos = rightEncoder.getPosition() + decelDistance(rightEncoder.getVelocity());
+        leftPID.setGoal(new TrapezoidProfile.State(lTargetPos, 0)); 
+        rightPID.setGoal(new TrapezoidProfile.State(rTargetPos, 0)); 
+    }
+
+    private double decelDistance(double velocity){
+        double t = Math.abs(velocity / maxAcceleration);
+        double decel = -Math.signum(velocity) * maxAcceleration;
+        return (velocity * t) + (0.5 * decel * t * t);
+    }
+
     private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
+        setMotorPctOutput(leftSpeed, rightSpeed, false);
+    }
+
+    private void setMotorPctOutput(double leftSpeed, double rightSpeed, boolean ignoreLimits) {
         leftSpeed  = MathUtil.clamp(leftSpeed,  -1.0, 1.0);
         rightSpeed = MathUtil.clamp(rightSpeed, -1.0, 1.0);
-        if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
-        if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
-        if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
-        if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
+
+        if(!ignoreLimits){
+            if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
+            if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
+            if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
+            if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
+        }
 
         leftMotor.set(leftSpeed);
         rightMotor.set(rightSpeed);
@@ -172,8 +195,18 @@ public class Hopper extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (leftHardLimit())  { leftEncoder.setPosition(0); }
-        if (rightHardLimit()) { rightEncoder.setPosition(0); }
+        if (leftHardLimit()){
+            if(Math.abs(leftEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+                setPIDEnabled(false);
+            }
+            leftEncoder.setPosition(0);
+        }
+        if (rightHardLimit()) {
+            if(Math.abs(rightEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+                setPIDEnabled(false);
+            }
+            rightEncoder.setPosition(0);
+        }        
 
         if (isPIDEnabled()) {
             double ffOutput = feedforward.calculate(0); // static gravity compensation (velocity = 0)
@@ -204,13 +237,7 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atMinPosition() {
-        return atSoftMinL() && atSoftMinR();
-    }
-
-    public Command stopCommand() {
-        Command cmd = new InstantCommand(this::stop, this);
-        cmd.setName("stopCommand");
-        return cmd;
+        return atSoftMinL() || atSoftMinR();
     }
 
     public Command setPositionCommand(DoubleSupplier targetPosition) {
@@ -236,7 +263,7 @@ public class Hopper extends SubsystemBase {
         return cmd;
     }
 
-        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight) {
+        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight, BooleanSupplier ignoreLimits) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init
             () -> move(speedSupplierLeft.getAsDouble(), speedSupplierRight.getAsDouble()), // call move() with supplier value
@@ -285,7 +312,10 @@ public class Hopper extends SubsystemBase {
             posTolerance = Preferences.getDouble(HopperConstants.posToleranceKey, HopperConstants.posToleranceDefault);
             maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
             maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
+            hardLimitEnable = Preferences.getBoolean(HopperConstants.hardLimitEnableKey, true);
             applyPIDGains();
+            leftEncoder.setPosition(Preferences.getDouble(HopperConstants.leftPositionKey, 0));
+            rightEncoder.setPosition(Preferences.getDouble(HopperConstants.rightPositionKey, 0));
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -303,14 +333,15 @@ public class Hopper extends SubsystemBase {
         Preferences.setDouble(HopperConstants.posToleranceKey, posTolerance);
         Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
         Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
+        Preferences.setBoolean(HopperConstants.hardLimitEnableKey, hardLimitEnable);
     }
 
     public boolean leftHardLimit() {
-        return !leftContractedLimitSwitch.get();
+        return hardLimitEnable && !leftContractedLimitSwitch.get();
     }
 
     public boolean rightHardLimit() {
-        return !rightContractedLimitSwitch.get();
+        return hardLimitEnable && !rightContractedLimitSwitch.get();
     }
 
     @Override
@@ -331,6 +362,7 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("Max Velocity",     () -> maxVelocity,     (x) -> { maxVelocity     = x; applyPIDGains(); });
         builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
         builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
+        builder.addBooleanProperty("Hard Limit Enable", () -> hardLimitEnable, (x) -> hardLimitEnable = x);
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);

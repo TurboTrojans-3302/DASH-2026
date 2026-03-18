@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -13,7 +14,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Navigation;
@@ -21,20 +21,53 @@ import frc.utils.SwerveUtils;
 
 public class GoToCommand extends Command {
 
+  private static double globalSpeedScale = 1.0;
+  private static double globalToleranceScale = 1.0;
   protected final double dT = Robot.kDefaultPeriod;
 
   protected Pose2d m_dest;
   protected Transform2d m_delta;
   protected DriveTrain m_drive;
-  protected TrapezoidProfile m_trapezoid;
+  protected TrapezoidProfile m_speedProfile;
+  protected TrapezoidProfile m_angularSpeedProfile;
   protected boolean m_relativeFlag;
   protected Navigation m_nav;
   protected double m_totalDistance;  // total distance to goal at initialize()
 
-  static double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
-  static double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
-  static double kDistanceTolerance = Constants.AutoConstants.kDistanceTolerance;
-  static double kHeadingTolerance = Constants.AutoConstants.kHeadingTolerance;
+  double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
+  double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
+  double angularSpeedLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecond;
+  double angularAccelLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared;  
+  double kDistanceTolerance = AutoConstants.kDistanceTolerance;
+  double kHeadingTolerance =  AutoConstants.kHeadingTolerance;
+
+
+  public static void setGlobalSpeedScale(double scale) {
+    globalSpeedScale = MathUtil.clamp(scale, 0.0, 1.0);
+  }
+
+  public static void setGlobalToleranceScale(double scale) {
+    globalToleranceScale = MathUtil.clamp(scale, 0.0, 10.0);
+  }
+
+  public static double getGlobalToleranceScale() {
+    return globalToleranceScale;
+  }
+
+  public GoToCommand setLimits(double speedLimit, double accelLimit) {
+    this.speedLimit = speedLimit;
+    this.accelLimit = accelLimit;
+    return this;
+  } 
+
+  public GoToCommand setTolerance(double distanceTolerance, double headingTolerance) {
+    this.kDistanceTolerance = distanceTolerance;
+    this.kHeadingTolerance = headingTolerance;
+    this.setName(getName());
+    return this;
+  }
+
+
 
   protected GoToCommand(DriveTrain drive, Navigation nav) {
     m_drive = drive;
@@ -71,7 +104,8 @@ public class GoToCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_trapezoid = new TrapezoidProfile(new Constraints(speedLimit, accelLimit));
+    m_speedProfile = new TrapezoidProfile(new Constraints(globalSpeedScale * speedLimit, globalSpeedScale * accelLimit));
+    m_angularSpeedProfile = new TrapezoidProfile(new Constraints(globalSpeedScale * angularSpeedLimit, globalSpeedScale * angularAccelLimit));
 
     if (m_relativeFlag) {
       Pose2d currPose2d = m_nav.getPose();
@@ -99,11 +133,11 @@ public class GoToCommand extends Command {
   }
 
   protected double deltaHeading() {
-    return SwerveUtils.angleDeltaDeg(m_nav.getAngleDegrees(), destHeadingDegrees());
+    return SwerveUtils.angleDeltaDeg(m_nav.getHeadingDegrees(), destHeadingDegrees());
   }
 
   protected double speedTowardTarget() {
-    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getAngle());
+    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getHeading());
     Translation2d targetDirection = translation2dest();
 
     if (botDirection.getNorm() <= 1e-6) {
@@ -112,7 +146,7 @@ public class GoToCommand extends Command {
       return -m_drive.getSpeed();
     }
 
-    Double difference = targetDirection.getAngle().getRadians() - botDirection.getAngle().getRadians();
+    double difference = targetDirection.getAngle().getRadians() - botDirection.getAngle().getRadians();
     return m_drive.getSpeed() * Math.cos(difference);
   }
 
@@ -122,19 +156,32 @@ public class GoToCommand extends Command {
     Translation2d toDest = translation2dest();
     double distanceToDest = toDest.getNorm();
 
-    if(distanceToDest < kDistanceTolerance){
-      return; // do nothing
-    }
-
     double traveledDistance = Math.max(0.0, m_totalDistance - distanceToDest);
     State currentState = new State(traveledDistance, speedTowardTarget());
     State goalState = new State(m_totalDistance, 0.0);
 
-    double speed = m_trapezoid.calculate(dT, currentState, goalState).velocity;
+    double speed = m_speedProfile.calculate(dT, currentState, goalState).velocity;
 
-    Translation2d unitTranslation = toDest.div(distanceToDest);
+    Translation2d unitTranslation;
+    if (distanceToDest > 1e-6) {
+      unitTranslation = toDest.div(distanceToDest);
+    } else {
+      unitTranslation = new Translation2d();
+    }
 
-    m_drive.driveHeading(unitTranslation.times(speed), destHeadingRadians());
+    double currentHeading = m_drive.getHeading().getRadians();
+    double goalHeading = destHeadingRadians();
+    double angleError = MathUtil.angleModulus(goalHeading - currentHeading);
+    State angularCurrentState = new State(angleError, -m_drive.getAngularVelocityRadPerSec());
+    State angularGoalState = new State(0.0, 0.0);
+    double profiledErrorVelocity = m_angularSpeedProfile.calculate(dT, angularCurrentState, angularGoalState).velocity;
+    double rotation = -profiledErrorVelocity;
+    
+    if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance * globalToleranceScale)){
+      speed = 0.0;
+    }
+
+    m_drive.drive(unitTranslation.times(speed), rotation, true);
   }
 
   // Called once the command ends or is interrupted.
@@ -147,8 +194,13 @@ public class GoToCommand extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return distance() < kDistanceTolerance &&
-        Math.abs(deltaHeading()) < kHeadingTolerance;
+    return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
+        MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
+                        kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
   }
+
+public static double getGlobalSpeedScale() {
+    return globalSpeedScale;
+}
 
 }
