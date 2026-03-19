@@ -37,7 +37,7 @@ public class SetRangeAndAim extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    driveTrain.driveHeading(new Translation2d(0.0, 0.0), navigation.getHeadingToTarget());
+    driveTrain.driveHeading(new Translation2d(0.0, 0.0), navigation.getAbsBearingToTarget());
     setShooterSpeedForDistance(); // just in case distance has changed a bit
   }
 
@@ -50,7 +50,7 @@ public class SetRangeAndAim extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return MathUtil.isNear(navigation.getHeadingToTarget().getRadians(), driveTrain.getHeading().getRadians(),
+    return MathUtil.isNear(navigation.getAbsBearingToTarget().getRadians(), driveTrain.getHeading().getRadians(),
                            Math.toRadians(kAimToleranceDegrees),
                            0.0, (2 * Math.PI))
            && shooter.isReady();
