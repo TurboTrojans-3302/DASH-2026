@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -48,6 +47,7 @@ public class Climber extends SubsystemBase{
   private double servoTime = ClimberConstants.climberServoTime;
   private double climberLowerSoftLimit = ClimberConstants.climberLowerSoftLimit;
   private double climberUpperSoftLimit = ClimberConstants.climberUpperSoftLimit;
+  private boolean limitsEnabled = true;
 
   private RelativeEncoder climberEncoder;
 
@@ -78,13 +78,12 @@ public class Climber extends SubsystemBase{
     retractHooks();
   }
 
-
   public boolean atLowerSoftLimit(){
-    return getClimberPosition() <= climberLowerSoftLimit;
+    return getClimberPosition() <= climberLowerSoftLimit && limitsEnabled;
   }
 
   public boolean atUpperSoftLimit(){
-    return getClimberPosition() >= climberUpperSoftLimit;
+    return getClimberPosition() >= climberUpperSoftLimit && limitsEnabled;
   }
 
   public boolean waitForServo(){
@@ -155,11 +154,11 @@ public class Climber extends SubsystemBase{
     return PIDEnabled;
   }
 
-  public void climberManualControl(double speed, boolean overrideLimits){
-    if(!overrideLimits){
-      if(atLowerSoftLimit()) speed = Math.max(0, speed); 
-      if(atUpperSoftLimit()) speed = Math.min(0, speed); 
-    }
+  public void climberManualControl(double speed){
+    speed = MathUtil.applyDeadband(speed, 0.1);
+    
+    if(atLowerSoftLimit()) speed = Math.max(0, speed); 
+    if(atUpperSoftLimit()) speed = Math.min(0, speed); 
 
     climberMotor.set(speed);
     enablePID(false);
@@ -181,6 +180,13 @@ public class Climber extends SubsystemBase{
     }
   }
 
+  public void overrideLimits(boolean override){
+    limitsEnabled = override;
+  }
+
+  public boolean getLimitsEnabled(){
+    return limitsEnabled;
+  }
 
   public void loadPreferences() {
       System.out.println("Loading climber PID values from preferences");
@@ -279,13 +285,14 @@ public class Climber extends SubsystemBase{
     );
   }
 
-  public Command ClimberManualControlCommand(DoubleSupplier speed, BooleanSupplier overrideLimits){
+  public Command ClimberManualControlCommand(DoubleSupplier speed){
     return new FunctionalCommand(
-                                ()-> {climberManualControl(speed.getAsDouble(), overrideLimits.getAsBoolean());},
+                                ()-> {climberManualControl(speed.getAsDouble());},
                                 ()-> {},
                                 (x)-> stopClimbers(),
                                 ()-> false,
                                 this                           
     );
   }
+
 }

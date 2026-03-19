@@ -47,7 +47,8 @@ public class Hopper extends SubsystemBase {
     private double kG = HopperConstants.kGdefault;
     private double maxVelocity     = HopperConstants.maxVelocityDefault;
     private double maxAcceleration = HopperConstants.maxAccelerationDefault;
-    private boolean hardLimitEnable = true;
+    private Boolean hardLimitEnable = true;
+    private boolean softLimitsEnabled = true;
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
@@ -175,19 +176,13 @@ public class Hopper extends SubsystemBase {
     }
 
     private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
-        setMotorPctOutput(leftSpeed, rightSpeed, false);
-    }
-
-    private void setMotorPctOutput(double leftSpeed, double rightSpeed, boolean ignoreLimits) {
         leftSpeed  = MathUtil.clamp(leftSpeed,  -1.0, 1.0);
         rightSpeed = MathUtil.clamp(rightSpeed, -1.0, 1.0);
 
-        if(!ignoreLimits){
-            if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
-            if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
-            if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
-            if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
-        }
+        if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
+        if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
+        if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
+        if(atSoftMinR()) rightSpeed = Math.max(0, rightSpeed); // if at min, only allow extending (positive speed)
 
         leftMotor.set(leftSpeed);
         rightMotor.set(rightSpeed);
@@ -217,11 +212,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMaxL() {
-        return leftEncoder.getPosition() >= softMax;
+        return leftEncoder.getPosition() >= softMax && softLimitsEnabled;
     }
 
     public boolean atSoftMaxR() {
-        return rightEncoder.getPosition() >= softMax;
+        return rightEncoder.getPosition() >= softMax && softLimitsEnabled;
     }
 
     public boolean atMaxPosition() {
@@ -229,15 +224,23 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMinL() {
-        return leftEncoder.getPosition() <= softMin;
+        return leftEncoder.getPosition() <= softMin && softLimitsEnabled;
     }
 
     public boolean atSoftMinR() {
-        return rightEncoder.getPosition() <= softMin;
+        return rightEncoder.getPosition() <= softMin && softLimitsEnabled;
     }
 
     public boolean atMinPosition() {
         return atSoftMinL() || atSoftMinR();
+    }
+
+    public void enableSoftLimits(boolean enabled) {
+        softLimitsEnabled = enabled;
+    }
+
+    public boolean areSoftLimitsEnabled() {
+        return softLimitsEnabled;
     }
 
     public Command setPositionCommand(DoubleSupplier targetPosition) {
@@ -263,7 +266,7 @@ public class Hopper extends SubsystemBase {
         return cmd;
     }
 
-        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight, BooleanSupplier ignoreLimits) {
+        public Command manualMoveCommand(DoubleSupplier speedSupplierLeft, DoubleSupplier speedSupplierRight) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init
             () -> move(speedSupplierLeft.getAsDouble(), speedSupplierRight.getAsDouble()), // call move() with supplier value
@@ -333,7 +336,6 @@ public class Hopper extends SubsystemBase {
         Preferences.setDouble(HopperConstants.posToleranceKey, posTolerance);
         Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
         Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
-        Preferences.setBoolean(HopperConstants.hardLimitEnableKey, hardLimitEnable);
     }
 
     public boolean leftHardLimit() {
@@ -363,6 +365,7 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
         builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
         builder.addBooleanProperty("Hard Limit Enable", () -> hardLimitEnable, (x) -> hardLimitEnable = x);
+        builder.addBooleanProperty("Soft Limit Enable", () -> areSoftLimitsEnabled(), (x) -> enableSoftLimits(x));
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);

@@ -194,7 +194,12 @@ public class RobotContainer {
      *
      */
 
-  JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
+  new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch)
+      .onTrue(new InstantCommand(() -> {
+        m_shooter.setDangerMode(!m_shooter.isDangerMode());
+        m_hopper.enableSoftLimits(!m_hopper.areSoftLimitsEnabled());
+        m_climbers.overrideLimits(!m_climbers.getLimitsEnabled());
+      }, m_shooter, m_hopper, m_harvester)); // dummy command to require all subsystems and act as a "safety switch" that prevents any other button from working when not pressed
 
   if(SHOOTER_ENABLE)
   {
@@ -219,8 +224,6 @@ public class RobotContainer {
     JoystickButton feederForward = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right3); // blockage
     JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                    // without feeding
-    enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
-
     shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
     feederReverse.whileTrue(m_shooter.reverseFeedCommand());
@@ -236,7 +239,7 @@ public class RobotContainer {
     JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
     hopperExpand.onTrue(m_hopper.expandCommand());
     if (HARVESTER_ENABLE) {
-      hopperRetract.and(enableDangerMode.or(() -> !m_harvester.isOn())).onTrue(m_hopper.retractCommand());
+      hopperRetract.onTrue(m_hopper.retractCommand());
     } else {
       hopperRetract.onTrue(m_hopper.retractCommand());
     }
@@ -251,17 +254,17 @@ public class RobotContainer {
     nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
     nudgeHopperOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed));
     nudgeHopperRightOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed));
     nudgeHopperLeftIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0));
     nudgeHopperIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed));
     nudgeHopperRightIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed));
 
     JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
     JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
@@ -288,7 +291,7 @@ public class RobotContainer {
     new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
         .onTrue(new InstantCommand(() -> m_climbers.enablePID(false), m_climbers));
     new Trigger(() -> (Math.abs(m_copilotController.getRightY()) > 0.1) && !m_climbers.PIDEnabled())  
-        .whileTrue(m_climbers.ClimberManualControlCommand(() -> -m_copilotController.getRightY(), () -> false));
+        .whileTrue(m_climbers.ClimberManualControlCommand(() -> -m_copilotController.getRightY()));
     
     new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
         .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
