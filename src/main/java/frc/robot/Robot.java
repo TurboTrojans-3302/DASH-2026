@@ -8,11 +8,12 @@ package frc.robot;
 import java.util.Map;
 import java.util.Optional;
 
-
+import edu.wpi.first.hal.MatchInfoData;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -30,18 +31,13 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
   private static Robot instance;
   public static DriverStation.Alliance alliance;
- 
-  public static final String[] teleOpShiftName = {"Transition", "Shift 1", "Shift 2", "Shift 3", "Shift 4", "Endgame"};
-  public static final double[] shiftEndTime = {130.0, 105.0, 80.0, 55.0, 30.0, 0.0}; //Transition, Shift 1 ... 4, Endgame
-  public static final boolean[] firstShiftScoringAllowed = {true, true, false, true, false, true};
-  public static final boolean[] secondShiftScoringAllowed = {true, false, true, false, true, true};
- 
-  private boolean[] scoringAllowed = firstShiftScoringAllowed;
-
-  private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+  private boolean gameDataReceived = false;
 
+  private SendableChooser<String> m_autonomousChooser;
+  private Command m_autonomousCommand;
+  public MatchInfoData matchInfoData;
 
   Robot(){
     instance = this;
@@ -70,18 +66,11 @@ public class Robot extends TimedRobot {
     // and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    //DataLogManager.start();
-    //CanBridge.runTCP();
-    LimelightHelpers.setCameraPose_RobotSpace(Constants.LimelightConstants.name,
-                                              Constants.LimelightConstants.Offset.forward,
-                                              Constants.LimelightConstants.Offset.side,
-                                              Constants.LimelightConstants.Offset.up,
-                                              Constants.LimelightConstants.Offset.roll,
-                                              Constants.LimelightConstants.Offset.pitch,
-                                              Constants.LimelightConstants.Offset.yaw
-                                            );
-
+    m_robotContainer.configureButtonBindings();
+    m_robotContainer.setDefaultCommands();
     
+    m_autonomousChooser = m_robotContainer.createAutonomousChooser();
+    SmartDashboard.putData("Autonomous", m_autonomousChooser);
   }
 
   /**
@@ -110,14 +99,23 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    m_robotContainer.saveSomePreferences();
     m_robotContainer.setLED(REVBlinkinLED.Pattern.SOLID_VIOLET);
   }
 
   @Override
+  public void disabledExit() {}
+
+  @Override
+  public void driverStationConnected() {
+    m_robotContainer.onDSAttached();
+  }
+
+  @Override
   public void disabledPeriodic() {
-    if(alliance == null) {
-      Optional<Alliance> a = DriverStation.getAlliance();
-      if (a.isPresent()) {
+    Optional<Alliance> a = DriverStation.getAlliance();
+    if (a.isPresent()) {
+      if(alliance != a.get()){
         alliance = a.get();
         if(alliance == Alliance.Red) {
           m_robotContainer.initRed();
@@ -136,15 +134,15 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     setLED(LEDmode.Auton);
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    // System.out.println("autonomousInit() m_pos == " + m_robotContainer.m_nav.getPose());
-    System.out.println("Starting command: " + m_autonomousCommand.getName());
+    m_robotContainer.readPIDswitches();
+    
+    m_robotContainer.m_robotDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
+    m_robotContainer.m_navigation.setIMUMode(4);
 
-
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+    String commandName = m_autonomousChooser.getSelected();
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);
+    System.out.println("Starting command: " + commandName + " -> " + m_autonomousCommand.getName());
+    CommandScheduler.getInstance().schedule(m_autonomousCommand);
   }
 
   /** This function is called periodically during autonomous. */
@@ -154,10 +152,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    
-    m_robotContainer.configureButtonBindings();
-    m_robotContainer.setDefaultCommands();
-    //m_robotContainer.m_intakeArm.stop();
+    m_robotContainer.readPIDswitches();
     
     setLED(LEDmode.Teleop);
     // This makes sure that the autonomous stops running when
@@ -167,49 +162,16 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-       
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {
     
-    String firstAllianceDisabled = DriverStation.getGameSpecificMessage();
-    if(firstAllianceDisabled.length() > 0){
-      if(firstAllianceDisabled.charAt(0) == 'R' && alliance == Alliance.Red){
-        scoringAllowed = secondShiftScoringAllowed;
-      }else if(firstAllianceDisabled.charAt(0) == 'B' && alliance == Alliance.Blue){
-        scoringAllowed = secondShiftScoringAllowed;
-      }else{
-        scoringAllowed = firstShiftScoringAllowed;
-      }
-    }
+    m_robotContainer.m_shooter.setRPMsetpoint(0.0);
+    
+    String gamedatastring = DriverStation.getGameSpecificMessage();
 
+    if (gamedatastring.length() > 0 && !gameDataReceived) {
+      RobotContainer.getInstance().m_gameData.setGameDataSring(gamedatastring);
+      gameDataReceived = true;
+    }
   } 
-  
-  
-  public int getCurrentShift() {
-    for (int i = 0; i < shiftEndTime.length; i++) {
-      if (DriverStation.getMatchTime() > shiftEndTime[i]) {
-        return i;
-      }
-    }
-    return 0; // Default to the first shift if no other shift is active 
-  }
-
-  public String getCurrentShiftName() {
-    return teleOpShiftName[getCurrentShift()];
-  }
-
-  public boolean scoring() {
-    int currentShift = getCurrentShift();
-    return scoringAllowed[currentShift];
-  }
-
-  public double getTimeLeftInShift() {
-    int currentShift = getCurrentShift();
-    return DriverStation.getMatchTime() - shiftEndTime[currentShift];
-  }
 
   @Override
   public void testInit() {

@@ -4,9 +4,12 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.DistanceUnit;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -25,38 +28,51 @@ public final class Constants {
   public final class CanIds {
     public static final int DX_SENSOR_CAN_ID = 0;
     // ID 1 through 8 are for swerve drive, defined in swerve config files
-    public static final int kShooterMotorCanId     =  9;
-    public static final int kFeederMotorCanId      = 10;
-    public static final int kHopperLeftMotorCanId  = 11;
+    public static final int kShooterMotorCanId = 9;
+    public static final int kFeederMotorCanId = 10;
+    public static final int kHopperLeftMotorCanId = 11;
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId   = 13;
-    public static final int kClimbMotor            = 14;
+    public static final int kSecondFeederMotorCanId = 14;
+    public static final int kClimbMotor            = 15;
+  }
+
+  public final class RobotConstants {
+    public static final double lengthWithBumpers = 0.762; // meters, 30 inches
+    public static final double widthWithBumpers = 0.762; // meters,
   }
 
   public static final class PWMChannels {
-    public static final int PWMServoInnerLeft = 0;
-    public static final int PWMServoInnerRight = 1;
-    public static final int PWMServoOuterLeft = 2;
-    public static final int PWMServoOuterRight = 3;
-
+    public static final int PWMServoLeft = 0;
+    public static final int PWMServoRight = 1;
   }
 
 
   public static final class DigitalIO {
-        public static final int kClimberLimitSwitch = 0;
-        
-      }
-  public static final class DriveConstants {
-    public static final double kMaxSpeed = 4.0; // m/s
+    public static final int kHopperLeftContractedLimitSwitchDio = 1;
+    public static final int kHopperRightContractedLimitSwitchDio = 2;
+    public static final int kClimberLimitSwitch = 3;
   }
 
+  public static final class DriveConstants {
+    public static final String maxSpeedKey = "driveMaxSpeed";
+    public static final double kMaxSpeedDefault = 4.0; // m/s
+    public static final Double kMaxAngularVelocityDefault = 2.0; // radians per second;
+    public static final String maxAngularVelocityKey = "driveMaxAngularVelocity";
+  }
+
+  public static final class TeleopConstants {
+    public static final double kDefaultDriveSpeedScale = 1.0;
+    public static final double kDefaultTurnSpeedScale = 1.0;
+  }
 
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
     public static final double kDriveDeadband = 0.05;
+    public static final double kClimbersDeadband = 0.2; //only want one speed so a high value because we only need to be sure the button is pressed
     public static final int kCopilotControllerPort = 1;
-    public static final int kReefControllerPort = 3;
     public static final int kButtonBoardPort = 2;
+
     public static final class ButtonBox {
       public static final int Left1 = 1;
       public static final int Right1 = 2;
@@ -93,51 +109,41 @@ public final class Constants {
       public static final int StickDownLeft = 225;
       public static final int StickLeft = 270;
       public static final int StickUpLeft = 315;
+      public static final int StickCenter = -1;
     }
   }
 
   public static final class AutoConstants {
-    public static final double kMaxSpeedMetersPerSecond = 50;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 50;
+    public static final double kMaxSpeedMetersPerSecond = 4.0;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 2.0;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
-    public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
+    public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI/2;
 
-    public static final double kPXController = 1;
-    public static final double kPYController = 1;
-    public static final double kPThetaController = 1;
-
-    // Constraint for the motion profiled robot angle controller
-    public static final TrapezoidProfile.Constraints kThetaControllerConstraints = new TrapezoidProfile.Constraints(
-        kMaxAngularSpeedRadiansPerSecond, kMaxAngularSpeedRadiansPerSecondSquared);
     public static final double kDistanceTolerance = 0.050;
     public static final double kHeadingTolerance = 2.0; // degrees
   }
 
   public static final class FieldConstants {
-    public static final Pose2d ZeroZero = new Pose2d(0.0, 0.0, new Rotation2d());
-    // for the station with april tag 13 these values both stay positive
-    public static final double poseOffsetStationRightX = 0.5;
-    public static final double poseOffsetStationRightY = 0.5;
-    //relative in the y-direction
-    public static final double yOffsetReefPoleLeft = 0.3;
-    public static final double yOffsetReefPoleRight = -0.3;
-  }
+    public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
+    public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
+    public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
+    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);}
 
   public static final class LimelightConstants {
     public static final String name = "limelight";
 
     public static final class Offset {
 
-      //measured to the center of the lens
+      // measured to the center of the lens
 
-      //inches
-      public static final double forward = 4; 
-      public static final double side = -7.5; //right is negative
-      public static final double up = 37.25; 
+      // inches
+      public static final double forward = -0.3;
+      public static final double side    = .011;
+      public static final double up      = 0.6;
 
-      public static final double roll = 0.0;
-      public static final double pitch = 0.0;
-      public static final double yaw = 0.0;
+      public static final double roll    = 0.0;
+      public static final double pitch   = 0.0;
+      public static final double yaw     = 180.0; // Limelight is mounted facing backwards, so we need to rotate the camera pose by 180 degrees around the vertical axis
     }
 
     public static final class PipelineIdx {
@@ -148,42 +154,100 @@ public final class Constants {
   }
 
   public static final class ShooterConstants {
-    public static final double kPdefault = 0;
+    public static final double kPdefault = 0.001;
     public static final double kIdefault = 0;
-    public static final double kDdefault = 0;
-    public static final double kVdefault = 0;
-    public static double PIDToleranceDefault = 0.0;
+    public static final double kDdefault = 0.0002;
+    public static final double kVdefault = 0.00018;
+    public static double PIDToleranceDefault = 10.0;
     public static final String kPkey = "shooter_kP";
     public static final String kIkey = "shooter_kI";
     public static final String kDkey = "shooter_kD";
     public static final String kVkey = "shooter_kV";
     public static final String PIDToleranceKey = "shooter_PIDTolerance";
-    public static final double maxRPM = 6000.0;
-    public static final double defaultShootRPM = 4900.0;
-    public static final double defaultShootPctOutput = 0.5;
+    public static final String kDfilterKey = "shooter_kDfilter";
+    public static final double kDfilterDefault = 0.0;
+    public static final String kRampRateKey = "shooter_kRampRate";
+    public static final double kRampRateDefault = 0.0;
+    public static final double maxRPM = 3000.0;
+    public static final double defaultShootRPM = 1600.0;
 
-    public static final double feederSpeedDefault = 0;
+    public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
-    public static double manualRPMincrement = 50; //rpm
-    public static double manualPCTincrement = 0.01; //percent output
+    public static double manualRPMincrement = 10; // rpm
+    public static String secondFeederSpeedKey = "secondFeederSpeed";
+    public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
 
+    public static final double SecondaryFeederSpeedDefault = 0.3;
   }
 
-  public static final class IntakeConstants {
-    
+  public static final class HarvesterConstants {
+    public static final double kVdefault = .0015;
+    public static final String kVkey = "harvesterKv";
+    public static final double pullInRPMDefault = 200;
+    public static final String pullInRPMkey = "harvesterPullInRPM";
+    public static final double kPdefault = 0.0;
+    public static final String kPkey = "harvesterKp";
+    public static final double kTolDefault = 10.0;
+    public static final String kTolKey = "harvesterKTol";
   }
 
   public static final class ClimberConstants {
-   public static final double hookRetractedAngle = 0.0;
-   public static final double hookDeployedAngle = 75.0;
-   public static final double hookEngagedAngle = 135.0;
-  public static final double kP = 0;
-public static final double kI = 0;
-public static final double kD = 0;
-public static final double kTolerance = 0;
+    public static final String leftHookRetractedAnglekey = "leftHookRetractedAngle";
+    public static final String leftHookDeployedAnglekey = "leftHookDeployedAngle";
+    public static final String rightHookRetractedAnglekey = "rightHookRetractedAngle";
+    public static final String rightHookDeployedAnglekey = "rightHookDeployedAngle";
+    public static final double leftHookRetractedAngle = 0.0;
+    public static final double leftHookDeployedAngle = 75.0;
+    public static final double rightHookRetractedAngle = 0.0;
+    public static final double rightHookDeployedAngle = 75.0;
+
+    public static final double kPdefault = 0;
+    public static final double kIdefault = 0;
+    public static final double kDdefault = 0;
+    public static final String kPkey = "climber_kP";
+    public static final String kIkey = "climber_kI";
+    public static final String kDkey = "climber_kD";
+    public static final String kVkey = "climber_kV";
+    public static final String PIDToleranceKey = "climber_PIDTolerance";
+    public static final double kToleranceDefault = 0;
+
+    public static final double climberDefaultSpeed = 0.3; // manual
+    public static final String climberSpeedKey = "climberSpeed";
+    public static final String climberServoTimeKey = "climberServoTime";
+    public static final double climberServoTime = 1.0;
+    public static final double climberLowerSoftLimit = 0;
+    public static final String climberLowerSoftLimitKey = null;
+    public static final String climberUpperSoftLimitKey = null;
+    public static double climberUpperSoftLimit;
   }
 
- 
+  public static final class HopperConstants {
+    public static final String maxPositionKey = "hopperMaxPosition";
+    public static final double maxPositionDefault = 220.0; // encoder units
+    public static final String minPositionKey = "hopperMinPosition";
+    public static final double minPositionDefault = 3.0; // encoder units
+    public static final String leftPositionKey = "hopperLeftPosition";
+    public static final double leftPositionDefault = 0.0; // encoder units
+    public static final String rightPositionKey = "hopperRightPosition";
+    public static final double rightPositionDefault = 0.0; // encoder units
+    // public static final String kVkey = "hopperKv";
+    // public static final double kVdefault = 0.001;
+    public static final String posToleranceKey = "hopperPosTolerance";
+    public static final double posToleranceDefault = 1;
+    public static final String kPkey = "hopperKp";
+    public static final double kPdefault = 0.02;
+    public static final String kIkey = "hopperKi";
+    public static final double kIdefault = 0.0;
+    public static final String kDkey = "hopperKd";
+    public static final double kDdefault = 0.0;
+    public static final String kGkey = "hopperKg";
+    public static final double kGdefault = 0.0;
+    public static final String maxVelocityKey = "hopperMaxVelocity";
+    public static final double maxVelocityDefault = 80.0; // encoder units per second
+    public static final String maxAccelerationKey = "hopperMaxAcceleration";
+    public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
+    public static final String hardLimitEnableKey = "hopperHardLimitEnable";
+  }
 
   public static final int BLINKIN_LED_PWM_CHANNEL = 0;
 }

@@ -4,19 +4,25 @@
 
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Meter;
+import java.io.File;
+import java.util.Arrays;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -26,10 +32,14 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import com.studica.frc.AHRS;
+
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
 import swervelib.SwerveModule;
+import swervelib.imu.SwerveIMU;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
@@ -41,32 +51,24 @@ public class DriveTrain extends SubsystemBase {
    * Swerve drive object.
    */
   private SwerveDrive swerveDrive;
+  private Double kMaxSpeed = Constants.DriveConstants.kMaxSpeedDefault;
+  private Double kMaxAngularVelocity = Constants.DriveConstants.kMaxAngularVelocityDefault;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
    *
    * @param directory Directory of swerve drive config files.
+   * @param startingPose The starting pose of the robot.
    */
-  public DriveTrain(String directory) {
+  public DriveTrain(String directory, Pose2d startingPose) {
     File configFileObject = new File(Filesystem.getDeployDirectory(), directory);
     try {
       System.out.println("loading SwerveDrive: " + configFileObject);
-      swerveDrive = new SwerveParser(configFileObject).createSwerveDrive(Constants.DriveConstants.kMaxSpeed);
+      swerveDrive = new SwerveParser(configFileObject).createSwerveDrive(Constants.DriveConstants.kMaxSpeedDefault);
     } catch (Exception e) {
       System.out.println("Swerve Configuration failed! " + e); // todo throw a fatal exception here?
     }
 
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
-
-    boolean blueAlliance = false;
-    Pose2d startingPose = blueAlliance ? new Pose2d(new Translation2d(Meter.of(1),
-        Meter.of(4)),
-        Rotation2d.fromDegrees(0))
-        : new Pose2d(new Translation2d(Meter.of(16),
-            Meter.of(4)),
-            Rotation2d.fromDegrees(180));
-    // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary
-    // objects being created.
     SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
     swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via
                                              // angle.
@@ -76,37 +78,37 @@ public class DriveTrain extends SubsystemBase {
         true,
         0.1); // Correct for skew that gets worse as angular velocity increases. Start with a
               // coefficient of 0.1.
-    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders and motor encoders periodically when they are not moving.
-    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used over the internal encoder and push the offsets onto it. Throws warning if not possible
+    swerveDrive.setModuleEncoderAutoSynchronize(false, 1); // Enable if you want to resynchronize your absolute encoders
+                                                           // and motor encoders periodically when they are not moving.
+    // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used
+    // over the internal encoder and push the offsets onto it. Throws warning if not
+    // possible
 
-    // If we successfully created the swerveDrive, initialize odometry to the starting pose
+    // If we successfully created the swerveDrive, initialize odometry to the
+    // starting pose
     if (swerveDrive != null) {
-      swerveDrive.resetOdometry(startingPose);
+      swerveDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
     }
 
-    // Publish a simple Sendable to SmartDashboard so we can inspect module angles/velocities and robot yaw
-    SmartDashboard.putData("Swerve Drive", new Sendable() {
+    SmartDashboard.putData("IMU Heading", new Sendable() {
       @Override
       public void initSendable(SendableBuilder builder) {
-        builder.setSmartDashboardType("SwerveDrive");
-
-        SwerveModule[] modules = swerveDrive.getModules();
-
-        builder.addDoubleProperty("Front Left Angle", () -> modules[0].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Left Velocity", () -> modules[0].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Front Right Angle", () -> modules[1].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Right Velocity", () -> modules[1].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Left Angle", () -> modules[2].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Left Velocity", () -> modules[2].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Right Angle", () -> modules[3].getPosition().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Right Velocity", () -> modules[3].getState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Robot Angle", () -> swerveDrive.getYaw().getRadians(), null);
-      }
+        builder.setSmartDashboardType("Gyro");
+        builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
+      } 
     });
+  }
+
+  public double getMaxAngularVelocity() {
+    return kMaxAngularVelocity;
+  }
+
+  @Override
+  public void initSendable(SendableBuilder builder) {
+    super.initSendable(builder);
+    builder.addDoubleProperty("Max Speed", () -> kMaxSpeed, (x) -> kMaxSpeed = x);
+    builder.addDoubleProperty("Max Angular Velocity", () -> kMaxAngularVelocity, (x) -> kMaxAngularVelocity = x);
+    builder.addBooleanProperty("save prefs", ()->false, (x) -> savePreferences());
   }
 
   @Override
@@ -263,6 +265,22 @@ public class DriveTrain extends SubsystemBase {
         false); // Open loop is disabled since it shouldn't be used most of the time.
   }
 
+  public void driveHeading(Translation2d translation, Rotation2d heading) {
+    double rotation = swerveDrive.swerveController.headingCalculate(getHeading().getRadians(), heading.getRadians());
+    swerveDrive.drive(translation, rotation, true, false);
+  }
+
+  /**
+   * Drive the robot given a translation in field-relative m/s.
+   * Heading is a desired angle that the robot should turn to while driving.
+   */
+  public void driveHeading(Translation2d translation, double headingRadians) {
+
+    double rotation = swerveDrive.getSwerveController().headingCalculate(getHeading().getRadians(), headingRadians);
+    swerveDrive.drive(translation, rotation, true, false); // Field relative should be used since we are controlling the
+                                                           // robot with a heading.
+  }
+
   /**
    * Drive the robot given a chassis field oriented velocity.
    *
@@ -315,6 +333,8 @@ public class DriveTrain extends SubsystemBase {
    * @param initialHolonomicPose The pose to set the odometry to
    */
   public void resetOdometry(Pose2d initialHolonomicPose) {
+    Rotation3d rot = new Rotation3d(initialHolonomicPose.getRotation());
+    swerveDrive.setGyro(rot);
     swerveDrive.resetOdometry(initialHolonomicPose);
   }
 
@@ -355,33 +375,6 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
-   * Checks if the alliance is red, defaults to false if alliance isn't available.
-   *
-   * @return true if the red alliance, false if blue. Defaults to false if none is
-   *         available.
-   */
-  private boolean isRedAlliance() {
-    var alliance = DriverStation.getAlliance();
-    return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
-  }
-
-  /**
-   * This will zero (calibrate) the robot to assume the current position is facing
-   * forward
-   * <p>
-   * If red alliance rotate the robot 180 after the drviebase zero command
-   */
-  public void zeroGyroWithAlliance() {
-    if (isRedAlliance()) {
-      zeroGyro();
-      // Set the pose 180 degrees
-      resetOdometry(new Pose2d(getPose().getTranslation(), Rotation2d.fromDegrees(180)));
-    } else {
-      zeroGyro();
-    }
-  }
-
-  /**
    * Sets the drive motors to brake/coast mode.
    *
    * @param brake True to set motors to brake mode, false for coast.
@@ -402,6 +395,15 @@ public class DriveTrain extends SubsystemBase {
     return getPose().getRotation();
   }
 
+  public double getAngularVelocityRadPerSec() {
+    return swerveDrive.getRobotVelocity().omegaRadiansPerSecond;
+  }
+
+  // todo this is duplicated, i think
+  public Double getMaxSpeed() {
+    return kMaxSpeed;
+  }
+
   /**
    * Get the chassis speeds based on controller input of 2 joysticks. One for
    * speeds in which direction. The other for
@@ -420,7 +422,7 @@ public class DriveTrain extends SubsystemBase {
         headingX,
         headingY,
         getHeading().getRadians(),
-        Constants.DriveConstants.kMaxSpeed);
+        kMaxSpeed);
   }
 
   /**
@@ -440,7 +442,7 @@ public class DriveTrain extends SubsystemBase {
         scaledInputs.getY(),
         angle.getRadians(),
         getHeading().getRadians(),
-        Constants.DriveConstants.kMaxSpeed);
+        kMaxSpeed);
   }
 
   /**
@@ -502,5 +504,52 @@ public class DriveTrain extends SubsystemBase {
    */
   public SwerveDrive getSwerveDrive() {
     return swerveDrive;
+  }
+
+  /** @return current gyro yaw in degrees */
+  public double getGyroAngleDegrees() {
+    return MathUtil.inputModulus(swerveDrive.getYaw().getDegrees(),
+                                 -180.0, 180.0);
+  }
+
+  /** @return current swerve module positions (distance + angle per module) */
+  public SwerveModulePosition[] getSwerveModulePositions() {
+    return swerveDrive.getModulePositions();
+  }
+
+  public void loadPreferences() {
+    if (Preferences.containsKey(Constants.DriveConstants.maxSpeedKey)) {
+      System.out.println("Loading DriveTrain values from preferences");
+      kMaxSpeed = Preferences.getDouble(Constants.DriveConstants.maxSpeedKey,
+          Constants.DriveConstants.kMaxSpeedDefault);
+      kMaxAngularVelocity = Preferences.getDouble(Constants.DriveConstants.maxAngularVelocityKey,
+          Constants.DriveConstants.kMaxAngularVelocityDefault);
+    } else {
+      System.out.println("No DriveTrain prefs found. Using default values");
+    }
+  }
+
+  public void savePreferences() {
+    System.out.println("Saving DriveTrain values to preferences");
+    Preferences.setDouble(Constants.DriveConstants.maxSpeedKey, kMaxSpeed);
+    Preferences.setDouble(Constants.DriveConstants.maxAngularVelocityKey, kMaxAngularVelocity);
+  }
+
+  public void stop() {
+    swerveDrive.drive(new ChassisSpeeds(0, 0, 0));
+  }
+
+  public double getSpeed() {
+    ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+    return Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
+  }
+
+  /*
+   * Returns the velocity vector of the robot, in the Robot Frame, in meters per
+   * second.
+   */
+  public Translation2d getVelocityVector() {
+    ChassisSpeeds chassisSpeeds = swerveDrive.getRobotVelocity();
+    return new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond);
   }
 }
