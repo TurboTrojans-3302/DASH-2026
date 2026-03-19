@@ -189,7 +189,27 @@ public class RobotContainer {
     JoystickButton coPilotToggleCameraStream = new JoystickButton(m_copilotController, XboxController.Button.kY.value);
     coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation)); 
 
-  /**
+    // only automatic sequence for servos, automatic and manual for climber pid?
+    if (CLIMBER_ENABLE) {
+      // climber up
+      new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
+          .onTrue(new InstantCommand(() -> m_climbers.enablePID(false), m_climbers));
+      new Trigger(() -> (Math.abs(m_copilotController.getRightY()) > 0.1) && !m_climbers.PIDEnabled())
+          .whileTrue(m_climbers.ClimberManualControlCommand(() -> -m_copilotController.getRightY()));
+
+      new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
+          .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
+      new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())
+          .whileTrue(m_climbers.NudgeClimberPosition(m_copilotController::getLeftY));
+
+      // retract/engage hooks
+      new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)
+          .onTrue(m_climbers.RetractHooks());
+      new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value)
+          .onTrue(m_climbers.DeployHooks());
+    }
+
+   /**
      * Button Board
      *
      */
@@ -285,25 +305,6 @@ public class RobotContainer {
         .onTrue(new InstantCommand(() -> m_harvester.enablePID(false), m_harvester));
   }
       
-  // only automatic sequence for servos, automatic and manual for climber pid?
-  if (CLIMBER_ENABLE) {
-    // climber up
-    new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
-        .onTrue(new InstantCommand(() -> m_climbers.enablePID(false), m_climbers));
-    new Trigger(() -> (Math.abs(m_copilotController.getRightY()) > 0.1) && !m_climbers.PIDEnabled())  
-        .whileTrue(m_climbers.ClimberManualControlCommand(() -> -m_copilotController.getRightY()));
-    
-    new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
-        .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
-    new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())  
-        .whileTrue(m_climbers.NudgeClimberPosition(m_copilotController::getLeftY));
-
-    // retract/engage hooks 
-    new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)
-        .onTrue(m_climbers.RetractHooks());
-    new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value)
-        .onTrue(m_climbers.DeployHooks());
-  }
 }
 
   public void configureTestControls() {

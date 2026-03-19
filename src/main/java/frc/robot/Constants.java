@@ -215,10 +215,16 @@ public final class Constants {
     public static final String climberSpeedKey = "climberSpeed";
     public static final String climberServoTimeKey = "climberServoTime";
     public static final double climberServoTime = 1.0;
-    public static final double climberLowerSoftLimit = 0;
-    public static final String climberLowerSoftLimitKey = null;
-    public static final String climberUpperSoftLimitKey = null;
-    public static double climberUpperSoftLimit;
+    public static final double climberLowerSoftLimit = 1.0;
+    public static final String climberLowerSoftLimitKey = "climberLowerSoftLimit";
+    public static final String climberUpperSoftLimitKey = "climberUpperSoftLimit";
+    public static final double climberUpperSoftLimit = 100.0;
+    public static final String climberMaxVelocityKey = "climberMaxVelocity";
+    public static final String climberMaxAccelerationKey = "climberMaxAcceleration";
+    public static final double climberMaxVelocityDefault = 500;
+    public static final double climberMaxAccelerationDefault = 1000;
+    public static final double climberNudgeIncrement = 1.0;
+    public static final String climberNudgeIncrementKey = "climberNudgeIncrement";
   }
 
   public static final class HopperConstants {

@@ -15,7 +15,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Preferences;
@@ -34,7 +35,7 @@ public class Climber extends SubsystemBase{
   private SparkMax climberMotor;
   private double climberSpeed = 0;
   private double climberSetpoint = 0;
-  private PIDController climberPID;
+  private ProfiledPIDController climberPID;
   private boolean PIDEnabled = true;
   private Servo servoLeft;
   private Servo servoRight;
@@ -48,6 +49,7 @@ public class Climber extends SubsystemBase{
   private double climberLowerSoftLimit = ClimberConstants.climberLowerSoftLimit;
   private double climberUpperSoftLimit = ClimberConstants.climberUpperSoftLimit;
   private boolean limitsEnabled = true;
+  private double nudgeIncrement = ClimberConstants.climberNudgeIncrement;
 
   private RelativeEncoder climberEncoder;
 
@@ -55,17 +57,20 @@ public class Climber extends SubsystemBase{
 
 
   public Climber() {
-
-    loadPreferences();
-
     climberMotor = new SparkMax(Constants.CanIds.kClimbMotor, MotorType.kBrushless);
     climberMotor.configure(new SparkMaxConfig().inverted(false)
         .idleMode(IdleMode.kBrake),
         ResetMode.kResetSafeParameters,
         PersistMode.kNoPersistParameters);
-    climberPID = new PIDController(ClimberConstants.kPdefault, ClimberConstants.kIdefault, ClimberConstants.kDdefault);
+    climberPID = new ProfiledPIDController(
+        ClimberConstants.kPdefault,
+        ClimberConstants.kIdefault,
+        ClimberConstants.kDdefault,
+        new TrapezoidProfile.Constraints(
+            ClimberConstants.climberMaxVelocityDefault,
+            ClimberConstants.climberMaxAccelerationDefault));
     climberPID.setTolerance(ClimberConstants.kToleranceDefault);
-    climberPID.reset();
+    climberPID.reset(getClimberPosition());
     climberEncoder = climberMotor.getEncoder();
     climberEncoder.setPosition(0.0);
 
@@ -74,7 +79,9 @@ public class Climber extends SubsystemBase{
 
     lowerLimitSwitch = new DigitalInput(Constants.DigitalIO.kClimberLimitSwitch);
     servoTimer = new Timer();
-  
+
+    loadPreferences();
+
     retractHooks();
   }
 
@@ -106,9 +113,8 @@ public class Climber extends SubsystemBase{
   }
 
   private boolean hooksReady(){
-    return servoTimer.hasElapsed(climberSetpoint);
+    return servoTimer.hasElapsed(servoTime);
   }
-
 
   public String hookStatus(){
     if(!hooksReady()){
@@ -124,11 +130,12 @@ public class Climber extends SubsystemBase{
 
 
   public void moveClimberPID(double setpoint){
-    climberSetpoint = MathUtil.clamp(setpoint, climberLowerSoftLimit, climberUpperSoftLimit);
+  climberSetpoint = MathUtil.clamp(setpoint, climberLowerSoftLimit, climberUpperSoftLimit);
+  climberPID.setGoal(climberSetpoint);
   }
 
   public boolean atSetpoint(){
-    return climberPID.atSetpoint();
+  return climberPID.atGoal();
   }
 
   public double getClimberManualSpeed(){
@@ -140,7 +147,8 @@ public class Climber extends SubsystemBase{
   }
 
   public void hold(){
-    moveClimberPID(climberEncoder.getPosition());
+  moveClimberPID(climberEncoder.getPosition());
+  climberPID.reset(climberEncoder.getPosition());
   }
 
   public void enablePID(boolean enabled){
@@ -175,7 +183,7 @@ public class Climber extends SubsystemBase{
   @Override 
   public void periodic(){
     if (PIDEnabled()){
-      double output = climberPID.calculate(getClimberPosition(), climberSetpoint);
+      double output = climberPID.calculate(getClimberPosition());
       climberMotor.set(output);
     }
   }
@@ -189,21 +197,32 @@ public class Climber extends SubsystemBase{
   }
 
   public void loadPreferences() {
-      System.out.println("Loading climber PID values from preferences");
-      climberPID.setP(Preferences.getDouble(ClimberConstants.kPkey, ClimberConstants.kPdefault));
-      climberPID.setI(Preferences.getDouble(ClimberConstants.kIkey, ClimberConstants.kIdefault));
-      climberPID.setD(Preferences.getDouble(ClimberConstants.kDkey, ClimberConstants.kDdefault));
-      climberPID.setTolerance(Preferences.getDouble(ClimberConstants.PIDToleranceKey,
-          ClimberConstants.kToleranceDefault));
-      climberSpeed = Preferences.getDouble(ClimberConstants.climberSpeedKey,
-          ClimberConstants.climberDefaultSpeed);
-      leftHookRetractedAngle = Preferences.getDouble(ClimberConstants.leftHookRetractedAnglekey, ClimberConstants.leftHookRetractedAngle);
-      leftHookDeployedAngle = Preferences.getDouble(ClimberConstants.leftHookDeployedAnglekey, ClimberConstants.leftHookDeployedAngle);
-      rightHookRetractedAngle = Preferences.getDouble(ClimberConstants.rightHookRetractedAnglekey, ClimberConstants.rightHookRetractedAngle);
-      rightHookDeployedAngle = Preferences.getDouble(ClimberConstants.rightHookDeployedAnglekey, ClimberConstants.rightHookDeployedAngle);
-      servoTime = Preferences.getDouble(ClimberConstants.climberServoTimeKey, ClimberConstants.climberServoTime);
-      climberLowerSoftLimit = Preferences.getDouble(ClimberConstants.climberLowerSoftLimitKey, ClimberConstants.climberLowerSoftLimit);
-      climberUpperSoftLimit = Preferences.getDouble(ClimberConstants.climberUpperSoftLimitKey, ClimberConstants.climberUpperSoftLimit);
+    System.out.println("Loading climber PID values from preferences");
+    climberPID.setP(Preferences.getDouble(ClimberConstants.kPkey, ClimberConstants.kPdefault));
+    climberPID.setI(Preferences.getDouble(ClimberConstants.kIkey, ClimberConstants.kIdefault));
+    climberPID.setD(Preferences.getDouble(ClimberConstants.kDkey, ClimberConstants.kDdefault));
+    climberPID.setTolerance(Preferences.getDouble(ClimberConstants.PIDToleranceKey,
+        ClimberConstants.kToleranceDefault));
+    climberPID.setConstraints(new TrapezoidProfile.Constraints(
+        Preferences.getDouble(ClimberConstants.climberMaxVelocityKey, ClimberConstants.climberMaxVelocityDefault),
+        Preferences.getDouble(ClimberConstants.climberMaxAccelerationKey,
+            ClimberConstants.climberMaxAccelerationDefault)));
+    climberSpeed = Preferences.getDouble(ClimberConstants.climberSpeedKey,
+        ClimberConstants.climberDefaultSpeed);
+    leftHookRetractedAngle = Preferences.getDouble(ClimberConstants.leftHookRetractedAnglekey,
+        ClimberConstants.leftHookRetractedAngle);
+    leftHookDeployedAngle = Preferences.getDouble(ClimberConstants.leftHookDeployedAnglekey,
+        ClimberConstants.leftHookDeployedAngle);
+    rightHookRetractedAngle = Preferences.getDouble(ClimberConstants.rightHookRetractedAnglekey,
+        ClimberConstants.rightHookRetractedAngle);
+    rightHookDeployedAngle = Preferences.getDouble(ClimberConstants.rightHookDeployedAnglekey,
+        ClimberConstants.rightHookDeployedAngle);
+    servoTime = Preferences.getDouble(ClimberConstants.climberServoTimeKey, ClimberConstants.climberServoTime);
+    climberLowerSoftLimit = Preferences.getDouble(ClimberConstants.climberLowerSoftLimitKey,
+        ClimberConstants.climberLowerSoftLimit);
+    climberUpperSoftLimit = Preferences.getDouble(ClimberConstants.climberUpperSoftLimitKey,
+        ClimberConstants.climberUpperSoftLimit);
+  nudgeIncrement = Preferences.getDouble(ClimberConstants.climberNudgeIncrementKey, ClimberConstants.climberNudgeIncrement);
   }
 
   public void savePreferences() {
@@ -211,7 +230,7 @@ public class Climber extends SubsystemBase{
     Preferences.setDouble(ClimberConstants.kPkey, climberPID.getP());
     Preferences.setDouble(ClimberConstants.kIkey, climberPID.getI());
     Preferences.setDouble(ClimberConstants.kDkey, climberPID.getD());
-    Preferences.setDouble(ClimberConstants.PIDToleranceKey, climberPID.getErrorTolerance());
+    Preferences.setDouble(ClimberConstants.PIDToleranceKey, climberPID.getPositionTolerance());
     Preferences.setDouble(ClimberConstants.climberSpeedKey, climberSpeed);
     Preferences.setDouble(ClimberConstants.leftHookRetractedAnglekey, leftHookRetractedAngle);
     Preferences.setDouble(ClimberConstants.leftHookDeployedAnglekey, leftHookDeployedAngle);
@@ -220,6 +239,7 @@ public class Climber extends SubsystemBase{
     Preferences.setDouble(ClimberConstants.climberServoTimeKey, servoTime);
     Preferences.setDouble(ClimberConstants.climberLowerSoftLimitKey, climberLowerSoftLimit);
     Preferences.setDouble(ClimberConstants.climberUpperSoftLimitKey, climberUpperSoftLimit);
+  Preferences.setDouble(ClimberConstants.climberNudgeIncrementKey, nudgeIncrement);
   }
 
   //PID values, climber default speed, servo setpoints
@@ -230,7 +250,7 @@ public class Climber extends SubsystemBase{
     builder.addDoubleProperty("kP", ()-> climberPID.getP(), (x)-> climberPID.setP(x));
     builder.addDoubleProperty("kI", ()-> climberPID.getI(), (x)-> climberPID.setI(x));
     builder.addDoubleProperty("kD", ()-> climberPID.getD(), (x)-> climberPID.setD(x));
-    builder.addDoubleProperty("kTolerance", ()-> climberPID.getErrorTolerance(), (x)-> climberPID.setTolerance(x));
+    builder.addDoubleProperty("kTolerance", ()-> climberPID.getPositionTolerance(), (x)-> climberPID.setTolerance(x));
     builder.addDoubleProperty("climber manual speed", ()-> getClimberManualSpeed(), (x)-> climberSpeed = x);
     builder.addDoubleProperty("left retracted angle", ()-> leftHookRetractedAngle, (x)-> leftHookRetractedAngle = x);
     builder.addDoubleProperty("right retracted angle", ()-> rightHookRetractedAngle, (x)-> rightHookRetractedAngle = x);
@@ -242,6 +262,9 @@ public class Climber extends SubsystemBase{
     builder.addDoubleProperty("Motor Output", () -> climberMotor.getAppliedOutput(), null);
     builder.addDoubleProperty("lower limit", ()->climberLowerSoftLimit, (x)->climberLowerSoftLimit=x);
     builder.addDoubleProperty("upper limit", ()->climberUpperSoftLimit, (x)->climberUpperSoftLimit=x);
+    builder.addDoubleProperty("nudge increment", ()-> nudgeIncrement, (x)-> nudgeIncrement = x);
+    builder.addBooleanProperty("limits enabled", ()-> limitsEnabled, (x)-> overrideLimits(x));
+    builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if(x){savePreferences();} });
   }
 
 
@@ -278,7 +301,7 @@ public class Climber extends SubsystemBase{
   public Command NudgeClimberPosition(DoubleSupplier nudgeAmount){
     return new FunctionalCommand(
                                 ()-> {},
-                                ()-> {moveClimberPID(getClimberPosition() + nudgeAmount.getAsDouble());},
+                                ()-> {moveClimberPID(getClimberPosition() + (nudgeAmount.getAsDouble() * nudgeIncrement));},
                                 (x)-> {hold();},
                                 ()-> atSetpoint(),
                                 this                           
