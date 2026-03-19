@@ -133,11 +133,11 @@ public class GoToCommand extends Command {
   }
 
   protected double deltaHeading() {
-    return SwerveUtils.angleDeltaDeg(m_nav.getAngleDegrees(), destHeadingDegrees());
+    return SwerveUtils.angleDeltaDeg(m_nav.getHeadingDegrees(), destHeadingDegrees());
   }
 
   protected double speedTowardTarget() {
-    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getAngle());
+    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getHeading());
     Translation2d targetDirection = translation2dest();
 
     if (botDirection.getNorm() <= 1e-6) {
@@ -162,12 +162,21 @@ public class GoToCommand extends Command {
 
     double speed = m_speedProfile.calculate(dT, currentState, goalState).velocity;
 
-    Translation2d unitTranslation = toDest.div(distanceToDest);
+    Translation2d unitTranslation;
+    if (distanceToDest > 1e-6) {
+      unitTranslation = toDest.div(distanceToDest);
+    } else {
+      unitTranslation = new Translation2d();
+    }
 
-    State angularCurrentState = new State(m_drive.getHeading().getRadians(), m_drive.getAngularVelocityRadPerSec());
-    State angularGoalState = new State(destHeadingRadians(), 0.0);
-    double rotation = m_angularSpeedProfile.calculate(dT, angularCurrentState, angularGoalState).velocity;
-
+    double currentHeading = m_drive.getHeading().getRadians();
+    double goalHeading = destHeadingRadians();
+    double angleError = MathUtil.angleModulus(goalHeading - currentHeading);
+    State angularCurrentState = new State(angleError, -m_drive.getAngularVelocityRadPerSec());
+    State angularGoalState = new State(0.0, 0.0);
+    double profiledErrorVelocity = m_angularSpeedProfile.calculate(dT, angularCurrentState, angularGoalState).velocity;
+    double rotation = -profiledErrorVelocity;
+    
     if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance * globalToleranceScale)){
       speed = 0.0;
     }
@@ -186,7 +195,7 @@ public class GoToCommand extends Command {
   @Override
   public boolean isFinished() {
     return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
-        MathUtil.isNear(destHeadingDegrees(), m_nav.getAngleDegrees(),
+        MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
                         kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
   }
 

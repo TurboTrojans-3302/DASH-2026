@@ -38,6 +38,11 @@ public final class Constants {
    // public static final int kClimbMotor2 = 15;
   }
 
+  public final class RobotConstants {
+    public static final double lengthWithBumpers = 0.762; // meters, 30 inches
+    public static final double widthWithBumpers = 0.762; // meters,
+  }
+
   public static final class DigitalIO {
     public static final int kHopperLeftContractedLimitSwitchDio = 1;
     public static final int kHopperRightContractedLimitSwitchDio = 2;
@@ -115,7 +120,7 @@ public final class Constants {
     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
     public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
     public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
-  }
+    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);}
 
   public static final class LimelightConstants {
     public static final String name = "limelight";
