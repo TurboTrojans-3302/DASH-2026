@@ -54,11 +54,11 @@ public class Shooter extends SubsystemBase {
   public Shooter(int shooterMotorID, int secondShooterMotorID, int feederMotorID, int secondFeederMotorID) {
     shooterMotor = new SparkMax(shooterMotorID, MotorType.kBrushless);
     SparkMaxConfig config1 = new SparkMaxConfig();
-    config1.apply(SparkMaxConfig.Presets.REV_NEO_550);
+    config1.apply(SparkMaxConfig.Presets.REV_NEO);
     config1.inverted(false).idleMode(IdleMode.kCoast);
 
     SparkMaxConfig config2 = new SparkMaxConfig();
-    config2.apply(SparkMaxConfig.Presets.REV_NEO_550);
+    config2.apply(SparkMaxConfig.Presets.REV_NEO);
     config2.inverted(false).idleMode(IdleMode.kCoast);
     config2.follow(Constants.CanIds.kShooterMotorCanId);
 
