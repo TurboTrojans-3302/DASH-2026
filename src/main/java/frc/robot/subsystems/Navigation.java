@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -27,8 +28,8 @@ import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.utils.SwerveUtils;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Navigation extends SubsystemBase {
   private final String cameraName = "limelight";
@@ -41,6 +42,7 @@ public class Navigation extends SubsystemBase {
   private VideoCamera limeightCamera;
   private VideoCamera usbCamera;
   private VideoSink cameraServer;
+  private Alliance alliance;
 
   /** Creates a new Navigation. */
   public Navigation(DriveTrain drive, DXsensor dxSensor) {
@@ -59,6 +61,7 @@ public class Navigation extends SubsystemBase {
                                               LimelightConstants.Offset.pitch,
                                               LimelightConstants.Offset.yaw,
                                               LimelightConstants.Offset.roll);
+    setIMUMode(1);
 
     // Publish the Limelight MJPEG stream so Elastic can display it as a camera widget
     limeightCamera = new HttpCamera(
@@ -69,10 +72,19 @@ public class Navigation extends SubsystemBase {
     cameraServer = CameraServer.getServer();
 
     SmartDashboard.putData(m_dashboardField);
+    SmartDashboard.putData("Nav Pose Heading", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("Gyro");
+        builder.addDoubleProperty("Value", () -> getHeadingDegrees(), null);
+      } 
+    });
+
   }
 
-  public void setAlliance(DriverStation.Alliance alliance) {
-    if (alliance == DriverStation.Alliance.Red) {
+  public void setAlliance(Alliance alliance) {
+    this.alliance = alliance;
+    if (alliance == Alliance.Red) {
       m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
     } else {
       m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
@@ -82,17 +94,27 @@ public class Navigation extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-  
-    PoseEstimate est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
-    //TODO is this necessary? how often is the estimate invalid?
-    if (LimelightHelpers.validPoseEstimate(est) && 
-        (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
-      m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
+
+    if(alliance != null) {
+      PoseEstimate est;
+      if (alliance == Alliance.Red) {
+        est = LimelightHelpers.getBotPoseEstimate_wpiRed(cameraName);
+      } else {
+        est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
+      }
+
+      //TODO is this necessary? how often is the estimate invalid?
+      if (LimelightHelpers.validPoseEstimate(est) && 
+          (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
+        m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
+      }
     }
 
-    Pose2d pose = m_poseEstimator.getEstimatedPosition();
-    LimelightHelpers.SetRobotOrientation(cameraName, pose.getRotation().getDegrees(), 0, 0, 0, 0, 0);
-    m_dashboardField.setRobotPose(pose);
+    // todo: are we always setting yaw parameter correctly wrt to alliance?
+    double yaw = alliance == Alliance.Blue ? m_drive.getGyroAngleDegrees() : m_drive.getGyroAngleDegrees() + 180.0;
+    LimelightHelpers.SetRobotOrientation(cameraName, yaw, 0, 0, 0, 0, 0);
+
+    m_dashboardField.setRobotPose(getPose());
   }
 
   public Pose2d getPose() {
@@ -170,13 +192,13 @@ public class Navigation extends SubsystemBase {
     mainCameraStreamSelected = !mainCameraStreamSelected;
   }
 
-  public Rotation2d getHeadingToTarget() {
+  public Rotation2d getAbsBearingToTarget() {
     Translation2d delta = FieldConstants.HubCenterPoint.getTranslation().minus(getPose().getTranslation());
     return delta.getAngle();
   }
 
-  public double getDeltaAngleToTargetDegrees() {
-    return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getHeadingToTarget().getDegrees());
+  public double getRelBearingToTargetDegrees() {
+    return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getAbsBearingToTarget().getDegrees());
   } 
 
   /**
@@ -196,6 +218,10 @@ public class Navigation extends SubsystemBase {
     return new Pose2d(optimalPoint, heading);
   }
   
+  public void setIMUMode(int mode) {
+    LimelightHelpers.SetIMUMode(cameraName, mode);
+  } 
+
   @Override
   public void initSendable(SendableBuilder builder) {
       super.initSendable(builder);
@@ -204,6 +230,6 @@ public class Navigation extends SubsystemBase {
       builder.addIntegerProperty("ApriltagFound", () -> {return (int) LimelightHelpers.getFiducialID(cameraName);} , null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
       builder.addDoubleProperty("Target DX", ()->getDXtoTarget(), null);
-      builder.addDoubleProperty("Target Angle", ()->getDeltaAngleToTargetDegrees(), null);
+      builder.addDoubleProperty("Target Angle", ()->getRelBearingToTargetDegrees(), null);
     }
 }
