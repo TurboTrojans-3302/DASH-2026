@@ -268,7 +268,7 @@ public class Climber extends SubsystemBase{
   }
 
 
-  public Command DeployHooks(){
+  public Command deployHooksCommand(){
     return new FunctionalCommand(
                                 ()-> {deployHooks();},
                                 ()-> {},
@@ -278,7 +278,7 @@ public class Climber extends SubsystemBase{
     );
   }
 
-  public Command RetractHooks(){
+  public Command retractHooksCommand(){
     return new FunctionalCommand(
                                 ()-> {retractHooks();},
                                 ()-> {},
@@ -288,7 +288,7 @@ public class Climber extends SubsystemBase{
     );
   }
 
-  public Command MoveClimberToSetpoint(DoubleSupplier setpoint){
+  public Command moveClimberToSetpointCommand(DoubleSupplier setpoint){
     return new FunctionalCommand(
                                 ()-> {moveClimberPID(setpoint.getAsDouble());},
                                 ()-> {},
@@ -298,7 +298,7 @@ public class Climber extends SubsystemBase{
     );
   }
 
-  public Command NudgeClimberPosition(DoubleSupplier nudgeAmount){
+  public Command nudgeClimberPositionCommand(DoubleSupplier nudgeAmount){
     return new FunctionalCommand(
                                 ()-> {},
                                 ()-> {moveClimberPID(getClimberPosition() + (nudgeAmount.getAsDouble() * nudgeIncrement));},
@@ -308,7 +308,7 @@ public class Climber extends SubsystemBase{
     );
   }
 
-  public Command ClimberManualControlCommand(DoubleSupplier speed){
+  public Command climberManualControlCommand(DoubleSupplier speed){
     return new FunctionalCommand(
                                 ()-> {climberManualControl(speed.getAsDouble());},
                                 ()-> {},

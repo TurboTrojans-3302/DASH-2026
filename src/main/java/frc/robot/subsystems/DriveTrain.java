@@ -28,18 +28,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
-import java.io.File;
-import java.util.Arrays;
-import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
-
-import com.studica.frc.AHRS;
-
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
-import swervelib.SwerveModule;
-import swervelib.imu.SwerveIMU;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
@@ -97,6 +88,15 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
       } 
     });
+
+    SmartDashboard.putData("IMU Raw Heading", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("Gyro");
+        builder.addDoubleProperty("Value", () -> Math.toDegrees(swerveDrive.getGyro().getRawRotation3d().getZ()), null);
+      } 
+    });
+
   }
 
   public double getMaxAngularVelocity() {

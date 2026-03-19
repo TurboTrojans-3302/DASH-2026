@@ -7,13 +7,7 @@ package frc.robot;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import java.util.Map;
-import java.util.function.Supplier;
-
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -28,10 +22,10 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
-import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.AutoShootFromCenter;
 import frc.robot.autoncommands.AutoShootFromLeft;
 import frc.robot.autoncommands.AutoShootFromRight;
+import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
@@ -44,7 +38,6 @@ import frc.robot.subsystems.Harvester;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.GameData;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -195,18 +188,18 @@ public class RobotContainer {
       new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
           .onTrue(new InstantCommand(() -> m_climbers.enablePID(false), m_climbers));
       new Trigger(() -> (Math.abs(m_copilotController.getRightY()) > 0.1) && !m_climbers.PIDEnabled())
-          .whileTrue(m_climbers.ClimberManualControlCommand(() -> -m_copilotController.getRightY()));
+          .whileTrue(m_climbers.climberManualControlCommand(() -> -m_copilotController.getRightY()));
 
       new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
           .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
       new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())
-          .whileTrue(m_climbers.NudgeClimberPosition(m_copilotController::getLeftY));
+          .whileTrue(m_climbers.nudgeClimberPositionCommand(m_copilotController::getLeftY));
 
       // retract/engage hooks
       new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)
-          .onTrue(m_climbers.RetractHooks());
+          .onTrue(m_climbers.retractHooksCommand());
       new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value)
-          .onTrue(m_climbers.DeployHooks());
+          .onTrue(m_climbers.deployHooksCommand());
     }
 
    /**
