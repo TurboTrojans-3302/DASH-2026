@@ -4,12 +4,9 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Inches;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.DistanceUnit;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -36,6 +33,11 @@ public final class Constants {
     public static final int kSecondFeederMotorCanId = 14;
    // public static final int kClimbMotor1 = 14;
    // public static final int kClimbMotor2 = 15;
+  }
+
+  public final class RobotConstants {
+    public static final double lengthWithBumpers = 0.762; // meters, 30 inches
+    public static final double widthWithBumpers = 0.762; // meters,
   }
 
   public static final class DigitalIO {
@@ -115,7 +117,7 @@ public final class Constants {
     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
     public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
     public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
-  }
+    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);}
 
   public static final class LimelightConstants {
     public static final String name = "limelight";
@@ -169,6 +171,13 @@ public final class Constants {
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
 
     public static final double SecondaryFeederSpeedDefault = 0.3;
+    public static final int smartCurrentLimitDefault = 60;
+    public static final int secondaryCurrentLimitDefault = 60;
+    public static final int currentLimitRPMDefault = 5700;
+
+    public static final String smartCurrentLimitKey = "shooter_SmartCurrentLimit";
+    public static final String secondaryCurrentLimitKey = "shooter_SecondaryCurrentLimit";
+    public static final String currentLimitRPMKey = "shooter_CurrentLimitRPM";
   }
 
   public static final class HarvesterConstants {

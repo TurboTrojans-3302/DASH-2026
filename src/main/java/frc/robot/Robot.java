@@ -70,16 +70,6 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.configureButtonBindings();
     m_robotContainer.setDefaultCommands();
-    //CanBridge.runTCP();
-    LimelightHelpers.setCameraPose_RobotSpace(Constants.LimelightConstants.name,
-                                              Constants.LimelightConstants.Offset.forward,
-                                              Constants.LimelightConstants.Offset.side,
-                                              Constants.LimelightConstants.Offset.up,
-                                              Constants.LimelightConstants.Offset.roll,
-                                              Constants.LimelightConstants.Offset.pitch,
-                                              Constants.LimelightConstants.Offset.yaw
-                                            );
-
     
     m_autonomousChooser = m_robotContainer.createAutonomousChooser();
     SmartDashboard.putData("Autonomous", m_autonomousChooser);
@@ -113,8 +103,6 @@ public class Robot extends TimedRobot {
   public void disabledInit() {
     m_robotContainer.saveSomePreferences();
     m_robotContainer.setLED(REVBlinkinLED.Pattern.SOLID_VIOLET);
-    m_autonomousChooser = m_robotContainer.createAutonomousChooser();
-    SmartDashboard.putData("Autonomous", m_autonomousChooser);
   }
 
   @Override
@@ -127,9 +115,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
-    if(alliance == null) {
-      Optional<Alliance> a = DriverStation.getAlliance();
-      if (a.isPresent()) {
+    Optional<Alliance> a = DriverStation.getAlliance();
+    if (a.isPresent()) {
+      if(alliance != a.get()){
         alliance = a.get();
         if(alliance == Alliance.Red) {
           m_robotContainer.initRed();
@@ -151,12 +139,12 @@ public class Robot extends TimedRobot {
     m_robotContainer.readPIDswitches();
     
     m_robotContainer.m_robotDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
+    m_robotContainer.m_navigation.setIMUMode(4);
 
     String commandName = m_autonomousChooser.getSelected();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);
     System.out.println("Starting command: " + commandName + " -> " + m_autonomousCommand.getName());
     CommandScheduler.getInstance().schedule(m_autonomousCommand);
-
   }
 
   /** This function is called periodically during autonomous. */

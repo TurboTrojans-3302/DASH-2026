@@ -14,15 +14,13 @@ import frc.robot.subsystems.Shooter;
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class AutoShootFromRight extends SequentialCommandGroup {
-  /** Creates a new AutoShootFromCenter. */
-  public AutoShootFromRight(DriveTrain drivetrain, Shooter shooter, Navigation nav) {
+public class AutoSideStartMoveAndShootNoNav extends SequentialCommandGroup {
+  /** Creates a new AutoSideStartMoveAndShootNoNav. */
+  public AutoSideStartMoveAndShootNoNav(DriveTrain driveTrain, Navigation navigation, Shooter shooter, double dx, double angle) {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
-    addCommands(
-      GoToCommand.relative(drivetrain, nav, 1, 1, 45.0),
-      new SetRange(shooter, 1.141), //todo fix this range
-      shooter.shootCommand()
-    );
+    addCommands(GoToCommand.relative(driveTrain, navigation, dx, 0.0, angle),
+                new SetRange(shooter, dx).withTimeout(4.0),
+                shooter.shootCommand().withTimeout(10));
   }
 }
