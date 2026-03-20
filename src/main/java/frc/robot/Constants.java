@@ -4,12 +4,9 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Inches;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.DistanceUnit;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -161,16 +158,26 @@ public final class Constants {
     public static final double kDfilterDefault = 0.0;
     public static final String kRampRateKey = "shooter_kRampRate";
     public static final double kRampRateDefault = 0.0;
-    public static final double maxRPM = 3000.0;
+    public static final String kMaxAccelKey = "shooter_kMaxAccel";
+    public static final double kMaxAccelDefault = 1500.0;
+    public static final String kMaxVelocityKey = "shooter_kMaxVelocity";
+    public static final double kMaxVelocityDefault = 3000.0;
     public static final double defaultShootRPM = 1600.0;
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
     public static double manualRPMincrement = 10; // rpm
-    public static String secondFeederSpeedKey = "secondFeederSpeed";
+    public static final String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
 
     public static final double SecondaryFeederSpeedDefault = 0.3;
+    public static final int smartCurrentLimitDefault = 60;
+    public static final int secondaryCurrentLimitDefault = 60;
+    public static final int currentLimitRPMDefault = 5700;
+
+    public static final String smartCurrentLimitKey = "shooter_SmartCurrentLimit";
+    public static final String secondaryCurrentLimitKey = "shooter_SecondaryCurrentLimit";
+    public static final String currentLimitRPMKey = "shooter_CurrentLimitRPM";
   }
 
   public static final class HarvesterConstants {
