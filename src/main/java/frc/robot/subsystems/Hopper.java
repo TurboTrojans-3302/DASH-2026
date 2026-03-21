@@ -313,6 +313,8 @@ public class Hopper extends SubsystemBase {
             applyPIDGains();
             leftEncoder.setPosition(Preferences.getDouble(HopperConstants.leftPositionKey, 0));
             rightEncoder.setPosition(Preferences.getDouble(HopperConstants.rightPositionKey, 0));
+            System.out.println("Loading " + HopperConstants.leftPositionKey + ":" + Preferences.getDouble(HopperConstants.rightPositionKey, 0));
+            System.out.println("Loading " + HopperConstants.leftPositionKey + ":" + Preferences.getDouble(HopperConstants.rightPositionKey, 0));
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -367,7 +369,10 @@ public class Hopper extends SubsystemBase {
     }
 
     public void savePositions() {
-        Preferences.setDouble(HopperConstants.leftPositionKey,  leftEncoder.getPosition());
-        Preferences.setDouble(HopperConstants.rightPositionKey, rightEncoder.getPosition());
+        double l = leftEncoder.getPosition();
+        double r = rightEncoder.getPosition();
+        Preferences.setDouble(HopperConstants.leftPositionKey,  l);
+        Preferences.setDouble(HopperConstants.rightPositionKey, r);
+        System.out.println("Hopper positions saved: " + l + " " + r);
     }
 }
