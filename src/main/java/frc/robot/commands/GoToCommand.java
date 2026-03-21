@@ -133,11 +133,11 @@ public class GoToCommand extends Command {
   }
 
   protected double deltaHeading() {
-    return SwerveUtils.angleDeltaDeg(m_nav.getAngleDegrees(), destHeadingDegrees());
+    return SwerveUtils.angleDeltaDeg(m_nav.getHeadingDegrees(), destHeadingDegrees());
   }
 
   protected double speedTowardTarget() {
-    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getAngle());
+    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getHeading());
     Translation2d targetDirection = translation2dest();
 
     if (botDirection.getNorm() <= 1e-6) {
@@ -195,7 +195,7 @@ public class GoToCommand extends Command {
   @Override
   public boolean isFinished() {
     return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
-        MathUtil.isNear(destHeadingDegrees(), m_nav.getAngleDegrees(),
+        MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
                         kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
   }
 
