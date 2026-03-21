@@ -29,6 +29,8 @@ import frc.robot.Constants.HopperConstants;
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
  */
 public class Hopper extends SubsystemBase {
+    public static double STARTPOSITION = HopperConstants.STARTPOSITIONdefault;
+
     private final SparkMax leftMotor;
     private final SparkMax rightMotor;
     private final RelativeEncoder leftEncoder, rightEncoder;
@@ -237,6 +239,10 @@ public class Hopper extends SubsystemBase {
         return atSoftMinL() || atSoftMinR();
     }
 
+    public Command setPositionCommand(Double targetPosition) {
+        return setPositionCommand(()->targetPosition);
+    }
+    
     public Command setPositionCommand(DoubleSupplier targetPosition) {
         FunctionalCommand cmd = new FunctionalCommand(
             () -> { setPosition(targetPosition.getAsDouble()); },
@@ -274,7 +280,7 @@ public class Hopper extends SubsystemBase {
     public Command nudgeCommand(double incrementPerLoop) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init needed
-            () -> setPosition(positionSetpoint + incrementPerLoop), // advance setpoint each loop
+            () -> setPosition(getPosition() + incrementPerLoop), // advance setpoint each loop
             (interrupted) -> hold(), // hold position on release
             () -> false, // whileTrue in RobotContainer handles termination
             this);
