@@ -181,11 +181,11 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double kVdefault = .0015;
+    public static final double kVdefault = .02;
     public static final String kVkey = "harvesterKv";
-    public static final double pullInRPMDefault = 200;
+    public static final double pullInRPMDefault = 400;
     public static final String pullInRPMkey = "harvesterPullInRPM";
-    public static final double kPdefault = 0.0;
+    public static final double kPdefault = 0.01;
     public static final String kPkey = "harvesterKp";
     public static final double kTolDefault = 10.0;
     public static final String kTolKey = "harvesterKTol";
