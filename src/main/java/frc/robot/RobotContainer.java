@@ -118,7 +118,7 @@ public class RobotContainer {
       SmartDashboard.putData("HarvesterSubsystem", m_harvester);
     }
 
-    m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
+    m_BlinkinLED = new REVBlinkinLED(Constants.PWMChannels.BLINKIN_LED_PWM_CHANNEL);
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);

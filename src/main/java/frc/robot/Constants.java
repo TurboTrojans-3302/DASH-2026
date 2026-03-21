@@ -35,13 +35,14 @@ public final class Constants {
   }
 
   public final class RobotConstants {
-    public static final double lengthWithBumpers = 0.762; // meters, 30 inches
-    public static final double widthWithBumpers = 0.762; // meters,
+    public static final double lengthWithBumpers = 0.851; // 33.5 inches in meters
+    public static final double widthWithBumpers = 0.851;
   }
 
   public static final class PWMChannels {
-    public static final int PWMServoLeft = 0;
-    public static final int PWMServoRight = 1;
+    public static final int BLINKIN_LED_PWM_CHANNEL = 0;
+    public static final int PWMServoLeft = 1;
+    public static final int PWMServoRight = 2;
   }
 
 
@@ -155,7 +156,7 @@ public final class Constants {
     public static final double kIdefault = 0;
     public static final double kDdefault = 0.0002;
     public static final double kVdefault = 0.00018;
-    public static double PIDToleranceDefault = 10.0;
+    public static final double PIDToleranceDefault = 10.0;
     public static final String kPkey = "shooter_kP";
     public static final String kIkey = "shooter_kI";
     public static final String kDkey = "shooter_kD";
@@ -232,6 +233,10 @@ public final class Constants {
     public static final double climberMaxAccelerationDefault = 1000;
     public static final double climberNudgeIncrement = 1.0;
     public static final String climberNudgeIncrementKey = "climberNudgeIncrement";
+    public static final double START = 0.0;
+    public static final double HANG = 150.0;
+    public static final double HIGH = 200.0;
+
   }
 
   public static final class HopperConstants {
@@ -261,6 +266,4 @@ public final class Constants {
     public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
     public static final String hardLimitEnableKey = "hopperHardLimitEnable";
   }
-
-  public static final int BLINKIN_LED_PWM_CHANNEL = 0;
 }

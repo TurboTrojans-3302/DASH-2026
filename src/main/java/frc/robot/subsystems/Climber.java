@@ -26,14 +26,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.Constants.ClimberConstants;
 import frc.robot.Constants.PWMChannels;
 
 
 public class Climber extends SubsystemBase{
 
+  public static double START = ClimberConstants.START;
+  public static double HANG = ClimberConstants.HANG;
+  public static double HIGH = ClimberConstants.HIGH;  
+
   private SparkMax climberMotor;
-  private double climberSpeed = 0;
   private double climberSetpoint = 0;
   private ProfiledPIDController climberPID;
   private boolean PIDEnabled = true;
@@ -138,9 +142,6 @@ public class Climber extends SubsystemBase{
   return climberPID.atGoal();
   }
 
-  public double getClimberManualSpeed(){
-    return climberSpeed;
-  }
 
   public void stopClimbers(){
     climberMotor.stopMotor();
@@ -173,6 +174,7 @@ public class Climber extends SubsystemBase{
   }
 
   public double getClimberPosition(){
+    if(Robot.isSimulation()) return 0.0;
     return climberEncoder.getPosition();
   }
 
@@ -207,8 +209,6 @@ public class Climber extends SubsystemBase{
         Preferences.getDouble(ClimberConstants.climberMaxVelocityKey, ClimberConstants.climberMaxVelocityDefault),
         Preferences.getDouble(ClimberConstants.climberMaxAccelerationKey,
             ClimberConstants.climberMaxAccelerationDefault)));
-    climberSpeed = Preferences.getDouble(ClimberConstants.climberSpeedKey,
-        ClimberConstants.climberDefaultSpeed);
     leftHookRetractedAngle = Preferences.getDouble(ClimberConstants.leftHookRetractedAnglekey,
         ClimberConstants.leftHookRetractedAngle);
     leftHookDeployedAngle = Preferences.getDouble(ClimberConstants.leftHookDeployedAnglekey,
@@ -231,7 +231,6 @@ public class Climber extends SubsystemBase{
     Preferences.setDouble(ClimberConstants.kIkey, climberPID.getI());
     Preferences.setDouble(ClimberConstants.kDkey, climberPID.getD());
     Preferences.setDouble(ClimberConstants.PIDToleranceKey, climberPID.getPositionTolerance());
-    Preferences.setDouble(ClimberConstants.climberSpeedKey, climberSpeed);
     Preferences.setDouble(ClimberConstants.leftHookRetractedAnglekey, leftHookRetractedAngle);
     Preferences.setDouble(ClimberConstants.leftHookDeployedAnglekey, leftHookDeployedAngle);
     Preferences.setDouble(ClimberConstants.rightHookRetractedAnglekey, rightHookRetractedAngle);
@@ -251,7 +250,6 @@ public class Climber extends SubsystemBase{
     builder.addDoubleProperty("kI", ()-> climberPID.getI(), (x)-> climberPID.setI(x));
     builder.addDoubleProperty("kD", ()-> climberPID.getD(), (x)-> climberPID.setD(x));
     builder.addDoubleProperty("kTolerance", ()-> climberPID.getPositionTolerance(), (x)-> climberPID.setTolerance(x));
-    builder.addDoubleProperty("climber manual speed", ()-> getClimberManualSpeed(), (x)-> climberSpeed = x);
     builder.addDoubleProperty("left retracted angle", ()-> leftHookRetractedAngle, (x)-> leftHookRetractedAngle = x);
     builder.addDoubleProperty("right retracted angle", ()-> rightHookRetractedAngle, (x)-> rightHookRetractedAngle = x);
     builder.addDoubleProperty("left deployed angle", ()-> leftHookDeployedAngle, (x)-> leftHookDeployedAngle = x);
@@ -259,6 +257,7 @@ public class Climber extends SubsystemBase{
     builder.addDoubleProperty("servo time", ()-> servoTime, (x)-> servoTime = x);
     builder.addStringProperty("Hook Status", ()-> hookStatus(), null);
     builder.addDoubleProperty("Climber Position", ()-> getClimberPosition(), (x)-> resetClimberPostition(x));
+    builder.addDoubleProperty("Climber Setpoint", ()-> climberSetpoint, (x)-> moveClimberPID(x));
     builder.addDoubleProperty("Motor Output", () -> climberMotor.getAppliedOutput(), null);
     builder.addDoubleProperty("lower limit", ()->climberLowerSoftLimit, (x)->climberLowerSoftLimit=x);
     builder.addDoubleProperty("upper limit", ()->climberUpperSoftLimit, (x)->climberUpperSoftLimit=x);
@@ -288,6 +287,11 @@ public class Climber extends SubsystemBase{
     );
   }
 
+  
+  public Command moveClimberToSetpointCommand(Double setpoint){
+    return moveClimberToSetpointCommand(()->setpoint);
+  }
+  
   public Command moveClimberToSetpointCommand(DoubleSupplier setpoint){
     return new FunctionalCommand(
                                 ()-> {moveClimberPID(setpoint.getAsDouble());},

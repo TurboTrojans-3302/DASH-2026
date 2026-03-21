@@ -16,9 +16,9 @@ public class AutoClimb extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(
-      climber.moveClimberToSetpointCommand(() -> 200.0),
+      climber.moveClimberToSetpointCommand(Climber.HIGH),
       climber.deployHooksCommand(),
-      climber.moveClimberToSetpointCommand(() -> 10.0)
+      climber.moveClimberToSetpointCommand(Climber.HANG)
     );
       
   }
