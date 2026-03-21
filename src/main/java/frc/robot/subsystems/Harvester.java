@@ -188,3 +188,4 @@ public class Harvester extends SubsystemBase {
     builder.addDoubleProperty("motor output", () -> m_harvestMotor.getAppliedOutput(), null);
   }
 }
+

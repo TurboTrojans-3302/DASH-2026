@@ -115,6 +115,8 @@ public class GoToCommand extends Command {
 
     System.out.println("Starting go to: " + m_dest);
     m_nav.m_dashboardField.getObject("dest").setPose(m_dest);
+    System.out.println("profile: " + m_speedProfile);
+    System.out.println("angular profile: " + m_angularSpeedProfile);
   }
 
   protected double totalDistance() {
@@ -170,6 +172,7 @@ public class GoToCommand extends Command {
     State goalState = new State(totalDistance(), 0.0);
 
     double speed = m_speedProfile.calculate(dT, currentState, goalState).velocity;
+    System.out.println("distance: " + distanceToDest + ", speed: " + speed);
 
     Translation2d unitTranslation;
     if (distanceToDest > 1e-6) {
