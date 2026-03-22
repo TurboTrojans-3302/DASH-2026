@@ -59,7 +59,8 @@ public class RobotContainer {
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
 
-  public static boolean ignorePeriods = false;
+  private boolean dangerMode = false;
+
 
   private static final double kHopperNudgeIncrement = 4.0;
   private static final double kHopperNudgeOpenLoopSpeed = 0.2;
@@ -212,7 +213,8 @@ public class RobotContainer {
     JoystickButton feederForward = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right3); // blockage
     JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                    // without feeding
-    enableDangerMode.onTrue(new InstantCommand(() -> m_shooter.setDangerMode(!m_shooter.isDangerMode()), m_shooter));
+    enableDangerMode.onTrue(new InstantCommand(() -> {dangerMode = !dangerMode;
+                                                      m_shooter.setDangerMode(dangerMode);}, m_shooter));
 
     shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
@@ -229,7 +231,7 @@ public class RobotContainer {
     JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
     hopperExpand.onTrue(m_hopper.expandCommand());
     if (HARVESTER_ENABLE) {
-      hopperRetract.and(enableDangerMode.or(() -> !m_harvester.isOn())).onTrue(m_hopper.retractCommand());
+      hopperRetract.and(() -> !m_harvester.isOn()).onTrue(m_hopper.retractCommand());
     } else {
       hopperRetract.onTrue(m_hopper.retractCommand());
     }
@@ -244,17 +246,17 @@ public class RobotContainer {
     nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0, this::isDangerMode));
     nudgeHopperOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed, this::isDangerMode));
     nudgeHopperRightOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed, this::isDangerMode));
     nudgeHopperLeftIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0, this::isDangerMode));
     nudgeHopperIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed, this::isDangerMode));
     nudgeHopperRightIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed, enableDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed, this::isDangerMode));
 
     JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
     JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
@@ -366,6 +368,11 @@ public class RobotContainer {
           "Warning: selected autonomous routine '" + selectedRoutineName + "' not found. Defaulting to Do Nothing.");
       return new DoNothing();
     }
+  }
+
+
+  public boolean isDangerMode() {
+    return dangerMode;
   }
 
 }
