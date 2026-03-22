@@ -169,15 +169,15 @@ public class GoToCommand extends Command {
     State nextState = m_speedProfile.calculate(dT, previousState, goalState);
 
     Translation2d translate;
-    if(MathUtil.isNear(previousState.position, goalState.position, kDistanceTolerance)){
+    if(distanceIsNear()){
       translate = new Translation2d(0.0, 0.0);
     } else {
-        translate = toDest.div(toDest.getNorm()).times(nextState.velocity);
+      translate = toDest.div(toDest.getNorm()).times(nextState.velocity);
     }
 
     State angularNextState = m_angularSpeedProfile.calculate(dT, angularPreviousState, angularGoalState);
     double rotate;
-    if(MathUtil.isNear(angularPreviousState.position, angularGoalState.position, kHeadingTolerance)){
+    if(headingIsNear()){
       rotate = 0.0;
     } else {
       rotate = angularNextState.velocity;    
@@ -201,12 +201,18 @@ public class GoToCommand extends Command {
                           "distance: " + distance() + " deltaHeading: " + deltaHeadingDegrees());
   }
 
+  private boolean distanceIsNear() {
+    return MathUtil.isNear(0.0, distance(), kDistanceTolerance);
+  }
+
+  private boolean headingIsNear() {
+    return MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
+                            kHeadingTolerance, 0.0, 360.0);
+  }
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return MathUtil.isNear(0.0, distance(), kDistanceTolerance) &&
-        MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
-                        kHeadingTolerance, 0.0, 360.0);
+    return distanceIsNear() && headingIsNear();
   }
 
   public static Sendable getSendable(){
