@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -53,9 +52,7 @@ public class RobotContainer {
   private static boolean CLIMBERS_ENABLE = false;
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
-
-  private boolean dangerMode = false;
-
+  public static boolean feederEnabled = true;
 
   private static final double kHopperNudgeIncrement = 4.0;
   private static final double kHopperNudgeOpenLoopSpeed = 0.2;
@@ -180,12 +177,16 @@ public class RobotContainer {
     JoystickButton coPilotToggleCameraStream = new JoystickButton(m_copilotController, XboxController.Button.kY.value);
     coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation)); 
 
-  /**
+   /**
      * Button Board
      *
      */
 
-  JoystickButton enableDangerMode = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch);
+  new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.SafetySwitch)
+      .onTrue(new InstantCommand(() -> {
+        m_shooter.setDangerMode(!m_shooter.isDangerMode());
+        m_hopper.enableSoftLimits(!m_hopper.areSoftLimitsEnabled());
+      }, m_shooter, m_hopper, m_harvester)); // dummy command to require all subsystems and act as a "safety switch" that prevents any other button from working when not pressed
 
   if(SHOOTER_ENABLE)
   {
@@ -210,9 +211,6 @@ public class RobotContainer {
     JoystickButton feederForward = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right3); // blockage
     JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                    // without feeding
-    enableDangerMode.onTrue(new InstantCommand(() -> {dangerMode = !dangerMode;
-                                                      m_shooter.setDangerMode(dangerMode);}, m_shooter));
-
     shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
 
     feederReverse.whileTrue(m_shooter.reverseFeedCommand());
@@ -228,7 +226,7 @@ public class RobotContainer {
     JoystickButton hopperRetract = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right2);
     hopperExpand.onTrue(m_hopper.expandCommand());
     if (HARVESTER_ENABLE) {
-      hopperRetract.and(() -> !m_harvester.isOn()).onTrue(m_hopper.retractCommand());
+      hopperRetract.onTrue(m_hopper.retractCommand());
     } else {
       hopperRetract.onTrue(m_hopper.retractCommand());
     }
@@ -243,17 +241,17 @@ public class RobotContainer {
     nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0, this::isDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
     nudgeHopperOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed, this::isDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> kHopperNudgeOpenLoopSpeed));
     nudgeHopperRightOut.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed, this::isDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> kHopperNudgeOpenLoopSpeed));
     nudgeHopperLeftIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0, this::isDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> 0.0));
     nudgeHopperIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed, this::isDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> -kHopperNudgeOpenLoopSpeed, () -> -kHopperNudgeOpenLoopSpeed));
     nudgeHopperRightIn.and(() -> !m_hopper.isPIDEnabled())
-        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed, this::isDangerMode));
+        .whileTrue(m_hopper.manualMoveCommand(() -> 0.0, () -> -kHopperNudgeOpenLoopSpeed));
 
     JoystickButton hopperPIDenable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Up);
     JoystickButton hopperPIDdisable = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch3Down);
@@ -273,7 +271,8 @@ public class RobotContainer {
     new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Switch2Down)
         .onTrue(new InstantCommand(() -> m_harvester.enablePID(false), m_harvester));
   }
-  }
+      
+}
 
   public void configureTestControls() {
   }
@@ -365,11 +364,6 @@ public class RobotContainer {
           "Warning: selected autonomous routine '" + selectedRoutineName + "' not found. Defaulting to Do Nothing.");
       return new DoNothing();
     }
-  }
-
-
-  public boolean isDangerMode() {
-    return dangerMode;
   }
 
 }
