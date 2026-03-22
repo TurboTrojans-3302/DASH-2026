@@ -27,7 +27,6 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
-import frc.robot.commands.GoToCommand;
 import frc.utils.SwerveUtils;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -230,8 +229,6 @@ public class Navigation extends SubsystemBase {
       builder.addBooleanProperty("ValidTarget", () -> {return LimelightHelpers.getTV(cameraName);}, null);
       builder.addIntegerProperty("ApriltagFound", () -> {return (int) LimelightHelpers.getFiducialID(cameraName);} , null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
-      builder.addDoubleProperty("Auton Speed Scale", ()->GoToCommand.getGlobalSpeedScale(), (x) -> GoToCommand.setGlobalSpeedScale(x));
-      builder.addDoubleProperty("Auton Tolerance Scale", ()->GoToCommand.getGlobalToleranceScale(), (x) -> GoToCommand.setGlobalToleranceScale(x));
       builder.addDoubleProperty("Target DX", ()->getDXtoTarget(), null);
       builder.addDoubleProperty("Target Angle", ()->getRelBearingToTargetDegrees(), null);
     }
