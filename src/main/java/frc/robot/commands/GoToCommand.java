@@ -12,8 +12,11 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.StringLogEntry;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Robot;
@@ -44,6 +47,11 @@ public class GoToCommand extends Command {
   protected double angularAccelLimit;   
   protected double kDistanceTolerance; 
   protected double kHeadingTolerance; 
+  protected StringLogEntry stringLogEntry;
+  protected State previousState = new State(0.0, 0.0);
+  protected State angularPreviousState = new State(0.0, 0.0);
+  protected State goalState;
+  protected State angularGoalState;
 
   public GoToCommand setLimits(double speedLimit, double accelLimit) {
     this.speedLimit = speedLimit;
@@ -68,6 +76,9 @@ public class GoToCommand extends Command {
     m_drive = drive;
     this.m_nav = nav;
     addRequirements(m_drive);
+
+    DataLog log = DataLogManager.getLog();
+    stringLogEntry = new StringLogEntry(log, this.getClass().getSimpleName());
   }
 
   public GoToCommand(DriveTrain drive, Navigation nav, Pose2d dest) {
@@ -113,10 +124,13 @@ public class GoToCommand extends Command {
     m_dest = new Pose2d(m_dest.getTranslation(), Rotation2d.fromRadians(MathUtil.angleModulus(m_dest.getRotation().getRadians())));
     m_delta = new Transform2d(m_delta.getTranslation(), Rotation2d.fromRadians(MathUtil.angleModulus(m_delta.getRotation().getRadians())));
 
-    System.out.println("Starting go to: " + m_dest);
+    goalState = new State(totalDistance(), 0.0);
+    
+    double angularDifference = deltaHeadingRadians();
+    angularGoalState = new State(angularDifference, 0.0);
+
+    stringLogEntry.append("Starting go to: " + m_dest);
     m_nav.m_dashboardField.getObject("dest").setPose(m_dest);
-    System.out.println("profile: " + m_speedProfile);
-    System.out.println("angular profile: " + m_angularSpeedProfile);
   }
 
   protected double totalDistance() {
@@ -147,58 +161,44 @@ public class GoToCommand extends Command {
     return Math.toDegrees(deltaHeadingRadians());
   }
 
-  protected double speedTowardTarget() {
-    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getHeading());
-    Translation2d targetDirection = translation2dest();
-
-    if (botDirection.getNorm() <= 1e-6) {
-      return 0.0;
-    } else if (targetDirection.getNorm() <= 1e-6) {
-      return -m_drive.getSpeed();
-    }
-
-    double difference = targetDirection.getAngle().getRadians() - botDirection.getAngle().getRadians();
-    return m_drive.getSpeed() * Math.cos(difference);
-  }
-
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
     Translation2d toDest = translation2dest();
-    double distanceToDest = toDest.getNorm();
 
-    double traveledDistance = Math.max(0.0, totalDistance() - distanceToDest);
-    State currentState = new State(traveledDistance, speedTowardTarget());
-    State goalState = new State(totalDistance(), 0.0);
+    State nextState = m_speedProfile.calculate(dT, previousState, goalState);
 
-    double speed = m_speedProfile.calculate(dT, currentState, goalState).velocity;
-    System.out.println("distance: " + distanceToDest + ", speed: " + speed);
-
-    Translation2d unitTranslation;
-    if (distanceToDest > 1e-6) {
-      unitTranslation = toDest.div(distanceToDest);
+    Translation2d translate;
+    if(MathUtil.isNear(previousState.position, goalState.position, kDistanceTolerance)){
+      translate = new Translation2d(0.0, 0.0);
     } else {
-      unitTranslation = new Translation2d();
+        translate = toDest.div(toDest.getNorm()).times(nextState.velocity);
     }
 
-    double angularDifference = deltaHeadingRadians();
-
-    State angularCurrentState = new State(angularDifference, m_drive.getAngularVelocityRadPerSec());
-    State angularGoalState = new State(0.0, 0.0);
-    double angularVelocity = m_angularSpeedProfile.calculate(dT, angularCurrentState, angularGoalState).velocity;
-    
-    if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance)){
-      speed = 0.0;
+    State angularNextState = m_angularSpeedProfile.calculate(dT, angularPreviousState, angularGoalState);
+    double rotate;
+    if(MathUtil.isNear(angularPreviousState.position, angularGoalState.position, kHeadingTolerance)){
+      rotate = 0.0;
+    } else {
+      rotate = angularNextState.velocity;    
     }
 
-    m_drive.drive(unitTranslation.times(speed), angularVelocity, true);
+    m_drive.drive(translate, rotate, true);
+
+    previousState = nextState;
+    angularPreviousState = angularNextState;
+
+    stringLogEntry.append("speed: " + translate.getNorm() +
+                          "direction: " + translate.getAngle().getDegrees() +
+                          "angularVelocity: " + rotate);
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
     m_drive.stop();
-    System.out.println("End go to: " + m_nav.getPose());
+    stringLogEntry.append("End go to: " + m_nav.getPose() + " interrupted: " + interrupted +
+                          "distance: " + distance() + " deltaHeading: " + deltaHeadingDegrees());
   }
 
   // Returns true when the command should end.
