@@ -222,7 +222,10 @@ public class Climber extends SubsystemBase{
         ClimberConstants.climberLowerSoftLimit);
     climberUpperSoftLimit = Preferences.getDouble(ClimberConstants.climberUpperSoftLimitKey,
         ClimberConstants.climberUpperSoftLimit);
-  nudgeIncrement = Preferences.getDouble(ClimberConstants.climberNudgeIncrementKey, ClimberConstants.climberNudgeIncrement);
+    nudgeIncrement = Preferences.getDouble(ClimberConstants.climberNudgeIncrementKey, ClimberConstants.climberNudgeIncrement);
+    START = Preferences.getDouble(ClimberConstants.STARTKey, ClimberConstants.START);
+    HANG = Preferences.getDouble(ClimberConstants.HANGKey, ClimberConstants.HANG);
+    HIGH = Preferences.getDouble(ClimberConstants.HIGHKey, ClimberConstants.HIGH);
   }
 
   public void savePreferences() {
@@ -238,7 +241,10 @@ public class Climber extends SubsystemBase{
     Preferences.setDouble(ClimberConstants.climberServoTimeKey, servoTime);
     Preferences.setDouble(ClimberConstants.climberLowerSoftLimitKey, climberLowerSoftLimit);
     Preferences.setDouble(ClimberConstants.climberUpperSoftLimitKey, climberUpperSoftLimit);
-  Preferences.setDouble(ClimberConstants.climberNudgeIncrementKey, nudgeIncrement);
+    Preferences.setDouble(ClimberConstants.climberNudgeIncrementKey, nudgeIncrement);
+    Preferences.setDouble(ClimberConstants.STARTKey, START);
+    Preferences.setDouble(ClimberConstants.HANGKey, HANG);
+    Preferences.setDouble(ClimberConstants.HIGHKey, HIGH);
   }
 
   //PID values, climber default speed, servo setpoints
@@ -262,6 +268,9 @@ public class Climber extends SubsystemBase{
     builder.addDoubleProperty("lower limit", ()->climberLowerSoftLimit, (x)->climberLowerSoftLimit=x);
     builder.addDoubleProperty("upper limit", ()->climberUpperSoftLimit, (x)->climberUpperSoftLimit=x);
     builder.addDoubleProperty("nudge increment", ()-> nudgeIncrement, (x)-> nudgeIncrement = x);
+    builder.addDoubleProperty("START position", ()-> START, (x)-> START = x);
+    builder.addDoubleProperty("HANG position", ()-> HANG, (x)-> HANG = x);
+    builder.addDoubleProperty("HIGH position", ()-> HIGH, (x)-> HIGH = x);
     builder.addBooleanProperty("limits enabled", ()-> limitsEnabled, (x)-> overrideLimits(x));
     builder.addBooleanProperty("Save Prefs", () -> false, (x) -> { if(x){savePreferences();} });
   }

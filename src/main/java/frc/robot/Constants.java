@@ -243,6 +243,9 @@ public final class Constants {
     public static final double START = 0.0;
     public static final double HANG = 150.0;
     public static final double HIGH = 200.0;
+    public static final String HANGKey = "climber_HANGPosition";
+    public static final String STARTKey = "climber_STARTPosition";
+    public static final String HIGHKey = "climber_HIGHPosition";
 
   }
 
