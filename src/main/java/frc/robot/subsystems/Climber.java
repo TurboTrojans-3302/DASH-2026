@@ -148,8 +148,8 @@ public class Climber extends SubsystemBase{
   }
 
   public void hold(){
-  moveClimberPID(climberEncoder.getPosition());
-  climberPID.reset(climberEncoder.getPosition());
+    moveClimberPID(climberEncoder.getPosition());
+    climberPID.reset(climberEncoder.getPosition());
   }
 
   public void enablePID(boolean enabled){

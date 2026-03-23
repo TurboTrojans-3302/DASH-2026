@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import org.littletonrobotics.frc2026.FieldConstants;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -124,11 +125,14 @@ public final class Constants {
     public static final double kPY = 0;
   }
 
-  public static final class FieldConstants {
+  public static final class Field {
     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
-    public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
+    public static final Pose2d HubCenterPoint = new Pose2d(FieldConstants.Hub.topCenterPoint.toTranslation2d(), Rotation2d.kZero);
     public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
-    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);}
+    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);
+    public static final Translation2d TowerCenter = FieldConstants.Tower.centerPoint;
+    public static final Pose2d ClimbPosition = new Pose2d(TowerCenter.getX() + RobotConstants.widthWithBumpers/2, TowerCenter.getY(), Rotation2d.kCW_90deg);
+  }
 
   public static final class LimelightConstants {
     public static final String name = "limelight";
@@ -177,7 +181,7 @@ public final class Constants {
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
-    public static double manualRPMincrement = 10; // rpm
+    public static final double manualRPMincrement = 10; // rpm
     public static final String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
 

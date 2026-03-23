@@ -79,7 +79,7 @@ public class DriveTrain extends SubsystemBase {
     // If we successfully created the swerveDrive, initialize odometry to the
     // starting pose
     if (swerveDrive != null) {
-      swerveDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
+      swerveDrive.resetOdometry(Constants.Field.HubFrontFaceCenter);
     }
 
     SmartDashboard.putData("IMU Heading", new Sendable() {

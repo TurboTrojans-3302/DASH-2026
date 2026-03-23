@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.Field;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -157,7 +157,7 @@ public class Navigation extends SubsystemBase {
   }
 
   public double getDxToHubCenter() {
-    Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
+    Pose2d hubPose = Constants.Field.HubCenterPoint;
     Pose2d botPose = getPose();
     double odometryDistance = hubPose.getTranslation().getDistance(botPose.getTranslation());
 
@@ -193,7 +193,7 @@ public class Navigation extends SubsystemBase {
   }
 
   public Rotation2d getAbsBearingToTarget() {
-    Translation2d delta = FieldConstants.HubCenterPoint.getTranslation().minus(getPose().getTranslation());
+    Translation2d delta = Field.HubCenterPoint.getTranslation().minus(getPose().getTranslation());
     return delta.getAngle();
   }
 
@@ -206,7 +206,7 @@ public class Navigation extends SubsystemBase {
    * at rangeRPMtable.OPTIMAL meters from the hub center, facing the hub.
    */
   public Pose2d getOptimalShootPos() {
-    Translation2d hub = FieldConstants.HubCenterPoint.getTranslation();
+    Translation2d hub = Field.HubCenterPoint.getTranslation();
     Translation2d bot = getPose().getTranslation();
     Translation2d hubToBot = bot.minus(hub);
     // Unit vector from hub toward bot
