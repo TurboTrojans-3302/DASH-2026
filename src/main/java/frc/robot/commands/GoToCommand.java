@@ -12,45 +12,46 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.StringLogEntry;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Navigation;
-import frc.utils.SwerveUtils;
 
 public class GoToCommand extends Command {
 
-  private static double globalSpeedScale = 1.0;
-  private static double globalToleranceScale = 1.0;
   protected final double dT = Robot.kDefaultPeriod;
 
   protected Pose2d m_dest;
   protected Transform2d m_delta;
   protected DriveTrain m_drive;
-  protected TrapezoidProfile m_trapezoid;
+  protected TrapezoidProfile m_speedProfile;
+  protected TrapezoidProfile m_angularSpeedProfile;
   protected boolean m_relativeFlag;
   protected Navigation m_nav;
-  protected double m_totalDistance;  // total distance to goal at initialize()
 
-  double accelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
-  double speedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
-  double kDistanceTolerance = AutoConstants.kDistanceTolerance;
-  double kHeadingTolerance =  AutoConstants.kHeadingTolerance;
-
-
-  public static void setGlobalSpeedScale(double scale) {
-    globalSpeedScale = MathUtil.clamp(scale, 0.0, 1.0);
-  }
-
-  public static void setGlobalToleranceScale(double scale) {
-    globalToleranceScale = MathUtil.clamp(scale, 0.0, 10.0);
-  }
-
-  public static double getGlobalToleranceScale() {
-    return globalToleranceScale;
-  }
+  private static double defaultAccelLimit = AutoConstants.kMaxAccelerationMetersPerSecondSquared;
+  private static double defaultSpeedLimit = AutoConstants.kMaxSpeedMetersPerSecond;
+  private static double defaultAngularSpeedLimit = AutoConstants.kMaxAngularSpeedRadiansPerSecond;
+  private static double defaultAngularAccelLimit = AutoConstants.kMaxAngularAccelRadiansPerSecondSquared;  
+  private static double defaultDistanceTolerance = AutoConstants.kDistanceTolerance;
+  private static double defaultHeadingTolerance =  AutoConstants.kHeadingTolerance;
+  protected double accelLimit; 
+  protected double speedLimit; 
+  protected double angularSpeedLimit; 
+  protected double angularAccelLimit;   
+  protected double kDistanceTolerance; 
+  protected double kHeadingTolerance; 
+  protected StringLogEntry stringLogEntry;
+  protected State previousState = new State(0.0, 0.0);
+  protected State angularPreviousState = new State(0.0, 0.0);
+  protected State goalState;
+  protected State angularGoalState;
 
   public GoToCommand setLimits(double speedLimit, double accelLimit) {
     this.speedLimit = speedLimit;
@@ -61,16 +62,23 @@ public class GoToCommand extends Command {
   public GoToCommand setTolerance(double distanceTolerance, double headingTolerance) {
     this.kDistanceTolerance = distanceTolerance;
     this.kHeadingTolerance = headingTolerance;
-    this.setName(getName());
     return this;
   }
 
-
-
   protected GoToCommand(DriveTrain drive, Navigation nav) {
+    accelLimit = defaultAccelLimit;
+    speedLimit = defaultSpeedLimit;
+    angularSpeedLimit = defaultAngularSpeedLimit;
+    angularAccelLimit = defaultAngularAccelLimit;
+    kDistanceTolerance = defaultDistanceTolerance;
+    kHeadingTolerance = defaultHeadingTolerance;
+
     m_drive = drive;
     this.m_nav = nav;
     addRequirements(m_drive);
+
+    DataLog log = DataLogManager.getLog();
+    stringLogEntry = new StringLogEntry(log, this.getClass().getSimpleName());
   }
 
   public GoToCommand(DriveTrain drive, Navigation nav, Pose2d dest) {
@@ -102,15 +110,31 @@ public class GoToCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    m_trapezoid = new TrapezoidProfile(new Constraints(globalSpeedScale * speedLimit, globalSpeedScale * accelLimit));
+    m_speedProfile = new TrapezoidProfile(new Constraints(speedLimit, accelLimit));
+    m_angularSpeedProfile = new TrapezoidProfile(new Constraints(angularSpeedLimit, angularAccelLimit));
+    Pose2d currPose2d = m_nav.getPose();
 
     if (m_relativeFlag) {
-      Pose2d currPose2d = m_nav.getPose();
       m_dest = currPose2d.plus(m_delta);
+    } else {
+      m_delta = m_dest.minus(currPose2d);
     }
-    m_totalDistance = distance();
-    System.out.println("Starting go to: " + m_dest);
+
+    // normalize the angles
+    m_dest = new Pose2d(m_dest.getTranslation(), Rotation2d.fromRadians(MathUtil.angleModulus(m_dest.getRotation().getRadians())));
+    m_delta = new Transform2d(m_delta.getTranslation(), Rotation2d.fromRadians(MathUtil.angleModulus(m_delta.getRotation().getRadians())));
+
+    goalState = new State(totalDistance(), 0.0);
+    
+    double angularDifference = deltaHeadingRadians();
+    angularGoalState = new State(angularDifference, 0.0);
+
+    stringLogEntry.append("Starting go to: " + m_dest);
     m_nav.m_dashboardField.getObject("dest").setPose(m_dest);
+  }
+
+  protected double totalDistance() {
+    return m_delta.getTranslation().getNorm();
   }
 
   protected Translation2d translation2dest() {
@@ -129,68 +153,81 @@ public class GoToCommand extends Command {
     return m_dest.getRotation().getRadians();
   }
 
-  protected double deltaHeading() {
-    return SwerveUtils.angleDeltaDeg(m_nav.getAngleDegrees(), destHeadingDegrees());
+  protected double deltaHeadingRadians() {
+    return MathUtil.angleModulus(destHeadingRadians() - m_nav.getHeading().getRadians());
   }
 
-  protected double speedTowardTarget() {
-    Translation2d botDirection = m_drive.getVelocityVector().rotateBy(m_nav.getAngle());
-    Translation2d targetDirection = translation2dest();
-
-    if (botDirection.getNorm() <= 1e-6) {
-      return 0.0;
-    } else if (targetDirection.getNorm() <= 1e-6) {
-      return -m_drive.getSpeed();
-    }
-
-    double difference = targetDirection.getAngle().getRadians() - botDirection.getAngle().getRadians();
-    return m_drive.getSpeed() * Math.cos(difference);
+  protected double deltaHeadingDegrees() {
+    return Math.toDegrees(deltaHeadingRadians());
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
     Translation2d toDest = translation2dest();
-    double distanceToDest = toDest.getNorm();
 
-    double traveledDistance = Math.max(0.0, m_totalDistance - distanceToDest);
-    State currentState = new State(traveledDistance, speedTowardTarget());
-    State goalState = new State(m_totalDistance, 0.0);
+    State nextState = m_speedProfile.calculate(dT, previousState, goalState);
 
-    double speed = m_trapezoid.calculate(dT, currentState, goalState).velocity;
-
-    Translation2d unitTranslation = toDest.div(distanceToDest);
-
-    if(MathUtil.isNear(0.0, distanceToDest, kDistanceTolerance * globalToleranceScale)){
-      speed = 0.0;
+    Translation2d translate;
+    if(distanceIsNear()){
+      translate = new Translation2d(0.0, 0.0);
+    } else {
+      translate = toDest.div(toDest.getNorm()).times(nextState.velocity);
     }
 
-    m_drive.driveHeading(unitTranslation.times(speed), destHeadingRadians());
+    State angularNextState = m_angularSpeedProfile.calculate(dT, angularPreviousState, angularGoalState);
+    double rotate;
+    if(headingIsNear()){
+      rotate = 0.0;
+    } else {
+      rotate = angularNextState.velocity;    
+    }
+
+    m_drive.drive(translate, rotate, true);
+
+    previousState = nextState;
+    angularPreviousState = angularNextState;
+
+    stringLogEntry.append("speed: " + translate.getNorm() +
+                          "direction: " + translate.getAngle().getDegrees() +
+                          "angularVelocity: " + rotate);
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
     m_drive.stop();
-    System.out.println("End go to: " + m_nav.getPose());
+    stringLogEntry.append("End go to: " + m_nav.getPose() + " interrupted: " + interrupted +
+                          "distance: " + distance() + " deltaHeading: " + deltaHeadingDegrees());
   }
 
+  private boolean distanceIsNear() {
+    return MathUtil.isNear(0.0, distance(), kDistanceTolerance);
+  }
+
+  private boolean headingIsNear() {
+    return MathUtil.isNear(destHeadingDegrees(), m_nav.getHeadingDegrees(),
+                            kHeadingTolerance, 0.0, 360.0);
+  }
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return MathUtil.isNear(0.0, distance(), kDistanceTolerance * globalToleranceScale) &&
-        MathUtil.isNear(destHeadingDegrees(), m_nav.getAngleDegrees(),
-                        kHeadingTolerance * globalToleranceScale, 0.0, 360.0);
+    return distanceIsNear() && headingIsNear();
   }
 
-  @Override
-  public void initSendable(SendableBuilder builder) {
-    super.initSendable(builder);
-    builder.addDoubleProperty("Speed Scale", () -> globalSpeedScale, (x)->{setGlobalSpeedScale(x);});
+  public static Sendable getSendable(){
+    return new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("GoToCommand");
+        builder.addDoubleProperty("speedLimit", () -> defaultSpeedLimit, (value) -> defaultSpeedLimit = value);
+        builder.addDoubleProperty("accelLimit", () -> defaultAccelLimit, (value) -> defaultAccelLimit = value);
+        builder.addDoubleProperty("angularSpeedLimit", () -> defaultAngularSpeedLimit, (value) -> defaultAngularSpeedLimit = value);
+        builder.addDoubleProperty("angularAccelLimit", () -> defaultAngularAccelLimit, (value) -> defaultAngularAccelLimit = value);
+        builder.addDoubleProperty("distanceTolerance", () -> defaultDistanceTolerance, (value) -> defaultDistanceTolerance = value);
+        builder.addDoubleProperty("headingTolerance", () -> defaultHeadingTolerance, (value) -> defaultHeadingTolerance = value);
+      }
+    };
   }
-
-public static double getGlobalSpeedScale() {
-    return globalSpeedScale;
-}
 
 }

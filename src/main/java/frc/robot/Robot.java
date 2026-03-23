@@ -8,13 +8,17 @@ package frc.robot;
 import java.util.Map;
 import java.util.Optional;
 
+import edu.wpi.first.hal.MatchInfoData;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+//todo remove old wpilib tools from laptops
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -28,12 +32,13 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
   private static Robot instance;
   public static DriverStation.Alliance alliance;
- 
-  private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
   private boolean gameDataReceived = false;
 
+  private SendableChooser<String> m_autonomousChooser;
+  private Command m_autonomousCommand;
+  public MatchInfoData matchInfoData;
 
   Robot(){
     instance = this;
@@ -57,6 +62,7 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Starts recording to data log
     DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
 
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our
@@ -64,18 +70,9 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
     m_robotContainer.configureButtonBindings();
     m_robotContainer.setDefaultCommands();
-    //DataLogManager.start();
-    //CanBridge.runTCP();
-    LimelightHelpers.setCameraPose_RobotSpace(Constants.LimelightConstants.name,
-                                              Constants.LimelightConstants.Offset.forward,
-                                              Constants.LimelightConstants.Offset.side,
-                                              Constants.LimelightConstants.Offset.up,
-                                              Constants.LimelightConstants.Offset.roll,
-                                              Constants.LimelightConstants.Offset.pitch,
-                                              Constants.LimelightConstants.Offset.yaw
-                                            );
-
     
+    m_autonomousChooser = m_robotContainer.createAutonomousChooser();
+    SmartDashboard.putData("Autonomous", m_autonomousChooser);
   }
 
   /**
@@ -109,15 +106,18 @@ public class Robot extends TimedRobot {
   }
 
   @Override
+  public void disabledExit() {}
+
+  @Override
   public void driverStationConnected() {
     m_robotContainer.onDSAttached();
   }
 
   @Override
   public void disabledPeriodic() {
-    if(alliance == null) {
-      Optional<Alliance> a = DriverStation.getAlliance();
-      if (a.isPresent()) {
+    Optional<Alliance> a = DriverStation.getAlliance();
+    if (a.isPresent()) {
+      if(alliance != a.get()){
         alliance = a.get();
         if(alliance == Alliance.Red) {
           m_robotContainer.initRed();
@@ -136,15 +136,15 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     setLED(LEDmode.Auton);
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    // System.out.println("autonomousInit() m_pos == " + m_robotContainer.m_nav.getPose());
-    System.out.println("Starting command: " + m_autonomousCommand.getName());
+    m_robotContainer.readPIDswitches();
+    
+    m_robotContainer.m_robotDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
+    m_robotContainer.m_navigation.setIMUMode(4);
 
-
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      CommandScheduler.getInstance().schedule(m_autonomousCommand);
-    }
+    String commandName = m_autonomousChooser.getSelected();
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand(commandName);
+    System.out.println("Starting command: " + commandName + " -> " + m_autonomousCommand.getName());
+    CommandScheduler.getInstance().schedule(m_autonomousCommand);
   }
 
   /** This function is called periodically during autonomous. */
@@ -154,6 +154,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    m_robotContainer.readPIDswitches();
     
     setLED(LEDmode.Teleop);
     // This makes sure that the autonomous stops running when
@@ -164,13 +165,7 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     
-    m_robotContainer.m_shooter.stop();
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {
-
+    m_robotContainer.m_shooter.setRPMsetpoint(0.0);
     
     String gamedatastring = DriverStation.getGameSpecificMessage();
 

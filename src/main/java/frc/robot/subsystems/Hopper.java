@@ -13,24 +13,31 @@ import java.util.function.DoubleSupplier;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Constants.HopperConstants;
 
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
  */
 public class Hopper extends SubsystemBase {
+    public static double STARTPOSITION = HopperConstants.STARTPOSITIONdefault;
+
     private final SparkMax leftMotor;
     private final SparkMax rightMotor;
     private final RelativeEncoder leftEncoder, rightEncoder;
@@ -46,8 +53,10 @@ public class Hopper extends SubsystemBase {
     private final PrefValue<Double> maxVelocity     = new PrefValue<>("hopperMaxVelocity",      80.0,  this);
     private final PrefValue<Double> maxAcceleration = new PrefValue<>("hopperMaxAcceleration",  50.0,  this);
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, 0.0, 0);
+    private boolean hardLimitEnable = true;
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
+    private boolean softLimitsEnabled = true;
 
     private final ProfiledPIDController leftPID  = new ProfiledPIDController(0.0, 0.0, 0.0,
                                                                              new TrapezoidProfile.Constraints(0.0, 0.0));
@@ -83,7 +92,7 @@ public class Hopper extends SubsystemBase {
         SparkMaxConfig leftSparkConfig = new SparkMaxConfig();
         leftSparkConfig.apply(SparkMaxConfig.Presets.REV_NEO_550);
         leftSparkConfig.idleMode(IdleMode.kBrake);
-        leftSparkConfig.inverted(true);
+        leftSparkConfig.inverted(false);
 
         SparkMaxConfig rightSparkConfig = new SparkMaxConfig().apply(leftSparkConfig);
 
@@ -155,15 +164,29 @@ public class Hopper extends SubsystemBase {
 
     public void hold() {
         if (isPIDEnabled()) {
-            setPosition(getPosition()); // re-apply current setpoint to hold position
+            setPosition(getPosition());
         } else {
             stop();
         }
     }
 
+    public void rampToZero() {
+        double lTargetPos = leftEncoder.getPosition() + decelDistance(leftEncoder.getVelocity());
+        double rTargetPos = rightEncoder.getPosition() + decelDistance(rightEncoder.getVelocity());
+        leftPID.setGoal(new TrapezoidProfile.State(lTargetPos, 0)); 
+        rightPID.setGoal(new TrapezoidProfile.State(rTargetPos, 0)); 
+    }
+
+    private double decelDistance(double velocity){
+        double t = Math.abs(velocity / maxAcceleration);
+        double decel = -Math.signum(velocity) * maxAcceleration;
+        return (velocity * t) + (0.5 * decel * t * t);
+    }
+
     private void setMotorPctOutput(double leftSpeed, double rightSpeed) {
         leftSpeed  = MathUtil.clamp(leftSpeed,  -1.0, 1.0);
         rightSpeed = MathUtil.clamp(rightSpeed, -1.0, 1.0);
+
         if(atSoftMaxL()) leftSpeed = Math.min(0, leftSpeed); // if at max, only allow retracting (negative speed)
         if(atSoftMaxR()) rightSpeed = Math.min(0, rightSpeed); // if at max, only allow retracting (negative speed)
         if(atSoftMinL()) leftSpeed = Math.max(0, leftSpeed); // if at min, only allow extending (positive speed)
@@ -175,8 +198,18 @@ public class Hopper extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (leftHardLimit())  { leftEncoder.setPosition(0); }
-        if (rightHardLimit()) { rightEncoder.setPosition(0); }
+        if (leftHardLimit()){
+            if(Math.abs(leftEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+                setPIDEnabled(false);
+            }
+            leftEncoder.setPosition(0);
+        }
+        if (rightHardLimit()) {
+            if(Math.abs(rightEncoder.getPosition()) > 20.0){ // only reset if we're significantly away from zero to avoid accidental resets due to noise
+                setPIDEnabled(false);
+            }
+            rightEncoder.setPosition(0);
+        }        
 
         if (isPIDEnabled()) {
             double ffOutput = feedforward.calculate(0); // static gravity compensation (velocity = 0)
@@ -187,11 +220,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMaxL() {
-        return leftEncoder.getPosition() >= softMax.get();
+        return leftEncoder.getPosition() >= softMax && softLimitsEnabled;
     }
 
     public boolean atSoftMaxR() {
-        return rightEncoder.getPosition() >= softMax.get();
+        return rightEncoder.getPosition() >= softMax && softLimitsEnabled;
     }
 
     public boolean atMaxPosition() {
@@ -199,21 +232,23 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMinL() {
-        return leftEncoder.getPosition() <= softMin.get();
+        return leftEncoder.getPosition() <= softMin && softLimitsEnabled;
     }
 
     public boolean atSoftMinR() {
-        return rightEncoder.getPosition() <= softMin.get();
+        return rightEncoder.getPosition() <= softMin && softLimitsEnabled;
     }
 
     public boolean atMinPosition() {
-        return atSoftMinL() && atSoftMinR();
+        return atSoftMinL() || atSoftMinR();
     }
 
-    public Command stopCommand() {
-        Command cmd = new InstantCommand(this::stop, this);
-        cmd.setName("stopCommand");
-        return cmd;
+    public void enableSoftLimits(boolean enabled) {
+        softLimitsEnabled = enabled;
+    }
+
+    public boolean areSoftLimitsEnabled() {
+        return softLimitsEnabled;
     }
 
     public Command setPositionCommand(DoubleSupplier targetPosition) {
@@ -253,7 +288,7 @@ public class Hopper extends SubsystemBase {
     public Command nudgeCommand(double incrementPerLoop) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init needed
-            () -> setPosition(positionSetpoint + incrementPerLoop), // advance setpoint each loop
+            () -> setPosition(getPosition() + incrementPerLoop), // advance setpoint each loop
             (interrupted) -> hold(), // hold position on release
             () -> false, // whileTrue in RobotContainer handles termination
             this);
@@ -274,11 +309,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean leftHardLimit() {
-        return !leftContractedLimitSwitch.get();
+        return hardLimitEnable && !leftContractedLimitSwitch.get();
     }
 
     public boolean rightHardLimit() {
-        return !rightContractedLimitSwitch.get();
+        return hardLimitEnable && !rightContractedLimitSwitch.get();
     }
 
     @Override
@@ -291,6 +326,8 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("L Motor Out", () -> leftMotor.get(), null);
         builder.addDoubleProperty("R Motor Out", () -> rightMotor.get(), null);
         builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
+        builder.addBooleanProperty("Hard Limit Enable", () -> hardLimitEnable, (x) -> hardLimitEnable = x);
+        builder.addBooleanProperty("Soft Limit Enable", () -> areSoftLimitsEnabled(), (x) -> enableSoftLimits(x));
         builder.addDoubleProperty("PID Setpoint", () -> positionSetpoint, (x) -> setPosition(x));
         builder.addBooleanProperty("Left Limit", () -> leftHardLimit(), null);
         builder.addBooleanProperty("Right Limit", () -> rightHardLimit(), null);
@@ -298,7 +335,10 @@ public class Hopper extends SubsystemBase {
     }
 
     public void savePositions() {
-        Preferences.setDouble(HopperConstants.leftPositionKey,  leftEncoder.getPosition());
-        Preferences.setDouble(HopperConstants.rightPositionKey, rightEncoder.getPosition());
+        double l = leftEncoder.getPosition();
+        double r = rightEncoder.getPosition();
+        Preferences.setDouble(HopperConstants.leftPositionKey,  l);
+        Preferences.setDouble(HopperConstants.rightPositionKey, r);
+        System.out.println("Hopper positions saved: " + l + " " + r);
     }
 }
