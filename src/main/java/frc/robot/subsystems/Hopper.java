@@ -1,13 +1,5 @@
 package frc.robot.subsystems;
 
-import frc.robot.Constants;
-import frc.robot.Constants.HopperConstants;
-import frc.utils.PrefValue;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
@@ -31,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.HopperConstants;
+import frc.utils.PrefValue;
 
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
@@ -52,7 +45,7 @@ public class Hopper extends SubsystemBase {
     private final PrefValue<Double> kG              = new PrefValue<>("hopperKg",               0.0,   this);
     private final PrefValue<Double> maxVelocity     = new PrefValue<>("hopperMaxVelocity",      80.0,  this);
     private final PrefValue<Double> maxAcceleration = new PrefValue<>("hopperMaxAcceleration",  50.0,  this);
-    private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, 0.0, 0);
+    private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, kG.get(), 0);
     private boolean hardLimitEnable = true;
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
@@ -178,8 +171,8 @@ public class Hopper extends SubsystemBase {
     }
 
     private double decelDistance(double velocity){
-        double t = Math.abs(velocity / maxAcceleration);
-        double decel = -Math.signum(velocity) * maxAcceleration;
+        double t = Math.abs(velocity / maxAcceleration.get());
+        double decel = -Math.signum(velocity) * maxAcceleration.get();
         return (velocity * t) + (0.5 * decel * t * t);
     }
 
@@ -220,11 +213,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMaxL() {
-        return leftEncoder.getPosition() >= softMax && softLimitsEnabled;
+        return leftEncoder.getPosition() >= softMax.get() && softLimitsEnabled;
     }
 
     public boolean atSoftMaxR() {
-        return rightEncoder.getPosition() >= softMax && softLimitsEnabled;
+        return rightEncoder.getPosition() >= softMax.get() && softLimitsEnabled;
     }
 
     public boolean atMaxPosition() {
@@ -232,11 +225,11 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean atSoftMinL() {
-        return leftEncoder.getPosition() <= softMin && softLimitsEnabled;
+        return leftEncoder.getPosition() <= softMin.get() && softLimitsEnabled;
     }
 
     public boolean atSoftMinR() {
-        return rightEncoder.getPosition() <= softMin && softLimitsEnabled;
+        return rightEncoder.getPosition() <= softMin.get() && softLimitsEnabled;
     }
 
     public boolean atMinPosition() {

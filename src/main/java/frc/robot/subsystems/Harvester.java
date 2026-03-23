@@ -24,29 +24,15 @@ import frc.utils.PrefValue;
 
 public class Harvester extends SubsystemBase {
 
-    private SparkMax m_harvestMotor;
-    private RelativeEncoder m_harvestEncoder;
-    private DriveTrain m_driveTrain;
-    private Hopper m_hopper;
-    private final PrefValue<Double> speedConversionConstant = new PrefValue<>("harvesterSpeedConversionConstantKey", .003, this);
-    private final PrefValue<Double> pullInRPM = new PrefValue<>("harvesterPullInRPM", 200.0, this);
-     
-    public Harvester(DriveTrain drivetrain, Hopper hopper){
-        m_driveTrain = drivetrain;
-        m_hopper = hopper;
-        SparkMaxConfig config = new SparkMaxConfig();
-        config.apply(SparkMaxConfig.Presets.REV_NEO);
-        config.inverted(true);
-        config.idleMode(IdleMode.kBrake);
-        config.apply(new EncoderConfig().velocityConversionFactor(1/16.0));
   private SparkMax m_harvestMotor;
   private RelativeEncoder m_harvestEncoder;
-  private double pullInRPM = HarvesterConstants.pullInRPMDefault;
 
-  private PIDController PID = new PIDController(
-      HarvesterConstants.kPdefault, 0, 0);
-  private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(
-      0, HarvesterConstants.kVdefault);
+  private final PrefValue<Double> kV = new PrefValue<>("harvester_kV", HarvesterConstants.kVdefault, this);
+  private final PrefValue<Double> kP = new PrefValue<>("harvester_kP", HarvesterConstants.kPdefault, this);
+  private final PrefValue<Double> pullInRPM = new PrefValue<>("harvesterPullInRPM", 200.0, this);
+
+  private PIDController PID = new PIDController(kP.get(), 0, 0);
+  private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0, kV.get());
   private boolean PIDEnabled = false;
 
   private double setpoint = 0.0;
@@ -64,7 +50,8 @@ public class Harvester extends SubsystemBase {
     m_harvestEncoder = m_harvestMotor.getEncoder();
 
     PID.setTolerance(HarvesterConstants.kTolDefault);
-    loadPreferences();
+    kV.onChange((x) -> feedforward.setKv(x));
+    kP.onChange((x) -> PID.setP(x));
   }
 
   @Override
@@ -122,7 +109,7 @@ public class Harvester extends SubsystemBase {
         () -> {
         },
         () -> {
-          setSpeed(pullInRPM);
+          setSpeed(pullInRPM.get()); //shouldn't this be a doublesupplier?
         },
         (x) -> {
           stop();
@@ -136,7 +123,7 @@ public class Harvester extends SubsystemBase {
         () -> {
         },
         () -> {
-          setSpeed(-pullInRPM);
+          setSpeed(-pullInRPM.get());
         },
         (x) -> {
           stop();
@@ -146,10 +133,10 @@ public class Harvester extends SubsystemBase {
   }
 
   public void adjustPullInRPM(double delta) {
-    if(setpoint == pullInRPM || setpoint == -pullInRPM){
-      setSpeed(Math.signum(setpoint) * (pullInRPM + delta));
+    if(setpoint == pullInRPM.get() || setpoint == -pullInRPM.get()){
+      setSpeed(Math.signum(setpoint) * (pullInRPM.get() + delta));
     }
-    pullInRPM += delta;
+    pullInRPM.set(pullInRPM.get() + delta);
   }
 
   public Command StopCommand() {

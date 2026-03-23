@@ -44,7 +44,7 @@ public class DriveTrain extends SubsystemBase {
    */
   private SwerveDrive swerveDrive;
   private final PrefValue<Double> kMaxSpeed = new PrefValue<>(Constants.DriveConstants.maxSpeedKey, Constants.DriveConstants.kMaxSpeedDefault, this);
-  private Double kMaxAngularVelocity = Constants.DriveConstants.kMaxAngularVelocityDefault;
+  private PrefValue<Double> kMaxAngularVelocity = new PrefValue<>(Constants.DriveConstants.maxAngularVelocityKey, Constants.DriveConstants.kMaxAngularVelocityDefault, this);
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -92,15 +92,14 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public double getMaxAngularVelocity() {
-    return kMaxAngularVelocity;
+    return kMaxAngularVelocity.get();
   }
 
   @Override
   public void initSendable(SendableBuilder builder) {
     super.initSendable(builder);
-    builder.addDoubleProperty("Max Speed", () -> kMaxSpeed, (x) -> kMaxSpeed = x);
-    builder.addDoubleProperty("Max Angular Velocity", () -> kMaxAngularVelocity, (x) -> kMaxAngularVelocity = x);
-    builder.addBooleanProperty("save prefs", ()->false, (x) -> savePreferences());
+    PrefValue.addAllBuilderProperties(this, builder);
+    builder.addBooleanProperty("save prefs", ()->false, (x) -> PrefValue.saveObjectPrefs(this));
   }
 
   @Override

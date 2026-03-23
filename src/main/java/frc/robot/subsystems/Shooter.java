@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 import frc.utils.PrefValue;
 import frc.robot.Constants.ShooterConstants;
 
@@ -44,15 +43,14 @@ public class Shooter extends SubsystemBase {
   private final PrefValue<Double> kDfilter  = new PrefValue<>("shooter_kDfilter",     0.0,     this);
   private final PrefValue<Double> kRampRate = new PrefValue<>("shooter_kRampRate",    0.0,     this);
   private final PrefValue<Double> feederSpeed = new PrefValue<>("feederSpeed",        0.3,     this);
+  private final PrefValue<Double> secondFeederSpeed = new PrefValue<>("secondFeederSpeed", ShooterConstants.SecondaryFeederSpeedDefault, this)  ;
+  private final PrefValue<Double> kMaxAccel         = new PrefValue<>("shooter_kMaxAccel", ShooterConstants.kMaxAccelDefault, this);
+  private final PrefValue<Double> kMaxVelocity      = new PrefValue<>("shooter_kMaxVelocity", ShooterConstants.kMaxVelocityDefault, this);
+  private final PrefValue<Integer> smartCurrentLimit = new PrefValue<>("smartCurrentLimit", ShooterConstants.smartCurrentLimitDefault, this);
+  private final PrefValue<Integer> secondaryCurrentLimit = new PrefValue<>("secondaryCurrentLimit", ShooterConstants.secondaryCurrentLimitDefault, this);
+  private final PrefValue<Integer> currentLimitRPM = new PrefValue<>("currentLimitRPM", ShooterConstants.currentLimitRPMDefault, this);
 
-  private double secondFeederSpeed = ShooterConstants.SecondaryFeederSpeedDefault;
-  private double kMaxAccel = ShooterConstants.kMaxAccelDefault;
-  private double kMaxVelocity = ShooterConstants.kMaxVelocityDefault;
 
-  // New tunable settings
-  private int smartCurrentLimit = ShooterConstants.smartCurrentLimitDefault;
-  private int secondaryCurrentLimit = ShooterConstants.secondaryCurrentLimitDefault;
-  private int currentLimitRPM = ShooterConstants.currentLimitRPMDefault;
   // Locally-cached sensor/state values to avoid repeated CAN reads every loop
   private double currentRPM = 0.0;
   private ClosedLoopSlot currentSlot; // initialized from hardware in constructor
@@ -79,6 +77,11 @@ public class Shooter extends SubsystemBase {
     kTol.onChange(x -> setSparkClosedLoopConfig());
     kDfilter.onChange(x -> setSparkClosedLoopConfig());
     kRampRate.onChange(x -> setSparkClosedLoopConfig());
+    kMaxAccel.onChange(x -> setSparkClosedLoopConfig());
+    kMaxVelocity.onChange(x -> setSparkClosedLoopConfig());
+    smartCurrentLimit.onChange(x -> setSparkClosedLoopConfig());
+    secondaryCurrentLimit.onChange(x -> setSparkClosedLoopConfig());
+    currentLimitRPM.onChange(x -> setSparkClosedLoopConfig());
 
     // Apply gain values to the motor controller
     setSparkClosedLoopConfig();
@@ -114,13 +117,13 @@ public class Shooter extends SubsystemBase {
 
 
   public void setRPMsetpoint(double rpm) {
-    rpmSetpoint = MathUtil.clamp(rpm, 0.0, kMaxVelocity);
+    rpmSetpoint = MathUtil.clamp(rpm, 0.0, kMaxVelocity.get());
     closedLoopController.setSetpoint(rpmSetpoint, ControlType.kMAXMotionVelocityControl, currentSlot);
     if(isOpenLoop()) {timeAtSpeed.restart();}
   }
 
   public void setRPMsetpoint(double rpm, ClosedLoopSlot slot) {
-    rpmSetpoint = MathUtil.clamp(rpm, 0.0, kMaxVelocity);
+    rpmSetpoint = MathUtil.clamp(rpm, 0.0, kMaxVelocity.get());
     closedLoopController.setSetpoint(rpmSetpoint, ControlType.kMAXMotionVelocityControl, slot);
     currentSlot = slot;
     if(isOpenLoop()) {timeAtSpeed.restart();}
@@ -137,13 +140,13 @@ public class Shooter extends SubsystemBase {
 
     // slot zero has PID and feedforward
     ClosedLoopConfig cl0 = new ClosedLoopConfig()
-        .pid(kP, kI, kD, ClosedLoopSlot.kSlot0)
-        .dFilter(kDfilter, ClosedLoopSlot.kSlot0)
-        .apply(new FeedForwardConfig().kV(kV, ClosedLoopSlot.kSlot0))
-        .allowedClosedLoopError(kTol, ClosedLoopSlot.kSlot0)
+        .pid(kP.get(), kI.get(), kD.get(), ClosedLoopSlot.kSlot0)
+        .dFilter(kDfilter.get(), ClosedLoopSlot.kSlot0)
+        .apply(new FeedForwardConfig().kV(kV.get(), ClosedLoopSlot.kSlot0))
+        .allowedClosedLoopError(kTol.get(), ClosedLoopSlot.kSlot0)
         .apply(new MAXMotionConfig()
-            .maxAcceleration(kMaxAccel, ClosedLoopSlot.kSlot0)
-            .cruiseVelocity(kMaxVelocity * 1.5, ClosedLoopSlot.kSlot0));
+            .maxAcceleration(kMaxAccel.get(), ClosedLoopSlot.kSlot0)
+            .cruiseVelocity(kMaxVelocity.get() * 1.5, ClosedLoopSlot.kSlot0));
     cfg.apply(cl0);
 
     // slot one has only feedforward
@@ -154,7 +157,7 @@ public class Shooter extends SubsystemBase {
     cfg.apply(cl1);
 
     cfg.closedLoopRampRate(0.0)
-       .smartCurrentLimit(smartCurrentLimit, secondaryCurrentLimit, currentLimitRPM);
+       .smartCurrentLimit(smartCurrentLimit.get(), secondaryCurrentLimit.get(), currentLimitRPM.get());
 
     shooterMotor.configure(cfg, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
@@ -211,26 +214,26 @@ public class Shooter extends SubsystemBase {
   }
 
   public void feedForward() {
-    feederMotor.set(feederSpeed);
-    secondFeederMotor.set(secondFeederSpeed);
+    feederMotor.set(feederSpeed.get());
+    secondFeederMotor.set(secondFeederSpeed.get());
   }
 
   public void feedBackward() {
-    feederMotor.set(-feederSpeed);
-    secondFeederMotor.set(-secondFeederSpeed);
+    feederMotor.set(-feederSpeed.get());
+    secondFeederMotor.set(-secondFeederSpeed.get());
   }
 
   public void setFeederSpeed(double speed1, double speed2) {
-    feederSpeed = speed1;
-    secondFeederSpeed = speed2;
+    feederSpeed.set(speed1);
+    secondFeederSpeed.set(speed2);
   }
 
   public double getFirstFeederSpeed() {
-    return feederSpeed;
+    return feederSpeed.get();
   } 
 
   public double getSecondFeederSpeed() {
-    return secondFeederSpeed;
+    return secondFeederSpeed.get();
   } 
 
   public void stopFeeders() {
@@ -282,10 +285,6 @@ public class Shooter extends SubsystemBase {
         (x) -> setRPMsetpoint(x));
     builder.addBooleanProperty("Ready?", () -> isReady(), null);
     builder.addBooleanProperty("PID Enabled", this::isPIDEnabled, (x) -> enablePID(x));
-    builder.addDoubleProperty("Feeder Speed", () -> feederSpeed,
-        (x) -> feederSpeed = x);
-    builder.addDoubleProperty("Second Feeder Speed", () -> secondFeederSpeed,
-        (x) -> secondFeederSpeed = x);
     builder.addBooleanProperty("Danger Mode", () -> isDangerMode(), (x) -> setDangerMode(x));
     builder.addBooleanProperty("Save Prefs", () -> false, (x) -> {
       if (x) PrefValue.saveObjectPrefs(this);
@@ -293,12 +292,6 @@ public class Shooter extends SubsystemBase {
     builder.addDoubleProperty("shoot motor output", () -> shooterMotor.getAppliedOutput(), null);
     builder.addDoubleProperty ("1st feed motor output",()->feederMotor.get(), null);
     builder.addDoubleProperty ("2nd feed motor output",()->secondFeederMotor.get(), null);
-    builder.addIntegerProperty("Smart Current Limit", () -> smartCurrentLimit,
-        (x) -> { if (x != smartCurrentLimit) { smartCurrentLimit = (int)x; setSparkClosedLoopConfig(); } });
-    builder.addIntegerProperty("Secondary Current Limit", () -> secondaryCurrentLimit,
-        (x) -> { if (x != secondaryCurrentLimit) { secondaryCurrentLimit = (int)x; setSparkClosedLoopConfig(); } });
-    builder.addIntegerProperty("Current Limit RPM", () -> currentLimitRPM,
-        (x) -> { if (x != currentLimitRPM) { currentLimitRPM = (int)x; setSparkClosedLoopConfig(); } });
   }
 
   public double getRPMsetpoint() {
