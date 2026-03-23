@@ -44,6 +44,7 @@
             "title": "Current Shift",
             "x": 1088.0,
             "y": 128.0,
+            "y": 128.0,
             "width": 192.0,
             "height": 128.0,
             "type": "Large Text Display",
@@ -390,12 +391,11 @@
             "y": 256.0,
             "width": 128.0,
             "height": 128.0,
-            "type": "Text Display",
+            "type": "Toggle Button",
             "properties": {
-              "topic": "/SmartDashboard/DriveSubsystem/Max Angular Velocity",
+              "topic": "/SmartDashboard/DriveSubsystem/save prefs",
               "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
+              "data_type": "boolean"
             }
           },
           {
@@ -404,12 +404,15 @@
             "y": 256.0,
             "width": 128.0,
             "height": 128.0,
-            "type": "Text Display",
+            "type": "Boolean Box",
             "properties": {
-              "topic": "/SmartDashboard/DriveSubsystem/Max Speed",
+              "topic": "/SmartDashboard/TeleopCommand/FieldOrientedEnable",
               "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
             }
           },
           {
@@ -418,9 +421,9 @@
             "y": 256.0,
             "width": 128.0,
             "height": 128.0,
-            "type": "Toggle Button",
+            "type": "Boolean Box",
             "properties": {
-              "topic": "/SmartDashboard/DriveSubsystem/save prefs",
+              "topic": "/SmartDashboard/TeleopCommand/SlowDriveFlag",
               "period": 0.06,
               "data_type": "boolean"
             }
@@ -540,20 +543,6 @@
         "layouts": [],
         "containers": [
           {
-            "title": "Feeder Speed",
-            "x": 512.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ShooterSubsystem/Feeder Speed",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
             "title": "Shooter SetpointRPM",
             "x": 256.0,
             "y": 0.0,
@@ -638,7 +627,7 @@
           },
           {
             "title": "Danger Mode",
-            "x": 512.0,
+            "x": 768.0,
             "y": 128.0,
             "width": 128.0,
             "height": 128.0,
@@ -651,20 +640,6 @@
               "false_color": 4294198070,
               "true_icon": "None",
               "false_icon": "None"
-            }
-          },
-          {
-            "title": "feed motor output",
-            "x": 512.0,
-            "y": 256.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ShooterSubsystem/feed motor output",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
             }
           },
           {
@@ -682,18 +657,6 @@
             }
           },
           {
-            "title": "ShooterSubsystem",
-            "x": 640.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Subsystem",
-            "properties": {
-              "topic": "/SmartDashboard/ShooterSubsystem",
-              "period": 0.06
-            }
-          },
-          {
             "title": "Shooter RPM",
             "x": 384.0,
             "y": 0.0,
@@ -705,23 +668,6 @@
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": false
-            }
-          },
-          {
-            "title": "Score",
-            "x": 384.0,
-            "y": 256.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Score",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
             }
           },
           {
@@ -772,9 +718,9 @@
           },
           {
             "title": "Status",
-            "x": 640.0,
-            "y": 128.0,
-            "width": 256.0,
+            "x": 768.0,
+            "y": 0.0,
+            "width": 128.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
@@ -793,6 +739,90 @@
             "type": "Text Display",
             "properties": {
               "topic": "/SmartDashboard/ShooterSubsystem/kDfilter",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "1st feed motor output",
+            "x": 512.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/1st feed motor output",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "2nd feed motor output",
+            "x": 640.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/2nd feed motor output",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Feeder Speed",
+            "x": 512.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Feeder Speed",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "Second Feeder Speed",
+            "x": 640.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Second Feeder Speed",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "kMaxAccel",
+            "x": 640.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/kMaxAccel",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
+          },
+          {
+            "title": "kMaxVelocity",
+            "x": 512.0,
+            "y": 256.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/kMaxVelocity",
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": true
@@ -1139,269 +1169,20 @@
       }
     },
     {
-      "name": "Climber",
+      "name": "prefs",
       "grid_layout": {
         "layouts": [],
         "containers": [
           {
-            "title": "Position",
-            "x": 128.0,
+            "title": "Preferences",
+            "x": 448.0,
             "y": 0.0,
-            "width": 128.0,
+            "width": 256.0,
             "height": 384.0,
-            "type": "Number Bar",
+            "type": "RobotPreferences",
             "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/Climber Position",
-              "period": 0.06,
-              "data_type": "double",
-              "min_value": 0.0,
-              "max_value": 100.0,
-              "divisions": 5,
-              "inverted": false,
-              "orientation": "vertical"
-            }
-          },
-          {
-            "title": "Hook Status",
-            "x": 1024.0,
-            "y": 192.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/Hook Status",
-              "period": 0.06,
-              "data_type": "string",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "Motor Output",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/Motor Output",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": false
-            }
-          },
-          {
-            "title": "PID Enabled",
-            "x": 256.0,
-            "y": 96.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/PID Enabled",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Save Prefs",
-            "x": 1152.0,
-            "y": 288.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Toggle Button",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/Save Prefs",
-              "period": 0.06,
-              "data_type": "boolean"
-            }
-          },
-          {
-            "title": "kD",
-            "x": 640.0,
-            "y": 192.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/kD",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "kP",
-            "x": 640.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/kP",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "kI",
-            "x": 640.0,
-            "y": 96.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/kI",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "limits enabled",
-            "x": 256.0,
-            "y": 192.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/limits enabled",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "left deployed angle",
-            "x": 1024.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/left deployed angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "left retracted angle",
-            "x": 1024.0,
-            "y": 96.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/left retracted angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "right deployed angle",
-            "x": 1152.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/right deployed angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "right retracted angle",
-            "x": 1152.0,
-            "y": 96.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/right retracted angle",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "servo time",
-            "x": 1152.0,
-            "y": 192.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/servo time",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "lower limit",
-            "x": 768.0,
-            "y": 96.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/lower limit",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "upper limit",
-            "x": 768.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/upper limit",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "kTolerance",
-            "x": 640.0,
-            "y": 288.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/kTolerance",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
-            }
-          },
-          {
-            "title": "Climber Setpoint",
-            "x": 256.0,
-            "y": 0.0,
-            "width": 128.0,
-            "height": 96.0,
-            "type": "Text Display",
-            "properties": {
-              "topic": "/SmartDashboard/ClimberSubsystem/Climber Setpoint",
-              "period": 0.06,
-              "data_type": "double",
-              "show_submit_button": true
+              "topic": "/Preferences",
+              "period": 0.06
             }
           }
         ]

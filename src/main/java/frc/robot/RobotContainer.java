@@ -27,6 +27,7 @@ import frc.robot.autoncommands.AutoShootFromLeft;
 import frc.robot.autoncommands.AutoShootFromRight;
 import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.DoNothing;
+import frc.robot.commands.GoToCommand;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climber;
@@ -122,6 +123,8 @@ public class RobotContainer {
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);
+
+    SmartDashboard.putData("GoToCommand", GoToCommand.getSendable());
 
     pdh = new PowerDistribution(53, ModuleType.kRev);
     SmartDashboard.putData(pdh);

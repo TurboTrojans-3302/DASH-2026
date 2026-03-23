@@ -115,10 +115,13 @@ public final class Constants {
     public static final double kMaxSpeedMetersPerSecond = 4.0;
     public static final double kMaxAccelerationMetersPerSecondSquared = 2.0;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
-    public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI/2;
+    public static final double kMaxAngularAccelRadiansPerSecondSquared = Math.PI/2;
 
     public static final double kDistanceTolerance = 0.050;
     public static final double kHeadingTolerance = 2.0; // degrees
+    public static final double kPX = 0;
+    public static final double kPTheta = 0;
+    public static final double kPY = 0;
   }
 
   public static final class FieldConstants {
@@ -189,11 +192,11 @@ public final class Constants {
   }
 
   public static final class HarvesterConstants {
-    public static final double kVdefault = .0015;
+    public static final double kVdefault = .02;
     public static final String kVkey = "harvesterKv";
-    public static final double pullInRPMDefault = 200;
+    public static final double pullInRPMDefault = 400;
     public static final String pullInRPMkey = "harvesterPullInRPM";
-    public static final double kPdefault = 0.0;
+    public static final double kPdefault = 0.01;
     public static final String kPkey = "harvesterKp";
     public static final double kTolDefault = 10.0;
     public static final String kTolKey = "harvesterKTol";
@@ -265,5 +268,7 @@ public final class Constants {
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
     public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
     public static final String hardLimitEnableKey = "hopperHardLimitEnable";
+    public static final double STARTPOSITIONdefault = 29.0;
+    public static final String startPositionKey = "hopperStartPosition";
   }
 }

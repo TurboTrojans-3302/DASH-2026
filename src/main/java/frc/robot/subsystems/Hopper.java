@@ -1,37 +1,35 @@
 package frc.robot.subsystems;
 
-import frc.robot.Constants;
-import frc.robot.Robot;
-import frc.robot.Constants.HopperConstants;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Constants.HopperConstants;
 
 /**
  * Hopper subsystem controls two Neo550 motors to expand or retract the hopper.
  */
 public class Hopper extends SubsystemBase {
+    public static double STARTPOSITION = HopperConstants.STARTPOSITIONdefault;
+
     private final SparkMax leftMotor;
     private final SparkMax rightMotor;
     private final RelativeEncoder leftEncoder, rightEncoder;
@@ -280,7 +278,7 @@ public class Hopper extends SubsystemBase {
     public Command nudgeCommand(double incrementPerLoop) {
         Command cmd = new FunctionalCommand(
             () -> {}, // no init needed
-            () -> setPosition(positionSetpoint + incrementPerLoop), // advance setpoint each loop
+            () -> setPosition(getPosition() + incrementPerLoop), // advance setpoint each loop
             (interrupted) -> hold(), // hold position on release
             () -> false, // whileTrue in RobotContainer handles termination
             this);
@@ -319,6 +317,8 @@ public class Hopper extends SubsystemBase {
             applyPIDGains();
             leftEncoder.setPosition(Preferences.getDouble(HopperConstants.leftPositionKey, 0));
             rightEncoder.setPosition(Preferences.getDouble(HopperConstants.rightPositionKey, 0));
+            System.out.println("Loading " + HopperConstants.leftPositionKey + ":" + Preferences.getDouble(HopperConstants.rightPositionKey, 0));
+            System.out.println("Loading " + HopperConstants.leftPositionKey + ":" + Preferences.getDouble(HopperConstants.rightPositionKey, 0));
         } else {
             System.out.println("No hopper prefs found. Using default values");
         }
@@ -373,7 +373,10 @@ public class Hopper extends SubsystemBase {
     }
 
     public void savePositions() {
-        Preferences.setDouble(HopperConstants.leftPositionKey,  leftEncoder.getPosition());
-        Preferences.setDouble(HopperConstants.rightPositionKey, rightEncoder.getPosition());
+        double l = leftEncoder.getPosition();
+        double r = rightEncoder.getPosition();
+        Preferences.setDouble(HopperConstants.leftPositionKey,  l);
+        Preferences.setDouble(HopperConstants.rightPositionKey, r);
+        System.out.println("Hopper positions saved: " + l + " " + r);
     }
 }

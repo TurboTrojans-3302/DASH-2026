@@ -9,6 +9,7 @@ package org.littletonrobotics.frc2026;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -285,7 +286,7 @@ public class FieldConstants {
 
     private final String name;
     private volatile AprilTagFieldLayout layout;
-    private volatile String layConstantsoutString;
+    private volatile String layoutString;
 
     AprilTagLayoutType(String name) {
       this.name = name;
@@ -296,21 +297,7 @@ public class FieldConstants {
         synchronized (this) {
           if (layout == null) {
             try {
-              Path p =
-                  true
-                      ? Path.of(
-                          "src",
-                          "main",
-                          "deploy",
-                          "apriltags",
-                          fieldType.getJsonFolder(),
-                          name + ".json")
-                      : Path.of(
-                          Filesystem.getDeployDirectory().getPath(),
-                          "apriltags",
-                          fieldType.getJsonFolder(),
-                          name + ".json");
-              layout = new AprilTagFieldLayout(p);
+              layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
               layoutString = new ObjectMapper().writeValueAsString(layout);
             } catch (IOException e) {
               throw new RuntimeException(e);
