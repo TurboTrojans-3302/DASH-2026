@@ -4,9 +4,15 @@
 
 package frc.robot;
 
+import org.dyn4j.geometry.Transform;
+
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -117,10 +123,18 @@ public final class Constants {
   }
 
   public static final class FieldConstants {
-    public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
-    public static final Pose2d HubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
-    public static final Pose2d HubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
-    public static final Pose2d StartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);}
+    public static final double fieldLength = 16.541;
+    public static final double fieldWidth = 8.069;
+    public static final Pose2d BlueOrigin = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
+    public static final Pose2d RedOrigin = new Pose2d(new Translation2d(fieldLength, fieldWidth),
+                                                      Rotation2d.k180deg);
+    public static final Pose2d BlueHubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
+    public static final Pose2d BlueHubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
+    public static final Pose2d BlueStartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);
+    public static final Pose2d RedHubCenterPoint = BlueHubCenterPoint.relativeTo(RedOrigin);
+    public static final Pose2d RedHubFrontFaceCenter = BlueHubFrontFaceCenter.relativeTo(RedOrigin);
+    public static final Pose2d RedStartCenterTouchingHub = BlueStartCenterTouchingHub.relativeTo(RedOrigin);
+  }
 
   public static final class LimelightConstants {
     public static final String name = "limelight";

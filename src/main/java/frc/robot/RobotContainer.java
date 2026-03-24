@@ -7,6 +7,7 @@ package frc.robot;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -60,6 +61,7 @@ public class RobotContainer {
   private static RobotContainer instance;
 
   private Map<String, Supplier<Command>> autonCommands;
+  private Map<String, Pose2d> startingPositionList;
 
   // The robot's subsystems
   public DriveTrain m_robotDrive;
@@ -89,7 +91,7 @@ public class RobotContainer {
     instance = this;
 
     // The robot's subsystems
-    m_robotDrive = new DriveTrain(Configs.driveConfigFolder, Constants.FieldConstants.StartCenterTouchingHub);
+    m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
     m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
@@ -133,6 +135,11 @@ public class RobotContainer {
         "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, -15.0),
         "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, 15.0)        
       );
+
+    startingPositionList = Map.of(
+      "Blue Start Center Touching Hub", Constants.FieldConstants.BlueStartCenterTouchingHub,
+      "Red Start Center Touching Hub", Constants.FieldConstants.RedStartCenterTouchingHub
+    );
   }
 
   public void setDefaultCommands() {
@@ -363,6 +370,40 @@ public class RobotContainer {
       System.out.println(
           "Warning: selected autonomous routine '" + selectedRoutineName + "' not found. Defaulting to Do Nothing.");
       return new DoNothing();
+    }
+  }
+
+  public SendableChooser<String> createPositionChooser() {
+    final String prefKey = "selectedStartingPosition";
+    SendableChooser<String> chooser = new SendableChooser<>();
+    
+    for (Map.Entry<String, Pose2d> entry : startingPositionList.entrySet()) {
+      chooser.addOption(entry.getKey(), entry.getKey());
+    }
+
+    if(Preferences.containsKey(prefKey)) {
+      String name = Preferences.getString(prefKey, null);
+      if(startingPositionList.containsKey(name)) {
+        chooser.setDefaultOption(name, name);
+      }else{
+        System.out.println("Warning: saved starting position '" + name + "' not found."); 
+      }
+    }
+
+    chooser.onChange((selectedName)->{
+      Preferences.setString(prefKey, selectedName);
+    });
+
+    return chooser;
+  }
+  
+  public Pose2d getStartPosition(String selectedPositionName) {
+    if (selectedPositionName != null && startingPositionList.containsKey(selectedPositionName)) {
+      return startingPositionList.get(selectedPositionName);
+    } else {
+      System.out.println(
+          "Warning: selected starting position '" + selectedPositionName + "' not found. Defaulting Blue Start Center Touching Hub.");
+      return Constants.FieldConstants.BlueStartCenterTouchingHub;
     }
   }
 

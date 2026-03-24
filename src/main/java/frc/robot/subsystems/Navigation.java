@@ -51,6 +51,8 @@ public class Navigation extends SubsystemBase {
 
     m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
+
 
     LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getGyroAngleDegrees(), 0, 0, 0, 0, 0);
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
@@ -87,7 +89,6 @@ public class Navigation extends SubsystemBase {
     if (alliance == Alliance.Red) {
       m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
     } else {
-      m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
     }
   }
   
@@ -95,22 +96,14 @@ public class Navigation extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
 
-    if(alliance != null) {
-      PoseEstimate est;
-      if (alliance == Alliance.Red) {
-        est = LimelightHelpers.getBotPoseEstimate_wpiRed(cameraName);
-      } else {
-        est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
-      }
+    PoseEstimate est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
 
-      //TODO is this necessary? how often is the estimate invalid?
-      if (LimelightHelpers.validPoseEstimate(est) && 
-          (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
-        m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
-      }
+    // TODO is this necessary? how often is the estimate invalid?
+    if (LimelightHelpers.validPoseEstimate(est) &&
+        (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
+      m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
     }
 
-    // todo: are we always setting yaw parameter correctly wrt to alliance?
     double yaw = alliance == Alliance.Blue ? m_drive.getGyroAngleDegrees() : m_drive.getGyroAngleDegrees() + 180.0;
     LimelightHelpers.SetRobotOrientation(cameraName, yaw, 0, 0, 0, 0, 0);
 
@@ -120,13 +113,6 @@ public class Navigation extends SubsystemBase {
   public Pose2d getPose() {
     return m_poseEstimator.getEstimatedPosition();
   }
-
-  public void resetOdometry(Pose2d pose) {
-    m_poseEstimator.resetPosition(Rotation2d.fromDegrees(m_drive.getGyroAngleDegrees()),
-        m_drive.getSwerveModulePositions(),
-        pose);
-  }
-
 
   public static Pose2d getTagPose2d(int tagId) {
     return m_aprilTagLayout.getTagPose(tagId)
@@ -141,6 +127,9 @@ public class Navigation extends SubsystemBase {
     return tagPose.plus(delta);
   }
 
+  public void setPosition(Pose2d newPose) {
+    m_drive.resetOdometry(newPose);
+  }
 
   /**
    * @return heading angle of the bot, according to the odometry
@@ -156,8 +145,12 @@ public class Navigation extends SubsystemBase {
     return getHeading().getDegrees();
   }
 
+  public Pose2d HubCenterPoint() {
+    return alliance == Alliance.Blue ? FieldConstants.BlueHubCenterPoint : FieldConstants.RedHubCenterPoint;
+  }
+
   public double getDxToHubCenter() {
-    Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
+    Pose2d hubPose = HubCenterPoint();
     Pose2d botPose = getPose();
     double odometryDistance = hubPose.getTranslation().getDistance(botPose.getTranslation());
 
