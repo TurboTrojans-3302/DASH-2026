@@ -5,6 +5,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveTrain;
@@ -17,6 +18,7 @@ public class SetRangeAndAim extends Command {
   private final DriveTrain driveTrain;
   private final Navigation navigation;
   private final Shooter shooter;
+  private Rotation2d finalAngle;
 
   private static final double kAimToleranceDegrees = 2.0;
 
@@ -32,12 +34,13 @@ public class SetRangeAndAim extends Command {
   @Override
   public void initialize() {
     setShooterSpeedForDistance();
+    finalAngle = navigation.getAbsBearingToTarget().plus(Rotation2d.k180deg);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    driveTrain.driveHeading(new Translation2d(0.0, 0.0), navigation.getAbsBearingToTarget());
+    driveTrain.driveHeading(new Translation2d(0.0, 0.0), finalAngle);
     setShooterSpeedForDistance(); // just in case distance has changed a bit
   }
 
@@ -50,7 +53,7 @@ public class SetRangeAndAim extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return MathUtil.isNear(navigation.getAbsBearingToTarget().getRadians(), driveTrain.getHeading().getRadians(),
+    return MathUtil.isNear(finalAngle.getRadians(), driveTrain.getHeading().getRadians(),
                            Math.toRadians(kAimToleranceDegrees),
                            0.0, (2 * Math.PI))
            && shooter.isReady();

@@ -26,6 +26,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
+import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.utils.SwerveUtils;
 import edu.wpi.first.wpilibj.Timer;
@@ -84,11 +85,6 @@ public class Navigation extends SubsystemBase {
 
   public void setAlliance(Alliance alliance) {
     this.alliance = alliance;
-    if (alliance == Alliance.Red) {
-      m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
-    } else {
-      m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
-    }
   }
   
   @Override
@@ -121,13 +117,6 @@ public class Navigation extends SubsystemBase {
     return m_poseEstimator.getEstimatedPosition();
   }
 
-  public void resetOdometry(Pose2d pose) {
-    m_poseEstimator.resetPosition(Rotation2d.fromDegrees(m_drive.getGyroAngleDegrees()),
-        m_drive.getSwerveModulePositions(),
-        pose);
-  }
-
-
   public static Pose2d getTagPose2d(int tagId) {
     return m_aprilTagLayout.getTagPose(tagId)
     .orElseThrow(() -> new RuntimeException("No AprilTag with ID " + tagId))
@@ -156,8 +145,16 @@ public class Navigation extends SubsystemBase {
     return getHeading().getDegrees();
   }
 
+  public Pose2d getHubCenterPoint(){
+    if (alliance == Alliance.Blue){
+      return Constants.FieldConstants.BlueHubCenterPoint;
+    } else {
+      return Constants.FieldConstants.RedHubCenterPoint;
+    } 
+  }
+
   public double getDxToHubCenter() {
-    Pose2d hubPose = Constants.FieldConstants.HubCenterPoint;
+    Pose2d hubPose = getHubCenterPoint();
     Pose2d botPose = getPose();
     double odometryDistance = hubPose.getTranslation().getDistance(botPose.getTranslation());
 
@@ -193,7 +190,7 @@ public class Navigation extends SubsystemBase {
   }
 
   public Rotation2d getAbsBearingToTarget() {
-    Translation2d delta = FieldConstants.HubCenterPoint.getTranslation().minus(getPose().getTranslation());
+    Translation2d delta = getHubCenterPoint().getTranslation().minus(getPose().getTranslation());
     return delta.getAngle();
   }
 
@@ -206,7 +203,7 @@ public class Navigation extends SubsystemBase {
    * at rangeRPMtable.OPTIMAL meters from the hub center, facing the hub.
    */
   public Pose2d getOptimalShootPos() {
-    Translation2d hub = FieldConstants.HubCenterPoint.getTranslation();
+    Translation2d hub = getHubCenterPoint().getTranslation();
     Translation2d bot = getPose().getTranslation();
     Translation2d hubToBot = bot.minus(hub);
     // Unit vector from hub toward bot

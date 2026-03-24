@@ -89,7 +89,8 @@ public class RobotContainer {
     instance = this;
 
     // The robot's subsystems
-    m_robotDrive = new DriveTrain(Configs.driveConfigFolder, Constants.FieldConstants.StartCenterTouchingHub);
+
+    m_robotDrive = new DriveTrain(Configs.driveConfigFolder);
     SmartDashboard.putData("DriveSubsystem", m_robotDrive);
 
     m_dxSensor = new DXsensor(Constants.CanIds.DX_SENSOR_CAN_ID);
@@ -286,6 +287,7 @@ public class RobotContainer {
    */
   public void initRed() {
     m_navigation.setAlliance(Alliance.Red);
+    m_robotDrive.resetOdometry(Constants.FieldConstants.RedStartCenterTouchingHub); 
   }
 
   /*
@@ -293,6 +295,7 @@ public class RobotContainer {
    */
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
+    m_robotDrive.resetOdometry(Constants.FieldConstants.BlueStartCenterTouchingHub); 
   }
  
   public void onDSAttached(){

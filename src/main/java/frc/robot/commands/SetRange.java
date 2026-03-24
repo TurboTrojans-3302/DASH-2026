@@ -4,7 +4,10 @@
 
 package frc.robot.commands;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.rangeRPMtable;
 
@@ -12,19 +15,33 @@ import frc.robot.subsystems.rangeRPMtable;
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class SetRange extends Command {
   private final Shooter shooter;
-  private final double distance;
+  private DoubleSupplier distanceSupplier;
 
-  /** Creates a new SetRange. */
+  public SetRange(Shooter shooter, Navigation nav) {
+    this(shooter, () -> nav.getDXtoTarget());
+  }
+
   public SetRange(Shooter shooter, double distance) {
+    this(shooter, () -> distance);
+  }
+  
+  public SetRange(Shooter shooter, DoubleSupplier distanceSupplier) {
     addRequirements(shooter);
     this.shooter = shooter;
-    this.distance = distance;
+    this.distanceSupplier = distanceSupplier;
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    setShooterSpeedForDistance();
+    double distance = distanceSupplier.getAsDouble();
+    double rpm;
+    if (rangeRPMtable.inRange(distance)) {
+      rpm = rangeRPMtable.get(distance);
+    } else {
+      rpm = 1900.0;
+    }
+    shooter.setRPMsetpoint(rpm);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -39,16 +56,5 @@ public class SetRange extends Command {
     @Override
     public boolean isFinished() {
         return shooter.isReady();
-    }
-
-    private void setShooterSpeedForDistance() {
-        double rpm;
-        if (rangeRPMtable.inRange(distance)) {
-            rpm = rangeRPMtable.get(distance);
-        } else {
-            rpm = 1900.0;
-        }
-        shooter.setRPMsetpoint(rpm);
-
     }
 }

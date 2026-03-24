@@ -52,7 +52,7 @@ public class DriveTrain extends SubsystemBase {
    * @param directory Directory of swerve drive config files.
    * @param startingPose The starting pose of the robot.
    */
-  public DriveTrain(String directory, Pose2d startingPose) {
+  public DriveTrain(String directory) {
     File configFileObject = new File(Filesystem.getDeployDirectory(), directory);
     try {
       System.out.println("loading SwerveDrive: " + configFileObject);
@@ -76,11 +76,7 @@ public class DriveTrain extends SubsystemBase {
     // over the internal encoder and push the offsets onto it. Throws warning if not
     // possible
 
-    // If we successfully created the swerveDrive, initialize odometry to the
-    // starting pose
-    if (swerveDrive != null) {
-      swerveDrive.resetOdometry(Constants.FieldConstants.HubFrontFaceCenter);
-    }
+  
 
     SmartDashboard.putData("IMU Heading", new Sendable() {
       @Override
@@ -89,6 +85,7 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
       } 
     });
+    SmartDashboard.putData("Swerve Theta", swerveDrive.swerveController.thetaController);
   }
 
   public double getMaxAngularVelocity() {
