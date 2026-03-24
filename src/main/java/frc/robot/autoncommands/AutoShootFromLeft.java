@@ -21,7 +21,7 @@ public class AutoShootFromLeft extends SequentialCommandGroup {
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(
       GoToCommand.relative(drivetrain, nav, 1, 1, -45.0),
-      new SetRange(shooter, 1.141), //todo fix this range
+      new SetRange(shooter, 1.141),
       shooter.shootCommand()
     );
   }
