@@ -76,6 +76,8 @@ public class DriveTrain extends SubsystemBase {
     // over the internal encoder and push the offsets onto it. Throws warning if not
     // possible
 
+  
+
     SmartDashboard.putData("IMU Heading", new Sendable() {
       @Override
       public void initSendable(SendableBuilder builder) {
@@ -83,6 +85,7 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
       } 
     });
+    SmartDashboard.putData("Swerve Theta", swerveDrive.swerveController.thetaController);
   }
 
   public double getMaxAngularVelocity() {
