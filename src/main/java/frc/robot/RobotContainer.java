@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.autoncommands.AutoShoot;
 import frc.robot.autoncommands.AutoShootFromCenter;
@@ -49,6 +50,26 @@ import frc.robot.subsystems.Shooter;
  */
 public class RobotContainer {
 
+  class StartPosition {
+      public final Pose2d red;
+      public final Pose2d blue;
+
+      StartPosition(Pose2d red, Pose2d blue) {
+        this.red = red;
+        this.blue = blue;
+      }
+
+      StartPosition(Pose2d blue) {
+        this.blue = blue;
+        this.red = blue.relativeTo(Constants.FieldConstants.RedOrigin);
+      }
+
+      public Pose2d get(Alliance alliance) {
+        return alliance == Alliance.Red ? red : blue;
+      }
+    }
+
+
   private static boolean HARVESTER_ENABLE = true;
   private static boolean CLIMBERS_ENABLE = false;
   private static boolean HOPPER_ENABLE = true;
@@ -61,7 +82,9 @@ public class RobotContainer {
   private static RobotContainer instance;
 
   private Map<String, Supplier<Command>> autonCommands;
-  private Map<String, Pose2d> startingPositionList;
+
+
+  private Map<String, StartPosition> startingPositionList;
 
   // The robot's subsystems
   public DriveTrain m_robotDrive;
@@ -76,6 +99,7 @@ public class RobotContainer {
   public PowerDistribution pdh;
 
   private final REVBlinkinLED m_BlinkinLED;
+  private Alliance alliance;
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
@@ -138,8 +162,9 @@ public class RobotContainer {
       );
 
     startingPositionList = Map.of(
-      "Blue Start Center Touching Hub", Constants.FieldConstants.BlueStartCenterTouchingHub,
-      "Red Start Center Touching Hub", Constants.FieldConstants.RedStartCenterTouchingHub
+      "Start Center Touching Hub", new StartPosition(Constants.FieldConstants.BlueStartCenterTouchingHub),
+      "Start Left Touching Hub", new StartPosition(Constants.FieldConstants.BlueStartLeftTouchingHub),
+      "Start Right Touching Hub", new StartPosition(Constants.FieldConstants.BlueStartRightTouchingHub)
     );
   }
 
@@ -294,7 +319,8 @@ public class RobotContainer {
    */
   public void initRed() {
     m_navigation.setAlliance(Alliance.Red);
-    m_robotDrive.resetOdometry(Constants.FieldConstants.RedStartCenterTouchingHub); 
+    m_robotDrive.resetOdometry(FieldConstants.BlueStartCenterTouchingHub.relativeTo(FieldConstants.RedOrigin)); 
+    alliance = Alliance.Red;
   }
 
   /*
@@ -302,7 +328,8 @@ public class RobotContainer {
    */
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
-    m_robotDrive.resetOdometry(Constants.FieldConstants.BlueStartCenterTouchingHub); 
+    m_robotDrive.resetOdometry(FieldConstants.BlueStartCenterTouchingHub); 
+    alliance = Alliance.Blue;
   }
  
   public void onDSAttached(){
@@ -380,7 +407,7 @@ public class RobotContainer {
     final String prefKey = "selectedStartingPosition";
     SendableChooser<String> chooser = new SendableChooser<>();
     
-    for (Map.Entry<String, Pose2d> entry : startingPositionList.entrySet()) {
+    for (Map.Entry<String, StartPosition> entry : startingPositionList.entrySet()) {
       chooser.addOption(entry.getKey(), entry.getKey());
     }
 
@@ -402,7 +429,8 @@ public class RobotContainer {
   
   public Pose2d getStartPosition(String selectedPositionName) {
     if (selectedPositionName != null && startingPositionList.containsKey(selectedPositionName)) {
-      return startingPositionList.get(selectedPositionName);
+      StartPosition p = startingPositionList.get(selectedPositionName);
+      return p.get(alliance);
     } else {
       System.out.println(
           "Warning: selected starting position '" + selectedPositionName + "' not found. Defaulting Blue Start Center Touching Hub.");
