@@ -5,9 +5,9 @@
 package frc.robot.autoncommands;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.commands.AimAtHub;
 import frc.robot.commands.GoToCommand;
-import frc.robot.commands.GoToOptimalAndSetRange;
-import frc.robot.commands.SetRangeAndAim;
+import frc.robot.commands.SetRange;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
@@ -27,8 +27,10 @@ public class AutoShoot extends SequentialCommandGroup {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(GoToCommand.relative(driveTrain, navigation, 1.0, 0.0, 0.0)
-                            .setLimits(4.0, 8.0),
-                new SetRangeAndAim(m_driveTrain, m_navigation, m_shooter),
+                            .setLimits(4.0, 8.0).withTimeout(5.0),
+                GoToCommand.deferred(m_driveTrain, m_navigation, m_navigation::getOptimalShootPos),
+                new SetRange(m_shooter, m_navigation),
+                new AimAtHub(m_navigation, m_driveTrain),
                 m_shooter.shootCommand().withTimeout(10)); 
   }
 }

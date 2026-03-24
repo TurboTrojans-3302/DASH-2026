@@ -4,6 +4,9 @@
 
 package frc.robot.commands;
 
+import java.util.Set;
+import java.util.function.Supplier;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -18,6 +21,7 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
@@ -89,6 +93,11 @@ public class GoToCommand extends Command {
 
   public static GoToCommand absolute(DriveTrain drive, Navigation nav, Pose2d dest) {
     return new GoToCommand(drive, nav, dest);
+  }
+
+  public static Command deferred(DriveTrain drive, Navigation nav, Supplier<Pose2d> destSupplier) {
+    return Commands.defer(() -> new GoToCommand(drive, nav, destSupplier.get()),
+                          Set.of(drive, nav));
   }
 
   public static GoToCommand absolute(DriveTrain drive, Navigation nav, double x, double y, double heading) {
@@ -188,8 +197,10 @@ public class GoToCommand extends Command {
     previousState = nextState;
     angularPreviousState = angularNextState;
 
+    String direction = translate.getNorm() < 1e-6 ? "null": String.valueOf(translate.getAngle().getDegrees());
+
     stringLogEntry.append("speed: " + translate.getNorm() +
-                          "direction: " + translate.getAngle().getDegrees() +
+                          "direction: " + direction +
                           "angularVelocity: " + rotate);
   }
 
