@@ -162,7 +162,7 @@ public class RobotContainer {
     }
 
     JoystickButton toggleCameraStream = new JoystickButton(m_driverController, XboxController.Button.kY.value);
-    toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation));
+    toggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.nextCameraStream(), m_navigation));
 
     /**
      * Copilot's Controller
@@ -177,7 +177,7 @@ public class RobotContainer {
     }
 
     JoystickButton coPilotToggleCameraStream = new JoystickButton(m_copilotController, XboxController.Button.kY.value);
-    coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation)); 
+    coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.nextCameraStream(), m_navigation)); 
 
    /**
      * Button Board

@@ -9,6 +9,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.cscore.HttpCamera.HttpCameraKind;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoCamera;
 import edu.wpi.first.cscore.VideoSink;
 import edu.wpi.first.math.MathUtil;
@@ -19,18 +20,16 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
-import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.utils.SwerveUtils;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Navigation extends SubsystemBase {
   private final String cameraName = "limelight";
@@ -39,9 +38,11 @@ public class Navigation extends SubsystemBase {
   public Field2d m_dashboardField = new Field2d();
   protected SwerveDrivePoseEstimator m_poseEstimator;
   private static AprilTagFieldLayout m_aprilTagLayout;
-  private boolean mainCameraStreamSelected = true;
   private VideoCamera limeightCamera;
-  private VideoCamera usbCamera;
+  private VideoCamera frontUsbCamera;
+  private VideoCamera climberUsbCamera;
+  private VideoCamera[] cameraList;
+  private int currentCameraIndex = 0;
   private VideoSink cameraServer;
   private Alliance alliance;
 
@@ -69,8 +70,11 @@ public class Navigation extends SubsystemBase {
         cameraName,
         "http://limelight.local:5800/stream.mjpg",
         HttpCameraKind.kMJPGStreamer);
-    usbCamera = CameraServer.startAutomaticCapture();
+    frontUsbCamera = CameraServer.startAutomaticCapture(0);
+    climberUsbCamera = new UsbCamera("climberUsbCamera", 1);
     cameraServer = CameraServer.getServer();
+    cameraList = new VideoCamera[] {limeightCamera, frontUsbCamera, climberUsbCamera};
+
 
     SmartDashboard.putData(m_dashboardField);
     SmartDashboard.putData("Nav Pose Heading", new Sendable() {
@@ -180,13 +184,9 @@ public class Navigation extends SubsystemBase {
     return distance;
   }
 
-  public void toggleCameraStream() {
-    if(mainCameraStreamSelected) {
-      cameraServer.setSource(usbCamera);
-    } else {
-      cameraServer.setSource(limeightCamera);
-    }
-    mainCameraStreamSelected = !mainCameraStreamSelected;
+  public void nextCameraStream() {
+    currentCameraIndex = (currentCameraIndex + 1) % cameraList.length;
+    cameraServer.setSource(cameraList[currentCameraIndex]);
   }
 
   public Rotation2d getAbsBearingToTarget() {
