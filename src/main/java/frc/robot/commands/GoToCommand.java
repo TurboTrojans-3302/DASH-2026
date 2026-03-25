@@ -16,6 +16,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.util.datalog.StringLogEntry;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -52,6 +53,9 @@ public class GoToCommand extends Command {
   protected double kDistanceTolerance; 
   protected double kHeadingTolerance; 
   protected StringLogEntry stringLogEntry;
+  protected DoubleLogEntry speedLogEntry;
+  protected DoubleLogEntry angularSpeedLogEntry;
+  protected DoubleLogEntry translationDirectionEntry;
   protected State previousState = new State(0.0, 0.0);
   protected State angularPreviousState = new State(0.0, 0.0);
   protected State goalState;
@@ -82,7 +86,11 @@ public class GoToCommand extends Command {
     addRequirements(m_drive);
 
     DataLog log = DataLogManager.getLog();
-    stringLogEntry = new StringLogEntry(log, this.getClass().getSimpleName());
+    String name = this.getClass().getSimpleName() + " " + (m_relativeFlag ? m_delta : m_dest);
+    stringLogEntry = new StringLogEntry(log, name);
+    speedLogEntry = new DoubleLogEntry(log, name + "/speed");
+    angularSpeedLogEntry = new DoubleLogEntry(log, name + "/angularSpeed");
+    translationDirectionEntry = new DoubleLogEntry(log, name + "/translationDirection");
   }
 
   public GoToCommand(DriveTrain drive, Navigation nav, Pose2d dest) {
@@ -197,19 +205,17 @@ public class GoToCommand extends Command {
     previousState = nextState;
     angularPreviousState = angularNextState;
 
-    String direction = translate.getNorm() < 1e-6 ? "null": String.valueOf(translate.getAngle().getDegrees());
-
-    stringLogEntry.append("speed: " + translate.getNorm() +
-                          "direction: " + direction +
-                          "angularVelocity: " + rotate);
+    double speed = translate.getNorm();
+    speedLogEntry.append(speed);
+    angularSpeedLogEntry.append(rotate);
+    translationDirectionEntry.append(speed > 1e-6 ? translate.getAngle().getDegrees() : 0.0);
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
     m_drive.stop();
-    stringLogEntry.append("End go to: " + m_nav.getPose() + " interrupted: " + interrupted +
-                          "distance: " + distance() + " deltaHeading: " + deltaHeadingDegrees());
+    stringLogEntry.append("End go to: " + m_nav.getPose() + " interrupted: " + interrupted);
   }
 
   private boolean distanceIsNear() {
