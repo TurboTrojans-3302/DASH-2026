@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import java.lang.reflect.Field;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -33,8 +31,7 @@ public final class Constants {
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId = 13;
     public static final int kSecondFeederMotorCanId = 14;
-   // public static final int kClimbMotor1 = 14;
-   // public static final int kClimbMotor2 = 15;
+   // ID 15 for the climber. defined in swerve config files
   }
 
   public final class RobotConstants {
