@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import java.lang.reflect.Field;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -35,6 +33,7 @@ public final class Constants {
     public static final int kHarvesterMotorCanId   = 13;
     public static final int kSecondFeederMotorCanId = 14;
     public static final int kClimbMotor            = 15;
+    //todo fix conflicting can id with Pigeon2
   }
 
   public final class RobotConstants {
