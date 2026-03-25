@@ -7,8 +7,10 @@ package frc.robot.autoncommands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.commands.AimAtHub;
 import frc.robot.commands.GoToCommand;
+import frc.robot.commands.JostleShoot;
 import frc.robot.commands.SetRange;
 import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 
@@ -20,17 +22,25 @@ public class AutoShoot extends SequentialCommandGroup {
   private DriveTrain m_driveTrain;
   private Shooter m_shooter;
   private Navigation m_navigation;
-  public AutoShoot(DriveTrain driveTrain, Shooter shooter, Navigation navigation) {
+  private Hopper m_hopper;
+  public AutoShoot(DriveTrain driveTrain, Shooter shooter, Navigation navigation, Hopper hopper) {
     m_driveTrain = driveTrain;
     m_shooter = shooter;
     m_navigation = navigation;
-    // Add your commands in the addCommands() call, e.g.
-    // addCommands(new FooCommand(), new BarCommand());
-    addCommands(GoToCommand.relative(driveTrain, navigation, 1.0, 0.0, 0.0)
-                            .setLimits(4.0, 8.0).withTimeout(5.0),
-                GoToCommand.deferred(m_driveTrain, m_navigation, m_navigation::getOptimalShootPos),
-                new SetRange(m_shooter, m_navigation),
-                new AimAtHub(m_navigation, m_driveTrain),
-                m_shooter.shootCommand().withTimeout(10)); 
+    m_hopper = hopper;
+
+    addCommands(
+
+      GoToCommand.relative(m_driveTrain, m_navigation, 1.0, 0.0, 0.0)
+                            .setLimits(4.0, 8.0)
+                            .withTimeout(5.0),
+      
+      new SetRange(m_shooter, m_navigation).alongWith(
+        new AimAtHub(m_navigation, m_driveTrain),
+        m_hopper.setPositionCommand(Hopper.STARTPOSITION)
+      ),
+      
+      new JostleShoot(m_shooter, m_hopper, 10, 2.0)
+          .withTimeout(14)); 
   }
 }
