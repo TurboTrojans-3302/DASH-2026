@@ -133,12 +133,12 @@ public class RobotContainer {
 
     autonCommands = Map.of(
         "Do Nothing", () -> new DoNothing(),
-        "Start Center", () -> new AutoShootFromCenter(m_robotDrive, m_shooter, m_navigation),
-        "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation), 
-        "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation),
-        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation),
-        "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, -15.0),
-        "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, 1.0, 15.0),
+        "Start Center", () -> new AutoShootFromCenter(m_robotDrive, m_shooter, m_navigation, m_hopper),
+        "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation, m_hopper), 
+        "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation, m_hopper),
+        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation, m_hopper),
+        "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, m_hopper, 1.0, -15.0),
+        "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, m_hopper, 1.0, 15.0),
         "Aim At Hub", () -> new AimAtHub(m_navigation, m_robotDrive)
       );
   }

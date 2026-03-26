@@ -11,7 +11,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Navigation;
 
-/* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
+/*
+ * Because the shooter is on the back of the robot,
+ * we want to drive backwards towards the hub.
+ * This command will use the nav subsystem to get the angle
+ * to the target and then rotate in that direction until
+ * we are within 1 degree of the target.
+ */
 public class AimAtHub extends Command {
   Navigation nav;
   DriveTrain drive;
@@ -27,13 +33,13 @@ public class AimAtHub extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    targetAngle = nav.getAbsBearingToTarget().plus(Rotation2d.k180deg);
+    targetAngle = nav.getAbsBearingToTarget();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    drive.driveHeading(Translation2d.kZero, targetAngle);
+    drive.driveHeading(Translation2d.kZero, targetAngle.plus(Rotation2d.k180deg));
   }
 
   // Called once the command ends or is interrupted.

@@ -241,6 +241,10 @@ public class Hopper extends SubsystemBase {
         return softLimitsEnabled;
     }
 
+    public Command setPositionCommand(double targetPosition) {
+        return setPositionCommand(() -> targetPosition);
+    }
+
     public Command setPositionCommand(DoubleSupplier targetPosition) {
         FunctionalCommand cmd = new FunctionalCommand(
             () -> { setPosition(targetPosition.getAsDouble()); },
