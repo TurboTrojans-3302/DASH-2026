@@ -55,7 +55,7 @@ public class RobotContainer {
   private static boolean SHOOTER_ENABLE = true;
   public static boolean feederEnabled = true;
 
-  private static final double kHopperNudgeIncrement = 4.0;
+  private static final double kHopperNudgeIncrement = 5.0;
   private static final double kHopperNudgeOpenLoopSpeed = 0.2;
 
   private static RobotContainer instance;
@@ -239,8 +239,8 @@ public class RobotContainer {
     Trigger nudgeHopperLeftIn = new Trigger(() -> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownLeft);
     Trigger nudgeHopperIn = new Trigger(() -> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDown);
     Trigger nudgeHopperRightIn = new Trigger(() -> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownRight);
-    nudgeHopperOut.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
-    nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
+    nudgeHopperOut.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(kHopperNudgeIncrement));
+    nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-kHopperNudgeIncrement));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
         .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
