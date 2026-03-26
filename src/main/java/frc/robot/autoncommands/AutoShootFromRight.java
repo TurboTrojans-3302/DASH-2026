@@ -6,8 +6,10 @@ package frc.robot.autoncommands;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.commands.GoToCommand;
+import frc.robot.commands.JostleShoot;
 import frc.robot.commands.SetRange;
 import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 
@@ -16,13 +18,15 @@ import frc.robot.subsystems.Shooter;
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class AutoShootFromRight extends SequentialCommandGroup {
   /** Creates a new AutoShootFromCenter. */
-  public AutoShootFromRight(DriveTrain drivetrain, Shooter shooter, Navigation nav) {
+  public AutoShootFromRight(DriveTrain drivetrain, Shooter shooter, Navigation nav, Hopper hopper) {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(
-      GoToCommand.relative(drivetrain, nav, 1, 1, 45.0),
-      new SetRange(shooter, 1.141), //todo fix this range
-      shooter.shootCommand()
+      GoToCommand.relative(drivetrain, nav, 1, 1, 45.0).alongWith(
+        new SetRange(shooter, nav),
+        hopper.setPositionCommand(Hopper.STARTPOSITION)
+      ),
+      new JostleShoot(shooter, hopper, 10, 2.0).withTimeout(14)
     );
   }
 }
