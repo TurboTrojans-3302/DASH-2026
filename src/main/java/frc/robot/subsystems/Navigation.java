@@ -29,6 +29,7 @@ import frc.robot.LimelightHelpers;
 import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.utils.SwerveUtils;
+import swervelib.SwerveDrive;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -50,7 +51,9 @@ public class Navigation extends SubsystemBase {
     this.m_drive = drive;
     this.m_dxSensor = dxSensor;
 
-    m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
+    SwerveDrive swerve = m_drive.getSwerveDrive();
+    //swerve.getGyro().setInverted(false);
+    m_poseEstimator = swerve.swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
 
     LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getGyroAngleDegrees(), 0, 0, 0, 0, 0);
@@ -107,7 +110,7 @@ public class Navigation extends SubsystemBase {
     }
 
     // todo: are we always setting yaw parameter correctly wrt to alliance?
-    double yaw = alliance == Alliance.Blue ? m_drive.getGyroAngleDegrees() : m_drive.getGyroAngleDegrees() + 180.0;
+    double yaw = m_drive.getGyroAngleDegrees();
     LimelightHelpers.SetRobotOrientation(cameraName, yaw, 0, 0, 0, 0, 0);
 
     m_dashboardField.setRobotPose(getPose());
@@ -194,9 +197,9 @@ public class Navigation extends SubsystemBase {
     return delta.getAngle();
   }
 
-  public double getRelBearingToTargetDegrees() {
-    return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getAbsBearingToTarget().getDegrees());
-  } 
+  // public double getRelBearingToTargetDegrees() {
+  //   return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getAbsBearingToTarget().getDegrees());
+  // } 
 
   /**
    * Get the optimal shooting position: a Pose2d on the line between the bot and the hub center,
@@ -227,6 +230,6 @@ public class Navigation extends SubsystemBase {
       builder.addIntegerProperty("ApriltagFound", () -> {return (int) LimelightHelpers.getFiducialID(cameraName);} , null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
       builder.addDoubleProperty("Target DX", ()->getDXtoTarget(), null);
-      builder.addDoubleProperty("Target Angle", ()->getRelBearingToTargetDegrees(), null);
+      builder.addDoubleProperty("Target Angle", ()->getAbsBearingToTarget().getDegrees(), null);
     }
 }
