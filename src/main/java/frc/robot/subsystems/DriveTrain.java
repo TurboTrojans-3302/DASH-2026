@@ -272,8 +272,9 @@ public class DriveTrain extends SubsystemBase {
    * @param initialHolonomicPose The pose to set the odometry to
    */
   public void resetOdometry(Pose2d initialHolonomicPose) {
-    Rotation3d rot = new Rotation3d(initialHolonomicPose.getRotation());
-    swerveDrive.setGyro(rot);
+    // Don't call setGyro — it can conflict with invertIMU
+    // Rotation3d rot = new Rotation3d(initialHolonomicPose.getRotation());
+    // swerveDrive.setGyro(rot);
     swerveDrive.resetOdometry(initialHolonomicPose);
   }
 

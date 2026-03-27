@@ -104,7 +104,7 @@ public class Navigation extends SubsystemBase {
       m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
     }
 
-    double yaw = alliance == Alliance.Blue ? m_drive.getGyroAngleDegrees() : m_drive.getGyroAngleDegrees() + 180.0;
+    double yaw = m_drive.getGyroAngleDegrees();
     LimelightHelpers.SetRobotOrientation(cameraName, yaw, 0, 0, 0, 0, 0);
 
     m_dashboardField.setRobotPose(getPose());
