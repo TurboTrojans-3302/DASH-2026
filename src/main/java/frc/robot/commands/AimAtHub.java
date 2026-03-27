@@ -49,6 +49,6 @@ public class AimAtHub extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return MathUtil.isNear(0, nav.getRelBearingToTargetDegrees(), 1.0);
+    return MathUtil.isNear(targetAngle.getDegrees(), nav.getHeadingDegrees(), 1.0, -180, 180);
   }
 }
