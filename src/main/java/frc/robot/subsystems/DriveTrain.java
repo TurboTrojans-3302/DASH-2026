@@ -273,7 +273,6 @@ public class DriveTrain extends SubsystemBase {
    */
   public void resetOdometry(Pose2d initialHolonomicPose) {
     Rotation3d rot = new Rotation3d(initialHolonomicPose.getRotation());
-    swerveDrive.setGyro(rot);
     swerveDrive.resetOdometry(initialHolonomicPose);
   }
 
