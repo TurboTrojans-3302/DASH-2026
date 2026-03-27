@@ -6,7 +6,9 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -120,14 +122,15 @@ public final class Constants {
     public static final double fieldWidth = 8.069;
     public static final Pose2d BlueOrigin = Pose2d.kZero;
     public static final Pose2d RedOrigin = new Pose2d(new Translation2d(fieldLength, fieldWidth), Rotation2d.k180deg);
-    public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
+     public static final Pose2d ZeroZero = new Pose2d(Translation2d.kZero, Rotation2d.kZero);
     public static final Pose2d BlueHubCenterPoint = new Pose2d(4.62, 4.03, Rotation2d.kZero);
     public static final Pose2d RedHubCenterPoint = BlueHubCenterPoint.relativeTo(RedOrigin);
     public static final Pose2d BlueHubFrontFaceCenter = new Pose2d(3.6, 4.0346376, Rotation2d.k180deg);
     public static final Pose2d RedHubFrontFaceCenter = BlueHubFrontFaceCenter.relativeTo(RedOrigin);
     public static final Pose2d BlueStartCenterTouchingHub = new Pose2d(4.62 - RobotConstants.lengthWithBumpers/2, 4.03, Rotation2d.k180deg);
-    public static final Pose2d RedStartCenterTouchingHub = BlueStartCenterTouchingHub.relativeTo(RedOrigin); 
-  }
+    public static final Pose2d BlueStartLeftTouchingHub = BlueStartCenterTouchingHub.plus(new Transform2d(0.0, RobotConstants.widthWithBumpers, Rotation2d.kZero));
+    public static final Pose2d BlueStartRightTouchingHub = BlueStartCenterTouchingHub.plus(new Transform2d(0.0, -RobotConstants.widthWithBumpers, Rotation2d.kZero));    
+ }
 
   public static final class LimelightConstants {
     public static final String name = "limelight";

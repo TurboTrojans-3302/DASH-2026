@@ -19,14 +19,14 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
-import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.utils.SwerveUtils;
 import swervelib.SwerveDrive;
@@ -55,6 +55,8 @@ public class Navigation extends SubsystemBase {
     //swerve.getGyro().setInverted(false);
     m_poseEstimator = swerve.swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
+
 
     LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getGyroAngleDegrees(), 0, 0, 0, 0, 0);
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
@@ -94,23 +96,15 @@ public class Navigation extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
 
-    if(alliance != null) {
-      PoseEstimate est;
-      if (alliance == Alliance.Red) {
-        est = LimelightHelpers.getBotPoseEstimate_wpiRed(cameraName);
-      } else {
-        est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
-      }
+    PoseEstimate est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
 
-      //TODO is this necessary? how often is the estimate invalid?
-      if (LimelightHelpers.validPoseEstimate(est) && 
-          (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
-        m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
-      }
+    // TODO is this necessary? how often is the estimate invalid?
+    if (LimelightHelpers.validPoseEstimate(est) &&
+        (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
+      m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
     }
 
-    // todo: are we always setting yaw parameter correctly wrt to alliance?
-    double yaw = m_drive.getGyroAngleDegrees();
+    double yaw = alliance == Alliance.Blue ? m_drive.getGyroAngleDegrees() : m_drive.getGyroAngleDegrees() + 180.0;
     LimelightHelpers.SetRobotOrientation(cameraName, yaw, 0, 0, 0, 0, 0);
 
     m_dashboardField.setRobotPose(getPose());
@@ -133,6 +127,9 @@ public class Navigation extends SubsystemBase {
     return tagPose.plus(delta);
   }
 
+  public void setPosition(Pose2d newPose) {
+    m_drive.resetOdometry(newPose);
+  }
 
   /**
    * @return heading angle of the bot, according to the odometry

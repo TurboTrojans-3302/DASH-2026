@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import edu.wpi.first.hal.MatchInfoData;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -39,6 +40,8 @@ public class Robot extends TimedRobot {
   private SendableChooser<String> m_autonomousChooser;
   private Command m_autonomousCommand;
   public MatchInfoData matchInfoData;
+  private SendableChooser<String> m_startingPositionChooser;
+  private Pose2d m_startingPosition;
 
   Robot(){
     instance = this;
@@ -73,6 +76,10 @@ public class Robot extends TimedRobot {
     
     m_autonomousChooser = m_robotContainer.createAutonomousChooser();
     SmartDashboard.putData("Autonomous", m_autonomousChooser);
+
+    m_startingPositionChooser = m_robotContainer.createPositionChooser();
+    SmartDashboard.putData("Starting Position", m_startingPositionChooser);
+    m_startingPositionChooser.onChange(this::getStartPosition);
   }
 
   /**
@@ -137,6 +144,8 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     setLED(LEDmode.Auton);
     m_robotContainer.readPIDswitches();
+
+    getStartPosition(m_startingPositionChooser.getSelected());
     m_robotContainer.m_navigation.setIMUMode(4);
 
     String commandName = m_autonomousChooser.getSelected();
@@ -144,6 +153,14 @@ public class Robot extends TimedRobot {
     System.out.println("Starting command: " + commandName + " -> " + m_autonomousCommand.getName());
     CommandScheduler.getInstance().schedule(m_autonomousCommand);
   }
+
+  private void getStartPosition(String name) {
+    m_startingPosition = m_robotContainer.getStartPosition(name);
+    System.out.println("Starting at: " + name + " -> " + m_startingPosition);
+    m_robotContainer.m_robotDrive.resetOdometry(m_startingPosition);
+    m_robotContainer.m_navigation.setIMUMode(4);
+  }
+
 
   /** This function is called periodically during autonomous. */
   @Override
