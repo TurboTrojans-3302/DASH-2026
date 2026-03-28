@@ -1492,6 +1492,20 @@
               "period": 0.06,
               "data_type": "boolean"
             }
+          },
+          {
+            "title": "nudge increment",
+            "x": 512.0,
+            "y": 224.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ClimberSubsystem/nudge increment",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
+            }
           }
         ]
       }

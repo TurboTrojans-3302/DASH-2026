@@ -183,7 +183,6 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
-    m_climbers.setDefaultCommand(new RunCommand(()-> m_climbers.stopClimbers(), m_climbers));
   }
 
   public static RobotContainer getInstance() {
@@ -232,7 +231,7 @@ public class RobotContainer {
       new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
           .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
       new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())
-          .whileTrue(m_climbers.nudgeClimberPositionCommand(m_copilotController::getLeftY));
+          .whileTrue(m_climbers.nudgeClimberPositionCommand(()-> -m_copilotController.getLeftY()));
 
       // retract/engage hooks
       new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)

@@ -34,8 +34,8 @@ public final class Constants {
     public static final int kHopperRightMotorCanId = 12;
     public static final int kHarvesterMotorCanId   = 13;
     public static final int kSecondFeederMotorCanId = 14;
-    public static final int kClimbMotor            = 15;
-    //todo fix conflicting can id with Pigeon2
+    // Pigeon2 IMU using CanId 15, configured in swerve config files
+    public static final int kClimbMotor            = 16;
   }
 
   public final class RobotConstants {
