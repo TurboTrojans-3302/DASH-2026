@@ -62,8 +62,9 @@ public class Climber extends SubsystemBase{
 
   public Climber() {
     climberMotor = new SparkMax(Constants.CanIds.kClimbMotor, MotorType.kBrushless);
-    climberMotor.configure(new SparkMaxConfig().inverted(false)
-        .idleMode(IdleMode.kBrake),
+    climberMotor.configure(new SparkMaxConfig().inverted(true)
+        .idleMode(IdleMode.kBrake)
+        .smartCurrentLimit(60),
         ResetMode.kResetSafeParameters,
         PersistMode.kNoPersistParameters);
     climberPID = new ProfiledPIDController(
@@ -74,9 +75,9 @@ public class Climber extends SubsystemBase{
             ClimberConstants.climberMaxVelocityDefault,
             ClimberConstants.climberMaxAccelerationDefault));
     climberPID.setTolerance(ClimberConstants.kToleranceDefault);
-    climberPID.reset(getClimberPosition());
     climberEncoder = climberMotor.getEncoder();
     climberEncoder.setPosition(0.0);
+    climberPID.reset(getClimberPosition());
 
     servoLeft = new Servo(PWMChannels.PWMServoLeft);
     servoRight = new Servo(PWMChannels.PWMServoRight);
