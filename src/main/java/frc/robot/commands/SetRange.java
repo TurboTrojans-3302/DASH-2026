@@ -7,8 +7,8 @@ package frc.robot.commands;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.util.datalog.StringLogEntry;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Robot;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.rangeRPMtable;
@@ -32,7 +32,7 @@ public class SetRange extends Command {
     addRequirements(shooter);
     this.shooter = shooter;
     this.distanceSupplier = distanceSupplier;
-    log = new StringLogEntry(DataLogManager.getLog(), "SetRange");
+    log = new StringLogEntry(Robot.getLog(), "SetRange");
   }
 
   // Called when the command is initially scheduled.

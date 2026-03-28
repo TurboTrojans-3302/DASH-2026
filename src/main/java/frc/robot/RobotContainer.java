@@ -81,8 +81,8 @@ public class RobotContainer {
   public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
 
-  private static final double kHopperNudgeIncrement = 5.0;
-  private static final double kHopperNudgeOpenLoopSpeed = 0.2;
+  private static final double kHopperNudgeIncrement = 20.0;
+  private static final double kHopperNudgeOpenLoopSpeed = 0.8;
 
   private static RobotContainer instance;
 

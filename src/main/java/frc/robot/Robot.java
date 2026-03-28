@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import edu.wpi.first.hal.MatchInfoData;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -42,6 +43,8 @@ public class Robot extends TimedRobot {
   public MatchInfoData matchInfoData;
   private SendableChooser<String> m_startingPositionChooser;
   private Pose2d m_startingPosition;
+  
+  public DataLog log;
 
   Robot(){
     instance = this;
@@ -64,8 +67,9 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     // Starts recording to data log
-    DataLogManager.start();
-    DriverStation.startDataLog(DataLogManager.getLog());
+    DataLogManager.start("", "", 0.5);
+    log = DataLogManager.getLog();
+    DriverStation.startDataLog(log);
 
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our
@@ -80,6 +84,10 @@ public class Robot extends TimedRobot {
     m_startingPositionChooser = m_robotContainer.createPositionChooser();
     SmartDashboard.putData("Starting Position", m_startingPositionChooser);
     m_startingPositionChooser.onChange(this::getStartPosition);
+  }
+
+  public static DataLog getLog() {
+    return getInstance().log;
   }
 
   /**

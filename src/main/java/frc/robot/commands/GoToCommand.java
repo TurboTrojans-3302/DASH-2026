@@ -85,7 +85,7 @@ public class GoToCommand extends Command {
     this.m_nav = nav;
     addRequirements(m_drive);
 
-    DataLog log = DataLogManager.getLog();
+    DataLog log = Robot.getLog();
     String name = this.getClass().getSimpleName() + " " + (m_relativeFlag ? m_delta : m_dest);
     stringLogEntry = new StringLogEntry(log, name);
     speedLogEntry = new DoubleLogEntry(log, name + "/speed");

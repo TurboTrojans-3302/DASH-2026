@@ -7,7 +7,9 @@ package frc.robot.commands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.util.datalog.StringLogEntry;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Robot;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Navigation;
 
@@ -22,18 +24,21 @@ public class AimAtHub extends Command {
   Navigation nav;
   DriveTrain drive;
   Rotation2d targetAngle;
+  StringLogEntry log;
 
   /** Creates a new AimAtHub. */
   public AimAtHub(Navigation nav, DriveTrain drive) {
     this.nav = nav;
     this.drive = drive;
     addRequirements(nav, drive);
+    log = new StringLogEntry(Robot.getLog(), this.getName());
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
     targetAngle = nav.getAbsBearingToTarget();
+    log.append("aiming at: " + targetAngle);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -44,7 +49,9 @@ public class AimAtHub extends Command {
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    log.append("end(" +  interrupted + ") target: " + targetAngle.getDegrees() + " actual: " + nav.getHeadingDegrees());
+  }
 
   // Returns true when the command should end.
   @Override

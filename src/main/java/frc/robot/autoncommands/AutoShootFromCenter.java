@@ -25,7 +25,7 @@ public class AutoShootFromCenter extends SequentialCommandGroup {
     addCommands(
       GoToCommand.relative(drivetrain, nav, 1, 0, 0).alongWith(
         hopper.setPositionCommand(Hopper.STARTPOSITION)
-      ),
+      ).withTimeout(3.0),
       new AimAtHub(nav, drivetrain).withTimeout(3.0),
       new SetRange(shooter, nav).withTimeout(5.0),
       new JostleShoot(shooter, hopper, 10, 2.0)
