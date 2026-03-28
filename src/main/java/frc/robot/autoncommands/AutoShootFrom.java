@@ -5,6 +5,7 @@
 package frc.robot.autoncommands;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.commands.AimAtHub;
 import frc.robot.commands.GoToCommand;
 import frc.robot.commands.JostleShoot;
 import frc.robot.commands.SetRange;
@@ -16,18 +17,18 @@ import frc.robot.subsystems.Shooter;
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class AutoShootFromLeft extends SequentialCommandGroup {
-  /** Creates a new AutoShootFromCenter. */
-  public AutoShootFromLeft(DriveTrain drivetrain, Shooter shooter, Navigation nav, Hopper hopper) {
+public class AutoShootFrom extends SequentialCommandGroup {
+  public AutoShootFrom(DriveTrain drivetrain, Shooter shooter, Navigation nav, Hopper hopper, double deltaX, double deltaY) {
     // Add your commands in the addCommands() call, e.g.
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(
-      GoToCommand.relative(drivetrain, nav, 1, 1, -45.0).alongWith(
-        new SetRange(shooter, nav),
+      GoToCommand.relative(drivetrain, nav, deltaX, deltaY, 0).alongWith(
         hopper.setPositionCommand(Hopper.STARTPOSITION)
-      ),
-
-      new JostleShoot(shooter, hopper, 10, 2.0).withTimeout(14) 
+      ).withTimeout(3.0),
+      new AimAtHub(nav, drivetrain).withTimeout(3.0),
+      new SetRange(shooter, nav).withTimeout(5.0),
+      new JostleShoot(shooter, hopper, 10, 2.0)
+          .withTimeout(14)
     );
   }
 }

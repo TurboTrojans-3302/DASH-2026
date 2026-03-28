@@ -174,7 +174,7 @@ public final class Constants {
     public static final double kIdefault = 0;
     public static final double kDdefault = 0.0002;
     public static final double kVdefault = 0.00018;
-    public static final double PIDToleranceDefault = 10.0;
+    public static final double PIDToleranceDefault = 50.0;
     public static final String kPkey = "shooter_kP";
     public static final String kIkey = "shooter_kI";
     public static final String kDkey = "shooter_kD";
