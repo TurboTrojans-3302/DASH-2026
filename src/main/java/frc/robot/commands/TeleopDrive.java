@@ -8,6 +8,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
@@ -22,6 +23,7 @@ public class TeleopDrive extends Command {
   private boolean m_slowDriveFlag = false;
   private boolean m_DpadDriveFlag = false;
   private final double kDPADdriveSpeed = 2.0; // m/s, speed when driving strictly north/south/east/west with field-oriented control, can be tuned based on driver preference
+  private boolean isRedAlliance = true;  // This should be set based on the actual alliance color, possibly through a dashboard or during initialization
 
   /** Creates a new TeleopDrive. */
   public TeleopDrive(DriveTrain robotDrive, XboxController driverController, Navigation nav) {
@@ -34,6 +36,7 @@ public class TeleopDrive extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
+    isRedAlliance = DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
     m_robotDrive.lock();
   }
 
@@ -61,6 +64,11 @@ public class TeleopDrive extends Command {
         forward = kDPADdriveSpeed * Math.cos(povAngle);
         leftward = kDPADdriveSpeed * -Math.sin(povAngle);
       }
+
+      if(isRedAlliance){
+        forward = -forward;
+        leftward = -leftward;
+      } 
 
       if(m_driverController.getAButton()){
         Rotation2d desiredAngle = m_nav.getAbsBearingToTarget().plus(Rotation2d.k180deg);

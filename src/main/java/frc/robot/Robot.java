@@ -122,6 +122,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    checkAlliance();
+  }
+
+  public void checkAlliance() {
     Optional<Alliance> a = DriverStation.getAlliance();
     if (a.isPresent()) {
       if(alliance != a.get()){
@@ -142,6 +146,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    checkAlliance();
     setLED(LEDmode.Auton);
     m_robotContainer.readPIDswitches();
 
@@ -169,6 +174,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    checkAlliance();
     m_robotContainer.readPIDswitches();
     
     setLED(LEDmode.Teleop);
@@ -192,6 +198,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
+    checkAlliance();
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
 
