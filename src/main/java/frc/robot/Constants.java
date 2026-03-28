@@ -188,7 +188,7 @@ public final class Constants {
     public static final double kMaxAccelDefault = 1500.0;
     public static final String kMaxVelocityKey = "shooter_kMaxVelocity";
     public static final double kMaxVelocityDefault = 3000.0;
-    public static final double defaultShootRPM = 1600.0;
+    public static final double defaultShootRPM = 1800.0;
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
@@ -286,7 +286,11 @@ public final class Constants {
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
     public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
     public static final String hardLimitEnableKey = "hopperHardLimitEnable";
-    public static final double STARTPOSITIONdefault = 29.0;
+    public static final double STARTPOSITIONdefault = 100.0;
     public static final String startPositionKey = "hopperStartPosition";
+    public static final double jostleAmplitudeDefault = 50.0;
+    public static final double jostlePeriodDefault = 2.5;
+    public static final String jostleAmplitudeKey = "hopperJostleAmplitude";
+    public static final String jostlePeriodKey = "hopperJostlePeriod";
   }
 }

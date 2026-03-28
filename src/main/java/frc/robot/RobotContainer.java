@@ -33,6 +33,7 @@ import frc.robot.autoncommands.AutoShootFromRight;
 import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.GoToCommand;
+import frc.robot.commands.JostleHopper;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climber;
@@ -210,15 +211,21 @@ public class RobotContainer {
      *
      */
 
-    if (HARVESTER_ENABLE) {
-      Trigger copilotHarvest = new Trigger(() -> m_copilotController.getLeftTriggerAxis() > 0.1);
-      Trigger copilotHarvestReverse = new Trigger(() -> m_copilotController.getRightTriggerAxis() > 0.1);
-      copilotHarvest.whileTrue(m_harvester.PullInCommand());
-      copilotHarvestReverse.whileTrue(m_harvester.PushOutCommand());
-    }
+  // if (HARVESTER_ENABLE) {
+  //     Trigger copilotHarvest = new Trigger(() -> m_copilotController.getLeftTriggerAxis() > 0.1);
+  //     Trigger copilotHarvestReverse = new Trigger(() -> m_copilotController.getRightTriggerAxis() > 0.1);
+  //     copilotHarvest.whileTrue(m_harvester.PullInCommand());
+  //     copilotHarvestReverse.whileTrue(m_harvester.PushOutCommand());
+  //   }
 
     JoystickButton coPilotToggleCameraStream = new JoystickButton(m_copilotController, XboxController.Button.kY.value);
     coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation)); 
+
+    JoystickButton jostleHopper = new JoystickButton(m_copilotController, XboxController.Button.kA.value);
+    jostleHopper.whileTrue(new JostleHopper(m_hopper, m_hopper.jostleAmplitude, m_hopper.jostlePeriod));
+
+    JoystickButton jostleHopperAlternate = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left3);
+    jostleHopperAlternate.whileTrue(new JostleHopper(m_hopper, m_hopper.jostleAmplitude, m_hopper.jostlePeriod));
 
     // only automatic sequence for servos, automatic and manual for climber pid?
     if (CLIMBER_ENABLE) {

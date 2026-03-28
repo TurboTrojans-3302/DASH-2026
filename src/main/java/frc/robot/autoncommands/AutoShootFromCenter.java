@@ -5,6 +5,7 @@
 package frc.robot.autoncommands;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.commands.AimAtHub;
 import frc.robot.commands.GoToCommand;
 import frc.robot.commands.JostleShoot;
 import frc.robot.commands.SetRange;
@@ -23,10 +24,10 @@ public class AutoShootFromCenter extends SequentialCommandGroup {
     // addCommands(new FooCommand(), new BarCommand());
     addCommands(
       GoToCommand.relative(drivetrain, nav, 1, 0, 0).alongWith(
-        new SetRange(shooter, nav),
         hopper.setPositionCommand(Hopper.STARTPOSITION)
       ),
-      
+      new AimAtHub(nav, drivetrain).withTimeout(3.0),
+      new SetRange(shooter, nav).withTimeout(5.0),
       new JostleShoot(shooter, hopper, 10, 2.0)
           .withTimeout(14)
     );
