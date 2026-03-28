@@ -7,6 +7,8 @@ package frc.robot;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -18,8 +20,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.Field;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.AimAtHub;
 import frc.robot.autoncommands.AutoShoot;
@@ -49,6 +53,26 @@ import frc.robot.subsystems.Shooter;
  */
 public class RobotContainer {
 
+  class StartPosition {
+      public final Pose2d red;
+      public final Pose2d blue;
+
+      StartPosition(Pose2d red, Pose2d blue) {
+        this.red = red;
+        this.blue = blue;
+      }
+
+      StartPosition(Pose2d blue) {
+        this.blue = blue;
+        this.red = blue.relativeTo(Constants.Field.RedOrigin);
+      }
+
+      public Pose2d get(Alliance alliance) {
+        return alliance == Alliance.Red ? red : blue;
+      }
+    }
+
+
   private static boolean HARVESTER_ENABLE = true;
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
@@ -56,12 +80,15 @@ public class RobotContainer {
   public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
 
-  private static final double kHopperNudgeIncrement = 4.0;
+  private static final double kHopperNudgeIncrement = 5.0;
   private static final double kHopperNudgeOpenLoopSpeed = 0.2;
 
   private static RobotContainer instance;
 
   private Map<String, Supplier<Command>> autonCommands;
+
+
+  private Map<String, StartPosition> startingPositionList;
 
   // The robot's subsystems
   public DriveTrain m_robotDrive;
@@ -76,6 +103,7 @@ public class RobotContainer {
   public PowerDistribution pdh;
 
   private final REVBlinkinLED m_BlinkinLED;
+  private Alliance alliance;
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
@@ -141,6 +169,12 @@ public class RobotContainer {
         "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, m_hopper, 1.0, 15.0),
         "Aim At Hub", () -> new AimAtHub(m_navigation, m_robotDrive)
       );
+
+    startingPositionList = Map.of(
+      "Start Center Touching Hub", new StartPosition(Constants.Field.BlueStartCenterTouchingHub),
+      "Start Left Touching Hub", new StartPosition(Constants.Field.BlueStartLeftTouchingHub),
+      "Start Right Touching Hub", new StartPosition(Constants.Field.BlueStartRightTouchingHub)
+    );
   }
 
   public void setDefaultCommands() {
@@ -149,7 +183,6 @@ public class RobotContainer {
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
 
-    m_climbers.setDefaultCommand(new RunCommand(()-> m_climbers.stopClimbers(), m_climbers));
   }
 
   public static RobotContainer getInstance() {
@@ -198,7 +231,7 @@ public class RobotContainer {
       new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
           .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
       new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())
-          .whileTrue(m_climbers.nudgeClimberPositionCommand(m_copilotController::getLeftY));
+          .whileTrue(m_climbers.nudgeClimberPositionCommand(()-> -m_copilotController.getLeftY()));
 
       // retract/engage hooks
       new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)
@@ -268,8 +301,8 @@ public class RobotContainer {
     Trigger nudgeHopperLeftIn = new Trigger(() -> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownLeft);
     Trigger nudgeHopperIn = new Trigger(() -> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDown);
     Trigger nudgeHopperRightIn = new Trigger(() -> m_buttonBoard.getPOV() == OIConstants.ButtonBox.StickDownRight);
-    nudgeHopperOut.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(1));
-    nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-1));
+    nudgeHopperOut.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(kHopperNudgeIncrement));
+    nudgeHopperIn.and(() -> m_hopper.isPIDEnabled()).whileTrue(m_hopper.nudgeCommand(-kHopperNudgeIncrement));
 
     nudgeHopperLeftOut.and(() -> !m_hopper.isPIDEnabled())
         .whileTrue(m_hopper.manualMoveCommand(() -> kHopperNudgeOpenLoopSpeed, () -> 0.0));
@@ -306,6 +339,18 @@ public class RobotContainer {
 }
 
   public void configureTestControls() {
+    // Applies deadbands and inverts controls because joysticks
+    // are back-right positive while robot
+    // controls are front-left positive
+    // left stick controls translation
+    // right stick controls the desired angle NOT angular rotation
+    Command driveFieldOrientedDirectAngle = m_robotDrive.driveCommand(
+        () -> MathUtil.applyDeadband(m_driverController.getLeftY(), 0.1),
+        () -> MathUtil.applyDeadband(m_driverController.getLeftX(), 0.1),
+        () -> m_driverController.getRightX(),
+        () -> m_driverController.getRightY());
+        
+    m_robotDrive.setDefaultCommand(driveFieldOrientedDirectAngle);
   }
 
   public void setLED(double value) {
@@ -317,7 +362,8 @@ public class RobotContainer {
    */
   public void initRed() {
     m_navigation.setAlliance(Alliance.Red);
-    m_robotDrive.resetOdometry(Constants.Field.RedStartCenterTouchingHub); 
+    m_robotDrive.resetOdometry(Field.BlueStartCenterTouchingHub.relativeTo(Field.RedOrigin)); 
+    alliance = Alliance.Red;
   }
 
   /*
@@ -325,7 +371,8 @@ public class RobotContainer {
    */
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
-    m_robotDrive.resetOdometry(Constants.Field.BlueStartCenterTouchingHub); 
+    m_robotDrive.resetOdometry(Field.BlueStartCenterTouchingHub); 
+    alliance = Alliance.Blue;
   }
  
   public void onDSAttached(){
@@ -396,6 +443,41 @@ public class RobotContainer {
       System.out.println(
           "Warning: selected autonomous routine '" + selectedRoutineName + "' not found. Defaulting to Do Nothing.");
       return new DoNothing();
+    }
+  }
+
+  public SendableChooser<String> createPositionChooser() {
+    final String prefKey = "selectedStartingPosition";
+    SendableChooser<String> chooser = new SendableChooser<>();
+    
+    for (Map.Entry<String, StartPosition> entry : startingPositionList.entrySet()) {
+      chooser.addOption(entry.getKey(), entry.getKey());
+    }
+
+    if(Preferences.containsKey(prefKey)) {
+      String name = Preferences.getString(prefKey, null);
+      if(startingPositionList.containsKey(name)) {
+        chooser.setDefaultOption(name, name);
+      }else{
+        System.out.println("Warning: saved starting position '" + name + "' not found."); 
+      }
+    }
+
+    chooser.onChange((selectedName)->{
+      Preferences.setString(prefKey, selectedName);
+    });
+
+    return chooser;
+  }
+  
+  public Pose2d getStartPosition(String selectedPositionName) {
+    if (selectedPositionName != null && startingPositionList.containsKey(selectedPositionName)) {
+      StartPosition p = startingPositionList.get(selectedPositionName);
+      return p.get(alliance);
+    } else {
+      System.out.println(
+          "Warning: selected starting position '" + selectedPositionName + "' not found. Defaulting Blue Start Center Touching Hub.");
+      return Constants.Field.BlueStartCenterTouchingHub;
     }
   }
 

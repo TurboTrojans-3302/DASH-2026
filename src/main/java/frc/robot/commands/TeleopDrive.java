@@ -5,6 +5,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.XboxController;
@@ -62,7 +63,8 @@ public class TeleopDrive extends Command {
       }
 
       if(m_driverController.getAButton()){
-        m_robotDrive.driveHeading(new Translation2d(forward, leftward), m_nav.getAbsBearingToTarget());
+        Rotation2d desiredAngle = m_nav.getAbsBearingToTarget().plus(Rotation2d.k180deg);
+        m_robotDrive.driveHeading(new Translation2d(forward, leftward), desiredAngle);
       } else {
         m_robotDrive.drive(new Translation2d(forward, leftward), rotate, true);
       }

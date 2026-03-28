@@ -284,7 +284,7 @@
         "containers": [
           {
             "title": "IsRedAlliance",
-            "x": 768.0,
+            "x": 1024.0,
             "y": 256.0,
             "width": 128.0,
             "height": 128.0,
@@ -303,7 +303,7 @@
             "title": "Field",
             "x": 0.0,
             "y": 0.0,
-            "width": 768.0,
+            "width": 704.0,
             "height": 384.0,
             "type": "Field",
             "properties": {
@@ -322,9 +322,9 @@
           },
           {
             "title": "Autonomous",
-            "x": 768.0,
-            "y": 0.0,
-            "width": 448.0,
+            "x": 704.0,
+            "y": 256.0,
+            "width": 192.0,
             "height": 128.0,
             "type": "ComboBox Chooser",
             "properties": {
@@ -335,7 +335,7 @@
           },
           {
             "title": "ApriltagFound",
-            "x": 896.0,
+            "x": 1152.0,
             "y": 256.0,
             "width": 128.0,
             "height": 128.0,
@@ -348,17 +348,43 @@
             }
           },
           {
-            "title": "EstimatedPosition",
-            "x": 768.0,
-            "y": 128.0,
-            "width": 448.0,
+            "title": "Pigeon 2 (v6) [15]",
+            "x": 1024.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 256.0,
+            "type": "Gyro",
+            "properties": {
+              "topic": "/SmartDashboard/Pigeon 2 (v6) [15]",
+              "period": 0.06,
+              "counter_clockwise_positive": false
+            }
+          },
+          {
+            "title": "Target Angle",
+            "x": 896.0,
+            "y": 256.0,
+            "width": 128.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/SmartDashboard/NavigationSubsystem/EstimatedPosition",
+              "topic": "/SmartDashboard/NavigationSubsystem/Target Angle",
               "period": 0.06,
-              "data_type": "string",
+              "data_type": "double",
               "show_submit_button": false
+            }
+          },
+          {
+            "title": "Nav Pose Heading",
+            "x": 704.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 256.0,
+            "type": "Gyro",
+            "properties": {
+              "topic": "/SmartDashboard/Nav Pose Heading",
+              "period": 0.06,
+              "counter_clockwise_positive": false
             }
           }
         ]
@@ -432,19 +458,6 @@
             }
           },
           {
-            "title": "IMU Heading",
-            "x": 320.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "Gyro",
-            "properties": {
-              "topic": "/SmartDashboard/IMU Heading",
-              "period": 0.06,
-              "counter_clockwise_positive": false
-            }
-          },
-          {
             "title": "Nav Pose Heading",
             "x": 576.0,
             "y": 0.0,
@@ -454,7 +467,7 @@
             "properties": {
               "topic": "/SmartDashboard/Nav Pose Heading",
               "period": 0.06,
-              "counter_clockwise_positive": false
+              "counter_clockwise_positive": true
             }
           },
           {
@@ -517,24 +530,28 @@
             }
           },
           {
-            "title": "Field",
-            "x": 832.0,
+            "title": "Swerve Theta",
+            "x": 896.0,
             "y": 0.0,
-            "width": 448.0,
-            "height": 256.0,
-            "type": "Field",
+            "width": 256.0,
+            "height": 384.0,
+            "type": "PIDController",
             "properties": {
-              "topic": "/SmartDashboard/Field",
+              "topic": "/SmartDashboard/Swerve Theta",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Pigeon 2 (v6) [15]",
+            "x": 320.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 256.0,
+            "type": "Gyro",
+            "properties": {
+              "topic": "/SmartDashboard/Pigeon 2 (v6) [15]",
               "period": 0.06,
-              "field_game": "Rebuilt",
-              "robot_width": 0.85,
-              "robot_length": 0.85,
-              "show_other_objects": true,
-              "show_trajectories": true,
-              "field_rotation": 0.0,
-              "robot_color": 4294198070,
-              "trajectory_color": 4294967295,
-              "show_robot_outside_widget": true
+              "counter_clockwise_positive": true
             }
           }
         ]
@@ -817,6 +834,34 @@
               "period": 0.06,
               "data_type": "double",
               "show_submit_button": true
+            }
+          },
+          {
+            "title": "Secondary Current Limit",
+            "x": 896.0,
+            "y": 128.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Secondary Current Limit",
+              "period": 0.06,
+              "data_type": "int",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Smart Current Limit",
+            "x": 896.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ShooterSubsystem/Smart Current Limit",
+              "period": 0.06,
+              "data_type": "int",
+              "show_submit_button": false
             }
           }
         ]
@@ -1446,6 +1491,20 @@
               "topic": "/SmartDashboard/ClimberSubsystem/Save Prefs",
               "period": 0.06,
               "data_type": "boolean"
+            }
+          },
+          {
+            "title": "nudge increment",
+            "x": 512.0,
+            "y": 224.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/ClimberSubsystem/nudge increment",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": true
             }
           }
         ]
