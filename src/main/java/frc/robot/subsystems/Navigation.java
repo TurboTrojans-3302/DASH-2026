@@ -19,6 +19,8 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -26,9 +28,9 @@ import frc.robot.Constants;
 import frc.robot.Constants.Field;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
-import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.utils.SwerveUtils;
+import swervelib.SwerveDrive;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -50,8 +52,12 @@ public class Navigation extends SubsystemBase {
     this.m_drive = drive;
     this.m_dxSensor = dxSensor;
 
-    m_poseEstimator = m_drive.getSwerveDrive().swerveDrivePoseEstimator;
+    SwerveDrive swerve = m_drive.getSwerveDrive();
+    //swerve.getGyro().setInverted(false);
+    m_poseEstimator = swerve.swerveDrivePoseEstimator;
     m_aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+    m_aprilTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
+
 
     LimelightHelpers.SetRobotOrientation(cameraName, m_drive.getGyroAngleDegrees(), 0, 0, 0, 0, 0);
     LimelightHelpers.setPipelineIndex(cameraName, Constants.LimelightConstants.PipelineIdx.AprilTag);
@@ -91,22 +97,14 @@ public class Navigation extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
 
-    if(alliance != null) {
-      PoseEstimate est;
-      if (alliance == Alliance.Red) {
-        est = LimelightHelpers.getBotPoseEstimate_wpiRed(cameraName);
-      } else {
-        est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
-      }
+    PoseEstimate est = LimelightHelpers.getBotPoseEstimate_wpiBlue(cameraName);
 
-      //TODO is this necessary? how often is the estimate invalid?
-      if (LimelightHelpers.validPoseEstimate(est) && 
-          (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
-        m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
-      }
+    // TODO is this necessary? how often is the estimate invalid?
+    if (LimelightHelpers.validPoseEstimate(est) &&
+        (Timer.getFPGATimestamp() - est.timestampSeconds) < 0.3) {
+      m_poseEstimator.addVisionMeasurement(est.pose, est.timestampSeconds);
     }
 
-    // todo: are we always setting yaw parameter correctly wrt to alliance?
     double yaw = alliance == Alliance.Blue ? m_drive.getGyroAngleDegrees() : m_drive.getGyroAngleDegrees() + 180.0;
     LimelightHelpers.SetRobotOrientation(cameraName, yaw, 0, 0, 0, 0, 0);
 
@@ -130,6 +128,9 @@ public class Navigation extends SubsystemBase {
     return tagPose.plus(delta);
   }
 
+  public void setPosition(Pose2d newPose) {
+    m_drive.resetOdometry(newPose);
+  }
 
   /**
    * @return heading angle of the bot, according to the odometry
@@ -194,9 +195,9 @@ public class Navigation extends SubsystemBase {
     return delta.getAngle();
   }
 
-  public double getRelBearingToTargetDegrees() {
-    return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getAbsBearingToTarget().getDegrees());
-  } 
+  // public double getRelBearingToTargetDegrees() {
+  //   return SwerveUtils.angleDeltaDeg(getHeadingDegrees(), getAbsBearingToTarget().getDegrees());
+  // } 
 
   /**
    * Get the optimal shooting position: a Pose2d on the line between the bot and the hub center,
@@ -227,6 +228,6 @@ public class Navigation extends SubsystemBase {
       builder.addIntegerProperty("ApriltagFound", () -> {return (int) LimelightHelpers.getFiducialID(cameraName);} , null);
       builder.addStringProperty("EstimatedPosition", ()->getPose().toString(), null);
       builder.addDoubleProperty("Target DX", ()->getDXtoTarget(), null);
-      builder.addDoubleProperty("Target Angle", ()->getRelBearingToTargetDegrees(), null);
+      builder.addDoubleProperty("Target Angle", ()->getAbsBearingToTarget().getDegrees(), null);
     }
 }
