@@ -50,6 +50,8 @@ public class Hopper extends SubsystemBase {
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
+    public double jostleAmplitude = HopperConstants.jostleAmplitudeDefault;
+    public double jostlePeriod = HopperConstants.jostlePeriodDefault;
 
     private final ProfiledPIDController leftPID  = new ProfiledPIDController(
             HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault,
@@ -318,6 +320,8 @@ public class Hopper extends SubsystemBase {
             maxVelocity     = Preferences.getDouble(HopperConstants.maxVelocityKey,     HopperConstants.maxVelocityDefault);
             maxAcceleration = Preferences.getDouble(HopperConstants.maxAccelerationKey, HopperConstants.maxAccelerationDefault);
             hardLimitEnable = Preferences.getBoolean(HopperConstants.hardLimitEnableKey, true);
+            jostleAmplitude = Preferences.getDouble(HopperConstants.jostleAmplitudeKey, HopperConstants.jostleAmplitudeDefault);
+            jostlePeriod = Preferences.getDouble(HopperConstants.jostlePeriodKey, HopperConstants.jostlePeriodDefault);
             applyPIDGains();
             leftEncoder.setPosition(Preferences.getDouble(HopperConstants.leftPositionKey, 0));
             rightEncoder.setPosition(Preferences.getDouble(HopperConstants.rightPositionKey, 0));
@@ -340,6 +344,8 @@ public class Hopper extends SubsystemBase {
         Preferences.setDouble(HopperConstants.posToleranceKey, posTolerance);
         Preferences.setDouble(HopperConstants.maxVelocityKey,     maxVelocity);
         Preferences.setDouble(HopperConstants.maxAccelerationKey, maxAcceleration);
+        Preferences.setDouble(HopperConstants.jostleAmplitudeKey, jostleAmplitude);
+        Preferences.setDouble(HopperConstants.jostlePeriodKey, jostlePeriod);
     }
 
     public boolean leftHardLimit() {
@@ -367,6 +373,8 @@ public class Hopper extends SubsystemBase {
         builder.addDoubleProperty("kG", () -> kG, (x) -> { kG = x; applyPIDGains(); });
         builder.addDoubleProperty("Max Velocity",     () -> maxVelocity,     (x) -> { maxVelocity     = x; applyPIDGains(); });
         builder.addDoubleProperty("Max Acceleration", () -> maxAcceleration, (x) -> { maxAcceleration = x; applyPIDGains(); });
+        builder.addDoubleProperty("Jostle Amplitude", () -> jostleAmplitude, (x) -> jostleAmplitude = x);
+        builder.addDoubleProperty("Jostle Period", () -> jostlePeriod, (x) -> jostlePeriod = x);
         builder.addBooleanProperty("PID Enabled", () -> isPIDEnabled(), (x) -> setPIDEnabled(x));
         builder.addBooleanProperty("Hard Limit Enable", () -> hardLimitEnable, (x) -> hardLimitEnable = x);
         builder.addBooleanProperty("Soft Limit Enable", () -> areSoftLimitsEnabled(), (x) -> enableSoftLimits(x));

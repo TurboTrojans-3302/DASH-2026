@@ -286,7 +286,11 @@ public final class Constants {
     public static final String maxAccelerationKey = "hopperMaxAcceleration";
     public static final double maxAccelerationDefault = 50.0; // encoder units per second squared
     public static final String hardLimitEnableKey = "hopperHardLimitEnable";
-    public static final double STARTPOSITIONdefault = 29.0;
+    public static final double STARTPOSITIONdefault = 100.0;
     public static final String startPositionKey = "hopperStartPosition";
+    public static final double jostleAmplitudeDefault = 50.0;
+    public static final double jostlePeriodDefault = 2.5;
+    public static final String jostleAmplitudeKey = "hopperJostleAmplitude";
+    public static final String jostlePeriodKey = "hopperJostlePeriod";
   }
 }

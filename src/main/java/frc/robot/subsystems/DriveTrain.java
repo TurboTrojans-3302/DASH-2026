@@ -83,6 +83,7 @@ public class DriveTrain extends SubsystemBase {
       public void initSendable(SendableBuilder builder) {
         builder.setSmartDashboardType("Gyro");
         builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
+      
       } 
     });
 
