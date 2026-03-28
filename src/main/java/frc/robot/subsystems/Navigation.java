@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.Field;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -147,9 +148,9 @@ public class Navigation extends SubsystemBase {
 
   public Pose2d getHubCenterPoint(){
     if (alliance == Alliance.Blue){
-      return Constants.FieldConstants.BlueHubCenterPoint;
+      return Constants.Field.BlueHubCenterPoint;
     } else {
-      return Constants.FieldConstants.RedHubCenterPoint;
+      return Constants.Field.RedHubCenterPoint;
     } 
   }
 

@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.Field;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.AimAtHub;
 import frc.robot.autoncommands.AutoShoot;
@@ -35,7 +35,7 @@ import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.GoToCommand;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
-import frc.robot.subsystems.Climbers;
+import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Configs;
 import frc.robot.subsystems.DXsensor;
 import frc.robot.subsystems.DriveTrain;
@@ -64,7 +64,7 @@ public class RobotContainer {
 
       StartPosition(Pose2d blue) {
         this.blue = blue;
-        this.red = blue.relativeTo(Constants.FieldConstants.RedOrigin);
+        this.red = blue.relativeTo(Constants.Field.RedOrigin);
       }
 
       public Pose2d get(Alliance alliance) {
@@ -74,10 +74,11 @@ public class RobotContainer {
 
 
   private static boolean HARVESTER_ENABLE = true;
-  private static boolean CLIMBERS_ENABLE = false;
   private static boolean HOPPER_ENABLE = true;
   private static boolean SHOOTER_ENABLE = true;
+  private static boolean CLIMBER_ENABLE = true;
   public static boolean feederEnabled = true;
+  public static boolean ignorePeriods = false;
 
   private static final double kHopperNudgeIncrement = 5.0;
   private static final double kHopperNudgeOpenLoopSpeed = 0.2;
@@ -92,7 +93,7 @@ public class RobotContainer {
   // The robot's subsystems
   public DriveTrain m_robotDrive;
   public Harvester m_harvester;
-  public Climbers m_climbers;
+  public Climber m_climbers;
   public Shooter m_shooter;
   public Hopper m_hopper;
   public Navigation m_navigation;
@@ -138,12 +139,17 @@ public class RobotContainer {
       SmartDashboard.putData("ShooterSubsystem", m_shooter);
     }
 
+    if (CLIMBER_ENABLE){
+      m_climbers = new Climber();
+      SmartDashboard.putData("ClimberSubsystem", m_climbers);
+    }
+
     if (HARVESTER_ENABLE) {
       m_harvester = new Harvester();
       SmartDashboard.putData("HarvesterSubsystem", m_harvester);
     }
 
-    m_BlinkinLED = new REVBlinkinLED(Constants.BLINKIN_LED_PWM_CHANNEL);
+    m_BlinkinLED = new REVBlinkinLED(Constants.PWMChannels.BLINKIN_LED_PWM_CHANNEL);
 
     m_gameData = new GameData();
     SmartDashboard.putData("GameData", m_gameData);
@@ -165,9 +171,9 @@ public class RobotContainer {
       );
 
     startingPositionList = Map.of(
-      "Start Center Touching Hub", new StartPosition(Constants.FieldConstants.BlueStartCenterTouchingHub),
-      "Start Left Touching Hub", new StartPosition(Constants.FieldConstants.BlueStartLeftTouchingHub),
-      "Start Right Touching Hub", new StartPosition(Constants.FieldConstants.BlueStartRightTouchingHub)
+      "Start Center Touching Hub", new StartPosition(Constants.Field.BlueStartCenterTouchingHub),
+      "Start Left Touching Hub", new StartPosition(Constants.Field.BlueStartLeftTouchingHub),
+      "Start Right Touching Hub", new StartPosition(Constants.Field.BlueStartRightTouchingHub)
     );
   }
 
@@ -176,6 +182,7 @@ public class RobotContainer {
     Command teleopCommand = new TeleopDrive(m_robotDrive, m_driverController, m_navigation);
     m_robotDrive.setDefaultCommand(teleopCommand);
     SmartDashboard.putData("TeleopCommand", teleopCommand);
+
   }
 
   public static RobotContainer getInstance() {
@@ -213,6 +220,26 @@ public class RobotContainer {
     JoystickButton coPilotToggleCameraStream = new JoystickButton(m_copilotController, XboxController.Button.kY.value);
     coPilotToggleCameraStream.onTrue(new InstantCommand(() -> m_navigation.toggleCameraStream(), m_navigation)); 
 
+    // only automatic sequence for servos, automatic and manual for climber pid?
+    if (CLIMBER_ENABLE) {
+      // climber up
+      new JoystickButton(m_copilotController, XboxController.Button.kRightStick.value)
+          .onTrue(new InstantCommand(() -> m_climbers.enablePID(false), m_climbers));
+      new Trigger(() -> (Math.abs(m_copilotController.getRightY()) > 0.1) && !m_climbers.PIDEnabled())
+          .whileTrue(m_climbers.climberManualControlCommand(() -> -m_copilotController.getRightY()));
+
+      new JoystickButton(m_copilotController, XboxController.Button.kLeftStick.value)
+          .onTrue(new InstantCommand(() -> m_climbers.enablePID(true), m_climbers));
+      new Trigger(() -> (Math.abs(m_copilotController.getLeftY()) > 0.1) && m_climbers.PIDEnabled())
+          .whileTrue(m_climbers.nudgeClimberPositionCommand(()-> -m_copilotController.getLeftY()));
+
+      // retract/engage hooks
+      new JoystickButton(m_copilotController, XboxController.Button.kLeftBumper.value)
+          .onTrue(m_climbers.retractHooksCommand());
+      new JoystickButton(m_copilotController, XboxController.Button.kRightBumper.value)
+          .onTrue(m_climbers.deployHooksCommand());
+    }
+
    /**
      * Button Board
      *
@@ -222,6 +249,7 @@ public class RobotContainer {
       .onTrue(new InstantCommand(() -> {
         m_shooter.setDangerMode(!m_shooter.isDangerMode());
         m_hopper.enableSoftLimits(!m_hopper.areSoftLimitsEnabled());
+        m_climbers.overrideLimits(!m_climbers.getLimitsEnabled());
       }, m_shooter, m_hopper, m_harvester)); // dummy command to require all subsystems and act as a "safety switch" that prevents any other button from working when not pressed
 
   if(SHOOTER_ENABLE)
@@ -334,7 +362,7 @@ public class RobotContainer {
    */
   public void initRed() {
     m_navigation.setAlliance(Alliance.Red);
-    m_robotDrive.resetOdometry(FieldConstants.BlueStartCenterTouchingHub.relativeTo(FieldConstants.RedOrigin)); 
+    m_robotDrive.resetOdometry(Field.BlueStartCenterTouchingHub.relativeTo(Field.RedOrigin)); 
     alliance = Alliance.Red;
   }
 
@@ -343,7 +371,7 @@ public class RobotContainer {
    */
   public void initBlue() {
     m_navigation.setAlliance(Alliance.Blue);
-    m_robotDrive.resetOdometry(FieldConstants.BlueStartCenterTouchingHub); 
+    m_robotDrive.resetOdometry(Field.BlueStartCenterTouchingHub); 
     alliance = Alliance.Blue;
   }
  
@@ -449,7 +477,7 @@ public class RobotContainer {
     } else {
       System.out.println(
           "Warning: selected starting position '" + selectedPositionName + "' not found. Defaulting Blue Start Center Touching Hub.");
-      return Constants.FieldConstants.BlueStartCenterTouchingHub;
+      return Constants.Field.BlueStartCenterTouchingHub;
     }
   }
 

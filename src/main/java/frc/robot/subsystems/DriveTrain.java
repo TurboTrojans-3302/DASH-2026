@@ -85,6 +85,15 @@ public class DriveTrain extends SubsystemBase {
         builder.addDoubleProperty("Value", () -> swerveDrive.getYaw().getDegrees(), null);
       } 
     });
+
+    SmartDashboard.putData("IMU Raw Heading", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("Gyro");
+        builder.addDoubleProperty("Value", () -> Math.toDegrees(swerveDrive.getGyro().getRawRotation3d().getZ()), null);
+      } 
+    });
+
     SmartDashboard.putData("Swerve Theta", swerveDrive.swerveController.thetaController);
   }
 

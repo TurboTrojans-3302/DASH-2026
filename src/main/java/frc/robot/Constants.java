@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import org.littletonrobotics.frc2026.FieldConstants;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -31,19 +32,28 @@ public final class Constants {
     public static final int kFeederMotorCanId = 10;
     public static final int kHopperLeftMotorCanId = 11;
     public static final int kHopperRightMotorCanId = 12;
-    public static final int kHarvesterMotorCanId = 13;
+    public static final int kHarvesterMotorCanId   = 13;
     public static final int kSecondFeederMotorCanId = 14;
-   // ID 15 for the climber. defined in swerve config files
+    // Pigeon2 IMU using CanId 15, configured in swerve config files
+    public static final int kClimbMotor            = 16;
   }
 
   public final class RobotConstants {
-    public static final double lengthWithBumpers = 0.762; // meters, 30 inches
-    public static final double widthWithBumpers = 0.762; // meters,
+    public static final double lengthWithBumpers = 0.851; // 33.5 inches in meters
+    public static final double widthWithBumpers = 0.851;
   }
+
+  public static final class PWMChannels {
+    public static final int BLINKIN_LED_PWM_CHANNEL = 0;
+    public static final int PWMServoLeft = 1;
+    public static final int PWMServoRight = 2;
+  }
+
 
   public static final class DigitalIO {
     public static final int kHopperLeftContractedLimitSwitchDio = 1;
     public static final int kHopperRightContractedLimitSwitchDio = 2;
+    public static final int kClimberLimitSwitch = 3;
   }
 
   public static final class DriveConstants {
@@ -61,6 +71,7 @@ public final class Constants {
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0;
     public static final double kDriveDeadband = 0.05;
+    public static final double kClimbersDeadband = 0.2; //only want one speed so a high value because we only need to be sure the button is pressed
     public static final int kCopilotControllerPort = 1;
     public static final int kButtonBoardPort = 2;
 
@@ -117,7 +128,9 @@ public final class Constants {
     public static final double kPY = 0;
   }
 
-  public static final class FieldConstants {
+  public static final class Field {
+    public static final Translation2d BlueTowerCenter = FieldConstants.Tower.centerPoint;
+    public static final Pose2d BlueClimbPosition = new Pose2d(BlueTowerCenter.getX() + RobotConstants.widthWithBumpers/2, BlueTowerCenter.getY(), Rotation2d.kCW_90deg);
     public static final double fieldLength = 16.541; 
     public static final double fieldWidth = 8.069;
     public static final Pose2d BlueOrigin = Pose2d.kZero;
@@ -179,7 +192,7 @@ public final class Constants {
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";
-    public static double manualRPMincrement = 10; // rpm
+    public static final double manualRPMincrement = 10; // rpm
     public static final String secondFeederSpeedKey = "secondFeederSpeed";
     public static final double velocityFilterTimeConstant = 4 * Robot.kDefaultPeriod;
 
@@ -205,6 +218,45 @@ public final class Constants {
   }
 
   public static final class ClimberConstants {
+    public static final String leftHookRetractedAnglekey = "leftHookRetractedAngle";
+    public static final String leftHookDeployedAnglekey = "leftHookDeployedAngle";
+    public static final String rightHookRetractedAnglekey = "rightHookRetractedAngle";
+    public static final String rightHookDeployedAnglekey = "rightHookDeployedAngle";
+    public static final double leftHookRetractedAngle = 0.0;
+    public static final double leftHookDeployedAngle = 75.0;
+    public static final double rightHookRetractedAngle = 0.0;
+    public static final double rightHookDeployedAngle = 75.0;
+
+    public static final double kPdefault = 0;
+    public static final double kIdefault = 0;
+    public static final double kDdefault = 0;
+    public static final String kPkey = "climber_kP";
+    public static final String kIkey = "climber_kI";
+    public static final String kDkey = "climber_kD";
+    public static final String kVkey = "climber_kV";
+    public static final String PIDToleranceKey = "climber_PIDTolerance";
+    public static final double kToleranceDefault = 0;
+
+    public static final double climberDefaultSpeed = 0.3; // manual
+    public static final String climberSpeedKey = "climberSpeed";
+    public static final String climberServoTimeKey = "climberServoTime";
+    public static final double climberServoTime = 1.0;
+    public static final double climberLowerSoftLimit = 1.0;
+    public static final String climberLowerSoftLimitKey = "climberLowerSoftLimit";
+    public static final String climberUpperSoftLimitKey = "climberUpperSoftLimit";
+    public static final double climberUpperSoftLimit = 100.0;
+    public static final String climberMaxVelocityKey = "climberMaxVelocity";
+    public static final String climberMaxAccelerationKey = "climberMaxAcceleration";
+    public static final double climberMaxVelocityDefault = 500;
+    public static final double climberMaxAccelerationDefault = 1000;
+    public static final double climberNudgeIncrement = 1.0;
+    public static final String climberNudgeIncrementKey = "climberNudgeIncrement";
+    public static final double START = 0.0;
+    public static final double HANG = 150.0;
+    public static final double HIGH = 200.0;
+    public static final String HANGKey = "climber_HANGPosition";
+    public static final String STARTKey = "climber_STARTPosition";
+    public static final String HIGHKey = "climber_HIGHPosition";
 
   }
 
@@ -237,6 +289,4 @@ public final class Constants {
     public static final double STARTPOSITIONdefault = 29.0;
     public static final String startPositionKey = "hopperStartPosition";
   }
-
-  public static final int BLINKIN_LED_PWM_CHANNEL = 0;
 }

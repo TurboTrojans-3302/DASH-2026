@@ -45,11 +45,11 @@ public class Hopper extends SubsystemBase {
     private double kG = HopperConstants.kGdefault;
     private double maxVelocity     = HopperConstants.maxVelocityDefault;
     private double maxAcceleration = HopperConstants.maxAccelerationDefault;
-    private boolean hardLimitEnable = true;
+    private Boolean hardLimitEnable = true;
+    private boolean softLimitsEnabled = true;
     private ElevatorFeedforward feedforward = new ElevatorFeedforward(0, HopperConstants.kGdefault, 0);
     private boolean PIDEnabled = false;
     private double positionSetpoint = 0.0;
-    private boolean softLimitsEnabled = true;
 
     private final ProfiledPIDController leftPID  = new ProfiledPIDController(
             HopperConstants.kPdefault, HopperConstants.kIdefault, HopperConstants.kDdefault,
