@@ -53,6 +53,8 @@ public class DriveTrain extends SubsystemBase {
    * @param startingPose The starting pose of the robot.
    */
   public DriveTrain(String directory) {
+    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW;
+
     File configFileObject = new File(Filesystem.getDeployDirectory(), directory);
     try {
       System.out.println("loading SwerveDrive: " + configFileObject);
@@ -61,7 +63,6 @@ public class DriveTrain extends SubsystemBase {
       System.out.println("Swerve Configuration failed! " + e); // todo throw a fatal exception here?
     }
 
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
     swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via
                                              // angle.
     swerveDrive.setCosineCompensator(false);// !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for

@@ -27,10 +27,7 @@ import frc.robot.Constants.Field;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.AimAtHub;
 import frc.robot.autoncommands.AutoShoot;
-import frc.robot.autoncommands.AutoShootFromCenter;
-import frc.robot.autoncommands.AutoShootFromLeft;
-import frc.robot.autoncommands.AutoShootFromRight;
-import frc.robot.autoncommands.AutoSideStartMoveAndShootNoNav;
+import frc.robot.autoncommands.AutoShootFrom;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.GoToCommand;
 import frc.robot.commands.JostleHopper;
@@ -81,7 +78,7 @@ public class RobotContainer {
   public static boolean feederEnabled = true;
   public static boolean ignorePeriods = false;
 
-  private static final double kHopperNudgeIncrement = 20.0;
+  private static final double kHopperNudgeIncrement = 40.0;
   private static final double kHopperNudgeOpenLoopSpeed = 0.8;
 
   private static RobotContainer instance;
@@ -158,19 +155,15 @@ public class RobotContainer {
     SmartDashboard.putData("GoToCommand", GoToCommand.getSendable());
 
     pdh = new PowerDistribution(53, ModuleType.kRev);
-    SmartDashboard.putData(pdh);
+    //SmartDashboard.putData(pdh);
 
     autonCommands = Map.of(
         "Do Nothing", () -> new DoNothing(),
-        "Start Center", () -> new AutoShootFromCenter(m_robotDrive, m_shooter, m_navigation, m_hopper),
-        "Start Left", () -> new AutoShootFromLeft(m_robotDrive, m_shooter, m_navigation, m_hopper), 
-        "Start Right", () -> new AutoShootFromRight(m_robotDrive, m_shooter, m_navigation, m_hopper),
-        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation, m_hopper),
-        "Fwd 1m, left 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, m_hopper, 1.0, -15.0),
-        "Fwd 1m, right 15deg", ()-> new AutoSideStartMoveAndShootNoNav(m_robotDrive, m_navigation, m_shooter, m_hopper, 1.0, 15.0),
-        "Aim At Hub", () -> new AimAtHub(m_navigation, m_robotDrive)
+        "Start Center", () -> new AutoShootFrom(m_robotDrive, m_shooter, m_navigation, m_hopper, 1.0, 0.0),
+        "Start Left", () -> new AutoShootFrom(m_robotDrive, m_shooter, m_navigation, m_hopper, 1.0, -1.0), 
+        "Start Right", () -> new AutoShootFrom(m_robotDrive, m_shooter, m_navigation, m_hopper, 1.0, 1.0),
+        "Auto Shoot", () -> new AutoShoot(m_robotDrive, m_shooter, m_navigation, m_hopper)
       );
-
     startingPositionList = Map.of(
       "Start Center Touching Hub", new StartPosition(Constants.Field.BlueStartCenterTouchingHub),
       "Start Left Touching Hub", new StartPosition(Constants.Field.BlueStartLeftTouchingHub),
