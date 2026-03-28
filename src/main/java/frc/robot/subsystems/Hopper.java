@@ -88,6 +88,14 @@ public class Hopper extends SubsystemBase {
         rightMotor.configure(rightSparkConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
+    public double getSoftMax() {
+        return softMax;
+    }
+
+    public double getSoftMin() {
+        return softMin;
+    }
+    
     /**
      * Convenience constructor that uses CAN IDs from
      * {@link frc.robot.Constants.HopperConstants}.

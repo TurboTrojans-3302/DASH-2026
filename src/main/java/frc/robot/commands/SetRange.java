@@ -6,6 +6,8 @@ package frc.robot.commands;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.util.datalog.StringLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Navigation;
 import frc.robot.subsystems.Shooter;
@@ -16,6 +18,7 @@ import frc.robot.subsystems.rangeRPMtable;
 public class SetRange extends Command {
   private final Shooter shooter;
   private DoubleSupplier distanceSupplier;
+  private StringLogEntry log;
 
   public SetRange(Shooter shooter, Navigation nav) {
     this(shooter, () -> nav.getDXtoTarget());
@@ -29,6 +32,7 @@ public class SetRange extends Command {
     addRequirements(shooter);
     this.shooter = shooter;
     this.distanceSupplier = distanceSupplier;
+    log = new StringLogEntry(DataLogManager.getLog(), "SetRange");
   }
 
   // Called when the command is initially scheduled.
@@ -39,9 +43,10 @@ public class SetRange extends Command {
     if (rangeRPMtable.inRange(distance)) {
       rpm = rangeRPMtable.get(distance);
     } else {
-      rpm = 1900.0;
+      rpm = 1600.0;
     }
     shooter.setRPMsetpoint(rpm);
+    log.append("distance = " + distance + " rpm = " + rpm);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -50,7 +55,9 @@ public class SetRange extends Command {
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+        log.append("end(" + interrupted + ") rpm = " + shooter.getRPM());
+  }
 
     // Returns true when the command should end.
     @Override

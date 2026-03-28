@@ -188,7 +188,7 @@ public final class Constants {
     public static final double kMaxAccelDefault = 1500.0;
     public static final String kMaxVelocityKey = "shooter_kMaxVelocity";
     public static final double kMaxVelocityDefault = 3000.0;
-    public static final double defaultShootRPM = 1600.0;
+    public static final double defaultShootRPM = 1800.0;
 
     public static final double feederSpeedDefault = 0.3;
     public static final String feederSpeedKey = "feederSpeed";

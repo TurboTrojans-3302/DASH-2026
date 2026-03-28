@@ -224,6 +224,9 @@ public class RobotContainer {
     JoystickButton jostleHopper = new JoystickButton(m_copilotController, XboxController.Button.kA.value);
     jostleHopper.whileTrue(new JostleHopper(m_hopper, m_hopper.jostleAmplitude, m_hopper.jostlePeriod));
 
+    JoystickButton jostleHopperAlternate = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left3);
+    jostleHopperAlternate.whileTrue(new JostleHopper(m_hopper, m_hopper.jostleAmplitude, m_hopper.jostlePeriod));
+
     // only automatic sequence for servos, automatic and manual for climber pid?
     if (CLIMBER_ENABLE) {
       // climber up
