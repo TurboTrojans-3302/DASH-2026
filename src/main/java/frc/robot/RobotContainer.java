@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Field;
+import frc.robot.Constants.HopperConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.AimAtHub;
 import frc.robot.autoncommands.AutoShoot;
@@ -31,6 +32,7 @@ import frc.robot.autoncommands.AutoShootFrom;
 import frc.robot.autoncommands.DoNothing;
 import frc.robot.commands.GoToCommand;
 import frc.robot.commands.JostleHopper;
+import frc.robot.commands.JostleShoot;
 import frc.robot.commands.MeasureAndSetRange;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.subsystems.Climber;
@@ -275,7 +277,8 @@ public class RobotContainer {
     JoystickButton feederForward = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Right3); // blockage
     JoystickButton spinUpShooter = new JoystickButton(m_buttonBoard, OIConstants.ButtonBox.Left1); // spin up shooter
                                                                                                    // without feeding
-    shootButton.and(scoringAllowed.or(() -> m_shooter.isDangerMode())).whileTrue(m_shooter.shootCommand());
+    shootButton.whileTrue(new JostleShoot(m_shooter, m_hopper, HopperConstants.jostleAmplitudeDefault, HopperConstants.jostlePeriodDefault));
+    
 
     feederReverse.whileTrue(m_shooter.reverseFeedCommand());
     feederForward.whileTrue(m_shooter.forwardFeedCommand());
