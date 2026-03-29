@@ -227,8 +227,8 @@ public final class Constants {
     public static final double rightHookRetractedAngle = 0.0;
     public static final double rightHookDeployedAngle = 75.0;
 
-    public static final double kPdefault = 0;
-    public static final double kIdefault = 0;
+    public static final double kPdefault = 0.4;
+    public static final double kIdefault = 0.01;
     public static final double kDdefault = 0;
     public static final String kPkey = "climber_kP";
     public static final String kIkey = "climber_kI";
@@ -244,16 +244,16 @@ public final class Constants {
     public static final double climberLowerSoftLimit = 1.0;
     public static final String climberLowerSoftLimitKey = "climberLowerSoftLimit";
     public static final String climberUpperSoftLimitKey = "climberUpperSoftLimit";
-    public static final double climberUpperSoftLimit = 100.0;
+    public static final double climberUpperSoftLimit = 87.0;
     public static final String climberMaxVelocityKey = "climberMaxVelocity";
     public static final String climberMaxAccelerationKey = "climberMaxAcceleration";
-    public static final double climberMaxVelocityDefault = 500;
-    public static final double climberMaxAccelerationDefault = 1000;
+    public static final double climberMaxVelocityDefault = 20;
+    public static final double climberMaxAccelerationDefault = 50;
     public static final double climberNudgeIncrement = 1.0;
     public static final String climberNudgeIncrementKey = "climberNudgeIncrement";
-    public static final double START = 0.0;
-    public static final double HANG = 150.0;
-    public static final double HIGH = 200.0;
+    public static final double START = 10.0;
+    public static final double HANG = 65.0;
+    public static final double HIGH = 87.0;
     public static final String HANGKey = "climber_HANGPosition";
     public static final String STARTKey = "climber_STARTPosition";
     public static final String HIGHKey = "climber_HIGHPosition";
